@@ -1,6 +1,7 @@
 package mount
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -42,11 +43,11 @@ type Status struct {
 	} `json:"debug"`
 }
 
-// Status builds the UI snapshot from a fresh state/config read and the host
+// Status builds the UI snapshot from a single state/config read and the host
 // clock.
 func (m *Mount) Status() Status {
-	s := m.fetchState()
-	cfg := m.fetchConfig()
+	s, sErr := m.fetchState()
+	cfg, _ := m.fetchConfig()
 
 	st := Status{
 		Status:   "disconnected",
@@ -54,9 +55,9 @@ func (m *Mount) Status() Status {
 		Power:    false,
 		Ra:       "--:--:--",
 		Dec:      "--:--:--",
-		Lst:      formatHours(m.SiderealTime()),
+		Lst:      "--:--:--",
 		PierSide: "East",
-		Time:     time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		Time:     "",
 	}
 	st.Debug.Microsteps = 64 // MOTORS_MICROSTEPS (firmware build constant)
 
@@ -67,6 +68,7 @@ func (m *Mount) Status() Status {
 		st.Ra = formatHours(s.Ra)
 		st.Dec = formatDec(s.Dec)
 		st.IsHome = s.AtHome
+		st.Lst = formatHours(s.Lst)
 		if s.PierSide == "west" {
 			st.PierSide = "West"
 		} else {
@@ -84,12 +86,17 @@ func (m *Mount) Status() Status {
 		st.Debug.Limits.DecMin = s.Limits.DecMin
 		st.Debug.Limits.DecMax = s.Limits.DecMax
 		st.Debug.UptimeS = s.UptimeMs / 1000
+	} else if errors.Is(sErr, errNotConnected) {
+		// No link: keep a host-clock LST so the header stays meaningful, but
+		// never present it as a mount reading (a timeout stays "--:--:--").
+		st.Lst = formatHours(lstHours(0, time.Now()))
 	}
 
 	if cfg != nil {
 		st.Settings.Lat = cfg.Config.Lat
 		st.Settings.Lon = cfg.Config.Lon
 		st.Settings.Elevation = cfg.Config.Elevation
+		st.Time = cfg.Utc
 	}
 
 	return st

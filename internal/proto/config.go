@@ -10,6 +10,7 @@ type ConfigResponse struct {
 	OK        bool   `json:"ok"`
 	Error     string `json:"error"`
 	ConfigRev uint32 `json:"config_rev"`
+	Utc       string `json:"utc"`
 	Config    struct {
 		Lat          float64 `json:"lat"`
 		Lon          float64 `json:"lon"`

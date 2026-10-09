@@ -97,9 +97,11 @@ func (a *App) SlewTo(ra, dec float64, speed int) error {
 	return mount.Get().SlewTo(ra, dec, speed)
 }
 
-// SetTime forwards a UTC clock update to the mount.
-func (a *App) SetTime(iso string) error {
-	return mount.Get().SetUTCDate(iso)
+// SetTime re-syncs the mount clock to the host and clears any manual override,
+// restoring the automatic time authority. The UI's "Update" button is the way
+// back from a manual clock; an explicit Alpaca UTCDate set stays manual.
+func (a *App) SetTime(_ string) error {
+	return mount.Get().SyncTimeToHost()
 }
 
 // SetLocation updates the site latitude, longitude and elevation in one write.

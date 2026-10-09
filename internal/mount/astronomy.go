@@ -135,41 +135,50 @@ func equatorialToAxis(raHours, decDeg, lst, curRaAxis, curDecAxis float64,
 }
 
 // Altitude returns the current telescope altitude in degrees.
-func (m *Mount) Altitude() float64 {
-	s := m.fetchState()
-	if s == nil {
-		return 0
+func (m *Mount) Altitude() (float64, error) {
+	s, err := m.fetchState()
+	if err != nil {
+		return 0, err
 	}
-	alt, _ := horizontal(s.Ra, s.Dec, m.SiteLatitude(), s.Lst)
-	return alt
+	lat, err := m.SiteLatitude()
+	if err != nil {
+		return 0, err
+	}
+	alt, _ := horizontal(s.Ra, s.Dec, lat, s.Lst)
+	return alt, nil
 }
 
 // Azimuth returns the current telescope azimuth in degrees (0 = North).
-func (m *Mount) Azimuth() float64 {
-	s := m.fetchState()
-	if s == nil {
-		return 0
+func (m *Mount) Azimuth() (float64, error) {
+	s, err := m.fetchState()
+	if err != nil {
+		return 0, err
 	}
-	_, az := horizontal(s.Ra, s.Dec, m.SiteLatitude(), s.Lst)
-	return az
+	lat, err := m.SiteLatitude()
+	if err != nil {
+		return 0, err
+	}
+	_, az := horizontal(s.Ra, s.Dec, lat, s.Lst)
+	return az, nil
 }
 
-// SiderealTime returns the local mean sidereal time in hours, as reported by
-// the mount; falls back to the host clock when disconnected.
-func (m *Mount) SiderealTime() float64 {
-	s := m.fetchState()
-	if s != nil {
-		return s.Lst
+// SiderealTime returns the local mean sidereal time in hours as reported by the
+// mount. It does not fall back to the host clock: a communication failure is
+// returned as an error rather than masked as a valid reading.
+func (m *Mount) SiderealTime() (float64, error) {
+	s, err := m.fetchState()
+	if err != nil {
+		return 0, err
 	}
-	return lstHours(m.SiteLongitude(), time.Now())
+	return s.Lst, nil
 }
 
 // DestinationSideOfPier returns the pier side the mount would end on after a
 // slew to the given coordinates, or the current side when unreachable.
-func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) int {
-	s := m.fetchState()
-	if s == nil {
-		return m.SideOfPier()
+func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) (int, error) {
+	s, err := m.fetchState()
+	if err != nil {
+		return 0, err
 	}
 
 	lim := limits{s.Limits.RaMin, s.Limits.RaMax, s.Limits.DecMin, s.Limits.DecMax}
@@ -178,5 +187,5 @@ func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) int {
 	if !ok {
 		return m.SideOfPier()
 	}
-	return pier
+	return pier, nil
 }

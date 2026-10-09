@@ -607,9 +607,9 @@ input::placeholder {
             <span>Tracking <b x-text="serverTracking"></b></span>
             <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
             <span>Pier <b x-text="pierSide"></b></span>
-            <span>Lat <b x-text="settings.lat"></b></span>
-            <span>Lon <b x-text="settings.lon"></b></span>
-            <span>Elev <b x-text="settings.elevation"></b>m</span>
+            <span>Lat <b x-text="serverSettings.lat"></b></span>
+            <span>Lon <b x-text="serverSettings.lon"></b></span>
+            <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
         </div>
     </header>
 
@@ -812,9 +812,9 @@ input::placeholder {
             <div class="settings-row">
                 <span class="settings-label">Location</span>
                 <span class="settings-fields">
-                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settings.lat" class="settings-input" title="Latitude">
-                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settings.lon" class="settings-input" title="Longitude">
-                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settings.elevation" class="settings-input settings-input-short" title="Elevation (m)">
+                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat" @input="settingsDirty = true" class="settings-input" title="Latitude">
+                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon" @input="settingsDirty = true" class="settings-input" title="Longitude">
+                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation" @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
                 </span>
                 <button @click="updateSettings()">Update</button>
             </div>
@@ -855,7 +855,9 @@ input::placeholder {
         isDisconnected: false,
         hasPower: true,
         debug: {},
-        settings: {lat: 0, lon: 0, elevation: 0},
+        serverSettings: {lat: 0, lon: 0, elevation: 0},
+        settingsDraft: {lat: 0, lon: 0, elevation: 0},
+        settingsDirty: false,
         mountTime: '--',
         timeAutoSet: false,
         errorMessage: '',
@@ -903,9 +905,19 @@ input::placeholder {
 
                 const s = j.settings;
                 if (s) {
-                    this.settings.lat = s.lat != null ? s.lat : 0;
-                    this.settings.lon = s.lon != null ? s.lon : 0;
-                    this.settings.elevation = s.elevation != null ? s.elevation : 0;
+                    this.serverSettings = {
+                        lat: s.lat != null ? s.lat : 0,
+                        lon: s.lon != null ? s.lon : 0,
+                        elevation: s.elevation != null ? s.elevation : 0,
+                    };
+                    // Only overwrite the draft when the user is not editing.
+                    if (!this.settingsDirty) {
+                        this.settingsDraft = {
+                            lat: this.serverSettings.lat,
+                            lon: this.serverSettings.lon,
+                            elevation: this.serverSettings.elevation,
+                        };
+                    }
                 }
 
                 if (this.selectedTracking === null) {
@@ -989,17 +1001,34 @@ input::placeholder {
             this.run(app().SlewTo(raHours, decDeg, this.slewTarget.speed));
         },
 
+        /* Read and validate the location draft; null when invalid. */
+        locationDraft() {
+            const d = this.settingsDraft;
+            const lat = parseFloat(d.lat), lon = parseFloat(d.lon), elev = parseFloat(d.elev);
+            if (isNaN(lat) || isNaN(lon) || isNaN(elev)) {
+                this.showError('Location fields must be valid numbers');
+                return null;
+            }
+            return {lat, lon, elev};
+        },
+
         updateTime() {
-            const now = new Date().toISOString();
+            const loc = this.locationDraft();
+            if (!loc) return;
             this.run(
-                app().SetTime(now).then(() =>
-                    app().SetLocation(this.settings.lat || 0, this.settings.lon || 0, this.settings.elevation || 0)
-                )
+                app().SetTime(new Date().toISOString())
+                    .then(() => app().SetLocation(loc.lat, loc.lon, loc.elev))
+                    .then(() => { this.settingsDirty = false; })
             );
         },
 
         updateSettings() {
-            this.run(app().SetLocation(this.settings.lat || 0, this.settings.lon || 0, this.settings.elevation || 0));
+            const loc = this.locationDraft();
+            if (!loc) return;
+            this.run(
+                app().SetLocation(loc.lat, loc.lon, loc.elev)
+                    .then(() => { this.settingsDirty = false; })
+            );
         },
 
         fmtUptime(s) {

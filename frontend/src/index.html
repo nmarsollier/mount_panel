@@ -27,9 +27,9 @@
             <span>Tracking <b x-text="serverTracking"></b></span>
             <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
             <span>Pier <b x-text="pierSide"></b></span>
-            <span>Lat <b x-text="settings.lat"></b></span>
-            <span>Lon <b x-text="settings.lon"></b></span>
-            <span>Elev <b x-text="settings.elevation"></b>m</span>
+            <span>Lat <b x-text="serverSettings.lat"></b></span>
+            <span>Lon <b x-text="serverSettings.lon"></b></span>
+            <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
         </div>
     </header>
 
@@ -232,9 +232,9 @@
             <div class="settings-row">
                 <span class="settings-label">Location</span>
                 <span class="settings-fields">
-                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settings.lat" class="settings-input" title="Latitude">
-                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settings.lon" class="settings-input" title="Longitude">
-                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settings.elevation" class="settings-input settings-input-short" title="Elevation (m)">
+                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat" @input="settingsDirty = true" class="settings-input" title="Latitude">
+                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon" @input="settingsDirty = true" class="settings-input" title="Longitude">
+                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation" @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
                 </span>
                 <button @click="updateSettings()">Update</button>
             </div>

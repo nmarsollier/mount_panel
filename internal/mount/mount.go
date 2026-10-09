@@ -32,6 +32,10 @@ type Mount struct {
 	selectedTrackingRate int // ASCOM DriveRates: 0 sidereal, 1 lunar, 2 solar
 	connected            bool
 
+	// manualUTC is non-nil when the client set an explicit clock value. While
+	// set, the periodic time sync is disabled so it is not silently overwritten.
+	manualUTC *string
+
 	serialPort string
 }
 
@@ -144,73 +148,79 @@ func (m *Mount) IsConnected() bool {
 	return m.conn != nil
 }
 
-// timeSyncLoop re-sends the UTC clock hourly to correct the ESP RTC drift.
+// timeSyncLoop re-sends the UTC clock hourly to correct the ESP RTC drift. It
+// skips the resync while a manual time is in effect.
 func (m *Mount) timeSyncLoop() {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
 	for range ticker.C {
+		m.mu.RLock()
+		manual := m.manualUTC != nil
+		m.mu.RUnlock()
+		if manual {
+			continue
+		}
 		if err := m.provideTime(); err != nil && !errors.Is(err, errNotConnected) {
 			logx.Warn(mountCtx(), "time re-sync failed: "+err.Error())
 		}
 	}
 }
 
-// fetchState returns a fresh state snapshot, or nil when unavailable.
-func (m *Mount) fetchState() *proto.StateResponse {
+// fetchState returns a fresh state snapshot.
+func (m *Mount) fetchState() (*proto.StateResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	st, err := c.State()
-	if err != nil {
-		return nil
-	}
-	return st
+	return c.State()
 }
 
-// fetchConfig returns the current configuration, or nil when unavailable.
-func (m *Mount) fetchConfig() *proto.ConfigResponse {
+// fetchConfig returns the current configuration.
+func (m *Mount) fetchConfig() (*proto.ConfigResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	cfg, err := c.ConfigGet()
-	if err != nil {
-		return nil
-	}
-	return cfg
+	return c.ConfigGet()
 }
 
-// fetchCaps returns the mount capabilities, or nil when unavailable.
-func (m *Mount) fetchCaps() *proto.CapabilitiesResponse {
+// fetchCaps returns the mount capabilities.
+func (m *Mount) fetchCaps() (*proto.CapabilitiesResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	caps, err := c.Capabilities()
-	if err != nil {
-		return nil
-	}
-	return caps
+	return c.Capabilities()
 }
 
 // provideTime sends the current UTC clock so GOTO works now that the mount has
-// no network of its own.
+// no network of its own. A manual override, when set, wins over the host clock.
 func (m *Mount) provideTime() error {
 	c, err := m.getConn()
 	if err != nil {
 		return err
 	}
+
+	m.mu.RLock()
+	manual := m.manualUTC
+	m.mu.RUnlock()
+
 	utc := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	if manual != nil {
+		utc = *manual
+	}
 	_, err = c.ConfigSet(proto.ConfigRequest{Utc: &utc})
 	return err
 }
 
 // IsError reports whether the mount is in the unrecoverable error state.
-func (m *Mount) IsError() bool {
-	s := m.fetchState()
-	return s != nil && s.State == "error"
+func (m *Mount) IsError() (bool, error) {
+	s, err := m.fetchState()
+	if err != nil {
+		return false, err
+	}
+	return s.State == "error", nil
 }
 
 // Connected reports the logical client link (ASCOM Connected).

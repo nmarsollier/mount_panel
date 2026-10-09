@@ -23,4 +23,5 @@ const (
 const (
 	errNotImplemented = 1024
 	errInvalidValue   = 1025
+	errNotConnected   = 1027 // ASCOM "Not Connected" (0x403): serial link down/unresponsive
 )

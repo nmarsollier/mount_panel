@@ -7,7 +7,12 @@ import (
 
 // notError reports whether the mount is operational (not in the error state).
 func notError() bool {
-	return !mount.Get().IsError()
+	isErr, err := mount.Get().IsError()
+	if err != nil {
+		// Unknown state: don't disable capabilities on a communication failure.
+		return true
+	}
+	return !isErr
 }
 
 func getCanFindHome(c *gin.Context) {

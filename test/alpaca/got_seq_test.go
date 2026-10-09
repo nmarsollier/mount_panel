@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-func TestGotoReportsStartPosition(t *testing.T) {
-	t.Skip("requires the X-NRM-Snapshot header (firmware test mode only)")
-}
-
 func TestConsecutiveGotos(t *testing.T) {
 	c := newTestClient(t)
 	setupSiteTime(t, c)

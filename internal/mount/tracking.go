@@ -50,7 +50,7 @@ func (m *Mount) SetTrackingRate(rate int) error {
 	m.selectedTrackingRate = rate
 	m.mu.Unlock()
 
-	if m.Tracking() {
+	if trk, err := m.Tracking(); err == nil && trk {
 		return m.control(proto.ControlRequest{Tracking: rateToMode(rate)})
 	}
 	return nil

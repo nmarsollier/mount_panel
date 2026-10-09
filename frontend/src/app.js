@@ -12,7 +12,9 @@ function mountApp() {
         isDisconnected: false,
         hasPower: true,
         debug: {},
-        settings: {lat: 0, lon: 0, elevation: 0},
+        serverSettings: {lat: 0, lon: 0, elevation: 0},
+        settingsDraft: {lat: 0, lon: 0, elevation: 0},
+        settingsDirty: false,
         mountTime: '--',
         timeAutoSet: false,
         errorMessage: '',
@@ -60,9 +62,19 @@ function mountApp() {
 
                 const s = j.settings;
                 if (s) {
-                    this.settings.lat = s.lat != null ? s.lat : 0;
-                    this.settings.lon = s.lon != null ? s.lon : 0;
-                    this.settings.elevation = s.elevation != null ? s.elevation : 0;
+                    this.serverSettings = {
+                        lat: s.lat != null ? s.lat : 0,
+                        lon: s.lon != null ? s.lon : 0,
+                        elevation: s.elevation != null ? s.elevation : 0,
+                    };
+                    // Only overwrite the draft when the user is not editing.
+                    if (!this.settingsDirty) {
+                        this.settingsDraft = {
+                            lat: this.serverSettings.lat,
+                            lon: this.serverSettings.lon,
+                            elevation: this.serverSettings.elevation,
+                        };
+                    }
                 }
 
                 if (this.selectedTracking === null) {
@@ -146,17 +158,34 @@ function mountApp() {
             this.run(app().SlewTo(raHours, decDeg, this.slewTarget.speed));
         },
 
+        /* Read and validate the location draft; null when invalid. */
+        locationDraft() {
+            const d = this.settingsDraft;
+            const lat = parseFloat(d.lat), lon = parseFloat(d.lon), elev = parseFloat(d.elev);
+            if (isNaN(lat) || isNaN(lon) || isNaN(elev)) {
+                this.showError('Location fields must be valid numbers');
+                return null;
+            }
+            return {lat, lon, elev};
+        },
+
         updateTime() {
-            const now = new Date().toISOString();
+            const loc = this.locationDraft();
+            if (!loc) return;
             this.run(
-                app().SetTime(now).then(() =>
-                    app().SetLocation(this.settings.lat || 0, this.settings.lon || 0, this.settings.elevation || 0)
-                )
+                app().SetTime(new Date().toISOString())
+                    .then(() => app().SetLocation(loc.lat, loc.lon, loc.elev))
+                    .then(() => { this.settingsDirty = false; })
             );
         },
 
         updateSettings() {
-            this.run(app().SetLocation(this.settings.lat || 0, this.settings.lon || 0, this.settings.elevation || 0));
+            const loc = this.locationDraft();
+            if (!loc) return;
+            this.run(
+                app().SetLocation(loc.lat, loc.lon, loc.elev)
+                    .then(() => { this.settingsDirty = false; })
+            );
         },
 
         fmtUptime(s) {

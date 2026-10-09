@@ -40,7 +40,7 @@ func discoveryLoop() {
 		}
 		// Suppress the response when the mount is in the error state, matching
 		// the firmware's behaviour.
-		if mount.Get().IsError() {
+		if isErr, err := mount.Get().IsError(); err == nil && isErr {
 			continue
 		}
 		_, _ = conn.WriteToUDP(discoveryResponse(), remote)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.bug.st/serial"
@@ -21,14 +22,16 @@ type Client struct {
 	port serial.Port
 	name string
 
-	mu        sync.Mutex // serialises writes and in-flight requests
+	reqMu     sync.Mutex // serialises in-flight requests (one at a time)
 	pendingMu sync.Mutex // guards the pending map (reader + requester)
 	pending   map[uint32]chan json.RawMessage
 	nextID    uint32
 	timeout   time.Duration
 
-	done   chan struct{} // closed when the reader exits
-	closed bool
+	closeOnce sync.Once   // closes the port exactly once
+	closed    atomic.Bool // set before the port is closed
+	closeErr  error       // port.Close result
+	done      chan struct{}
 }
 
 // Open connects to the given serial port and starts the reader goroutine.
@@ -63,15 +66,15 @@ func (c *Client) Done() <-chan struct{} {
 	return c.done
 }
 
-// Close releases the serial port.
+// Close releases the serial port. It is idempotent and does not acquire the
+// request mutex, so a failing roundTrip can call it to interrupt a blocked
+// read or write without deadlocking on reqMu.
 func (c *Client) Close() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.closed {
-		return nil
-	}
-	c.closed = true
-	return c.port.Close()
+	c.closed.Store(true)
+	c.closeOnce.Do(func() {
+		c.closeErr = c.port.Close()
+	})
+	return c.closeErr
 }
 
 // readLoop reads frames from the serial port and dispatches them to the
@@ -85,10 +88,13 @@ func (c *Client) readLoop() {
 	for {
 		n, err := c.port.Read(buf)
 		if n > 0 {
-			scanner.push(buf[:n], c.dispatch)
+			if serr := scanner.push(buf[:n], c.dispatch); serr != nil {
+				c.fail(serr)
+				return
+			}
 		}
 		if err != nil {
-			c.failAll(err)
+			c.fail(err)
 			return
 		}
 	}
@@ -129,12 +135,20 @@ func (c *Client) failAll(err error) {
 	}
 }
 
+// fail invalidates the connection: it wakes every pending request and closes
+// the port, which unblocks the reader and tears the session down so the owner
+// can reconnect. It does not acquire reqMu, so roundTrip may call it safely.
+func (c *Client) fail(err error) {
+	c.failAll(err)
+	c.Close()
+}
+
 // roundTrip sends a request and waits for the response with the matching id.
 func (c *Client) roundTrip(ctx context.Context, reqType string, payload any) (json.RawMessage, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.reqMu.Lock()
+	defer c.reqMu.Unlock()
 
-	if c.closed {
+	if c.closed.Load() {
 		return nil, errors.New("serial connection closed")
 	}
 
@@ -157,6 +171,7 @@ func (c *Client) roundTrip(ctx context.Context, reqType string, payload any) (js
 	}()
 
 	if _, err := c.port.Write(encodeFrame(body)); err != nil {
+		c.fail(err)
 		return nil, err
 	}
 
@@ -166,6 +181,7 @@ func (c *Client) roundTrip(ctx context.Context, reqType string, payload any) (js
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-time.After(c.timeout):
+		c.fail(errTimeout)
 		return nil, errTimeout
 	}
 }

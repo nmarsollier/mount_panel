@@ -196,6 +196,43 @@ func TestDiscoverFromNewClient(t *testing.T) {
 	}
 }
 
-func TestRestStatusParseable(t *testing.T) {
-	t.Skip("requires firmware /api/status (port 80); the Alpaca equivalent is devicestate, covered in v4_test.go")
+// TestOperationalPropertiesParseable reads every device-derived read-only
+// property (state + config) and asserts each answers success with a correctly
+// typed value. This is the Alpaca equivalent of the firmware's /api/status
+// smoke test: the aggregate devicestate is covered in v4_test.go, and this
+// covers the individual properties it omits (site, guide rates, sidereal time,
+// UTC date, altitude/azimuth).
+func TestOperationalPropertiesParseable(t *testing.T) {
+	c := newTestClient(t)
+
+	bools := []string{"slewing", "tracking", "atpark", "athome", "ispulseguiding"}
+	floats := []string{
+		"rightascension", "declination", "siderealtime",
+		"altitude", "azimuth",
+		"sitelatitude", "sitelongitude",
+		"guideraterightascension", "guideratedeclination",
+	}
+	ints := []string{"sideofpier", "siteelevation"}
+	strings := []string{"utcdate"}
+
+	for _, name := range bools {
+		if _, err := c.boolValue(name, nil); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	for _, name := range floats {
+		if _, err := c.floatValue(name, nil); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	for _, name := range ints {
+		if _, err := c.intValue(name, nil); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	for _, name := range strings {
+		if _, err := c.stringValue(name, nil); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
 }

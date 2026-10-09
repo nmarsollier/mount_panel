@@ -39,9 +39,9 @@ func (m *Mount) SlewToTarget() error {
 
 // AbortSlew stops the in-progress slew while keeping an active tracking mode.
 func (m *Mount) AbortSlew() error {
-	s := m.fetchState()
+	s, err := m.fetchState()
 	saved := ""
-	if s != nil {
+	if err == nil {
 		saved = s.Tracking
 	}
 

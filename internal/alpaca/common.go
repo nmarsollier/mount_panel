@@ -80,24 +80,27 @@ func getSupportedActions(c *gin.Context) {
 // getDeviceState returns every Telescope operational property in one call, as
 // a JSON array of {Name, Value} objects.
 func getDeviceState(c *gin.Context) {
-	cid := clientTransactionID(c)
-	stx := nextServerTx()
-	m := mount.Get()
+	cid, stx := clientTransactionID(c), nextServerTx()
+	ds, err := mount.Get().DeviceState()
+	if err != nil {
+		writeError(c, errNotConnected, err.Error(), cid, stx)
+		return
+	}
 
 	entries := []struct {
 		Name  string          `json:"Name"`
 		Value json.RawMessage `json:"Value"`
 	}{
-		{"Altitude", rawFloat(m.Altitude())},
-		{"AtHome", rawBool(m.AtHome())},
-		{"AtPark", rawBool(m.AtPark())},
-		{"Azimuth", rawFloat(m.Azimuth())},
-		{"Declination", rawFloat(m.Declination())},
-		{"IsPulseGuiding", rawBool(m.IsPulseGuiding())},
-		{"RightAscension", rawFloat(m.RightAscension())},
-		{"SideOfPier", rawInt(m.SideOfPier())},
-		{"Slewing", rawBool(m.Slewing())},
-		{"Tracking", rawBool(m.Tracking())},
+		{"Altitude", rawFloat(ds.Altitude)},
+		{"AtHome", rawBool(ds.AtHome)},
+		{"AtPark", rawBool(ds.AtPark)},
+		{"Azimuth", rawFloat(ds.Azimuth)},
+		{"Declination", rawFloat(ds.Declination)},
+		{"IsPulseGuiding", rawBool(ds.IsPulseGuiding)},
+		{"RightAscension", rawFloat(ds.RightAscension)},
+		{"SideOfPier", rawInt(ds.SideOfPier)},
+		{"Slewing", rawBool(ds.Slewing)},
+		{"Tracking", rawBool(ds.Tracking)},
 	}
 
 	value, _ := json.Marshal(entries)

@@ -1,19 +1,25 @@
 package mount
 
 // MinSlewSpeed returns the slowest MoveAxis/slew speed in deg/s.
-func (m *Mount) MinSlewSpeed() float64 {
-	c := m.fetchCaps()
-	if c == nil || len(c.SlewSpeedsDps) == 0 {
-		return 1.0
+func (m *Mount) MinSlewSpeed() (float64, error) {
+	c, err := m.fetchCaps()
+	if err != nil {
+		return 0, err
 	}
-	return c.SlewSpeedsDps[0]
+	if len(c.SlewSpeedsDps) == 0 {
+		return 1.0, nil
+	}
+	return c.SlewSpeedsDps[0], nil
 }
 
 // MaxSlewSpeed returns the fastest MoveAxis/slew speed in deg/s.
-func (m *Mount) MaxSlewSpeed() float64 {
-	c := m.fetchCaps()
-	if c == nil || len(c.SlewSpeedsDps) == 0 {
-		return 6.0
+func (m *Mount) MaxSlewSpeed() (float64, error) {
+	c, err := m.fetchCaps()
+	if err != nil {
+		return 0, err
 	}
-	return c.SlewSpeedsDps[len(c.SlewSpeedsDps)-1]
+	if len(c.SlewSpeedsDps) == 0 {
+		return 6.0, nil
+	}
+	return c.SlewSpeedsDps[len(c.SlewSpeedsDps)-1], nil
 }

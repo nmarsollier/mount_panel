@@ -1,22 +1,38 @@
 package mount
 
-import (
-	"time"
+import "github.com/nmarsollier/nrm_ha_go/internal/proto"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
-)
-
-// UTCDate returns the current UTC date as an ISO 8601 string.
-func (m *Mount) UTCDate() string {
-	return time.Now().UTC().Format("2006-01-02T15:04:05")
+// UTCDate returns the current UTC date as an ISO 8601 string, as reported by
+// the mount (the device is the time source).
+func (m *Mount) UTCDate() (string, error) {
+	cfg, err := m.fetchConfig()
+	if err != nil {
+		return "", err
+	}
+	return cfg.Utc, nil
 }
 
-// SetUTCDate forwards a clock update to the mount (validation happens there).
+// SetUTCDate writes an explicit clock value to the mount and puts it into
+// manual mode, disabling the periodic time sync until SyncTimeToHost is called.
 func (m *Mount) SetUTCDate(iso string) error {
 	c, err := m.getConn()
 	if err != nil {
 		return err
 	}
-	_, err = c.ConfigSet(proto.ConfigRequest{Utc: &iso})
-	return err
+	if _, err := c.ConfigSet(proto.ConfigRequest{Utc: &iso}); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	m.manualUTC = &iso
+	m.mu.Unlock()
+	return nil
+}
+
+// SyncTimeToHost clears any manual override and re-syncs the mount clock to
+// the host, restoring the automatic time authority.
+func (m *Mount) SyncTimeToHost() error {
+	m.mu.Lock()
+	m.manualUTC = nil
+	m.mu.Unlock()
+	return m.provideTime()
 }
