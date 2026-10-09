@@ -180,6 +180,20 @@ Wails needs the `production` build tag and, on macOS, the
 CGO_LDFLAGS="-framework UniformTypeIdentifiers" go build -tags production -o nrm_ha_go .
 ```
 
+On Windows, build a GUI executable without a console window (`make build-windows`):
+
+```sh
+go build -ldflags "-H=windowsgui" -tags production -o nrm_ha_go.exe .
+```
+
+The Windows `.exe`, window and taskbar icon comes from `rsrc_windows_amd64.syso`
+(a Windows resource embedded by `go build`). It is configured in
+[`winres/winres.json`](winres/winres.json), whose source image is
+[`winres/icon.png`](winres/icon.png) — a square transparent-background PNG, set at
+resource ID 3 (the ID Wails loads for the title bar). To change the icon, replace
+that PNG (keep it square so it is not distorted) and regenerate the resource with
+`make winres` (requires `go install github.com/tc-hib/go-winres@latest`).
+
 The app **starts even when the mount is not connected**: it detects the serial
 port (enumerates the ports + `capabilities` handshake to verify it is a mount) and
 reconnects automatically once it is plugged in. Works on macOS and Windows.

@@ -53,7 +53,9 @@ func main() {
 			if err != nil {
 				return true // on error, keep the app open
 			}
-			return choice != "Quit"
+			// On Windows the dialog ignores Buttons and shows a Yes/No box,
+			// so the confirm answer comes back as "Yes" instead of "Quit".
+			return choice != "Quit" && choice != "Yes"
 		},
 		Bind: []any{app},
 	})
