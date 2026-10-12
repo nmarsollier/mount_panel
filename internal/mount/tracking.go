@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 )
 
 // rateToMode maps an ASCOM DriveRates value to the protocol tracking mode.
@@ -28,7 +28,7 @@ func (m *Mount) SetTracking(enabled bool) error {
 	if enabled {
 		mode = rateToMode(rate)
 	}
-	return m.control(proto.ControlRequest{Tracking: mode})
+	return m.control(mountproto.ControlRequest{Tracking: mode})
 }
 
 // SelectedTrackingRate returns the last-set DriveRates value (the setpoint,
@@ -51,7 +51,7 @@ func (m *Mount) SetTrackingRate(rate int) error {
 	m.mu.Unlock()
 
 	if trk, err := m.Tracking(); err == nil && trk {
-		return m.control(proto.ControlRequest{Tracking: rateToMode(rate)})
+		return m.control(mountproto.ControlRequest{Tracking: rateToMode(rate)})
 	}
 	return nil
 }

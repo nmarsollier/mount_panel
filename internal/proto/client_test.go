@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"testing"
@@ -58,10 +59,22 @@ func (p *fakePort) GetModemStatusBits() (*serial.ModemStatusBits, error) {
 func (p *fakePort) SetReadTimeout(time.Duration) error { return nil }
 func (p *fakePort) Break(time.Duration) error          { return nil }
 
-func TestRoundTripTimeoutFailsClient(t *testing.T) {
-	c := newClient(newFakePort(), "fake", 20*time.Millisecond)
+func TestCloseClosesDone(t *testing.T) {
+	c := NewClient(newFakePort(), "fake", time.Second)
 
-	_, err := c.State()
+	c.Close()
+
+	select {
+	case <-c.Done():
+	case <-time.After(time.Second):
+		t.Fatal("Done not closed after Close")
+	}
+}
+
+func TestRoundTripTimeoutFailsClient(t *testing.T) {
+	c := NewClient(newFakePort(), "fake", 20*time.Millisecond)
+
+	_, err := c.RoundTrip(context.Background(), 1, []byte(`{"type":"state","id":1}`))
 	if !errors.Is(err, errTimeout) {
 		t.Fatalf("want errTimeout, got %v", err)
 	}
@@ -78,11 +91,11 @@ func TestRoundTripTimeoutFailsClient(t *testing.T) {
 func TestCloseInterruptsBlockedWrite(t *testing.T) {
 	p := newFakePort()
 	p.writeBlock = true
-	c := newClient(p, "fake", time.Second)
+	c := NewClient(p, "fake", time.Second)
 
 	errCh := make(chan error, 1)
 	go func() {
-		_, err := c.State()
+		_, err := c.RoundTrip(context.Background(), 1, []byte(`{"type":"state","id":1}`))
 		errCh <- err
 	}()
 

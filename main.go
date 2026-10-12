@@ -10,7 +10,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca"
+	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount"
+	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
 	"github.com/nmarsollier/nrm_ha_go/internal/mount"
 	"github.com/nmarsollier/nrm_ha_go/internal/tools/env"
 	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
@@ -28,8 +29,11 @@ func main() {
 	// background, so the app runs even when the mount is not (yet) plugged in.
 	mount.Init(env.Get().SerialPort)
 
+	// Start the accessory model (focuser/fan) on its own serial link.
+	eaf.Init(env.Get().AccessoriesSerialPort)
+
 	// Serve Alpaca (N.I.N.A./PHD2) in the background alongside the GUI.
-	go alpaca.Start()
+	go alpaca_mount.Start()
 
 	app := ui.NewApp()
 

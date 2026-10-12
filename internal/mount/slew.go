@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 )
 
 // SlewToCoordinates starts an asynchronous slew at speed profile 4 (Alpaca).
@@ -21,7 +21,7 @@ func (m *Mount) SlewTo(ra, dec float64, speed int) error {
 	if !isFinite(dec) || dec < -90 || dec > 90 {
 		return errors.New("Declination out of range [-90,90]")
 	}
-	return m.action(proto.ActionRequest{Action: "goto", Ra: &ra, Dec: &dec, Speed: &speed})
+	return m.action(mountproto.ActionRequest{Action: "goto", Ra: &ra, Dec: &dec, Speed: &speed})
 }
 
 // SlewToTarget slews to the previously stored target coordinates.
@@ -34,7 +34,7 @@ func (m *Mount) SlewToTarget() error {
 		return errors.New("Target not set")
 	}
 	speed := 2
-	return m.action(proto.ActionRequest{Action: "goto", Ra: &ra, Dec: &dec, Speed: &speed})
+	return m.action(mountproto.ActionRequest{Action: "goto", Ra: &ra, Dec: &dec, Speed: &speed})
 }
 
 // AbortSlew stops the in-progress slew while keeping an active tracking mode.
@@ -45,11 +45,11 @@ func (m *Mount) AbortSlew() error {
 		saved = s.Tracking
 	}
 
-	if err := m.action(proto.ActionRequest{Action: "stop", Scope: "all"}); err != nil {
+	if err := m.action(mountproto.ActionRequest{Action: "stop", Scope: "all"}); err != nil {
 		return err
 	}
 	if saved != "" && saved != "none" {
-		return m.control(proto.ControlRequest{Tracking: saved})
+		return m.control(mountproto.ControlRequest{Tracking: saved})
 	}
 	return nil
 }

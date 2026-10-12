@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/proto"
+import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 
 // UTCDate returns the current UTC date as an ISO 8601 string, as reported by
 // the mount (the device is the time source).
@@ -19,7 +19,7 @@ func (m *Mount) SetUTCDate(iso string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := c.ConfigSet(proto.ConfigRequest{Utc: &iso}); err != nil {
+	if _, err := c.ConfigSet(mountproto.ConfigRequest{Utc: &iso}); err != nil {
 		return err
 	}
 	m.mu.Lock()

@@ -16,7 +16,16 @@
     <header class="header">
         <div class="header-top">
             <span class="brand">NRM-HA</span>
-            <span class="status-badge" x-text="statusText" :class="{ 'status-error': isError, 'status-off': isDisconnected }"></span>
+            <div class="conn-status">
+                <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+                      :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+                    <i></i>Mount
+                </span>
+                <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+                      :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+                    <i></i>EAF
+                </span>
+            </div>
         </div>
         <div class="header-coords">
             <span><i>RA</i><b x-text="status.ra"></b></span>
@@ -35,13 +44,21 @@
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-        <button :class="{ active: tab === 'principal' }" @click="tab = 'principal'">Principal</button>
-        <button :class="{ active: tab === 'movimiento' }" @click="tab = 'movimiento'">Movimiento</button>
-        <button :class="{ active: tab === 'settings' }" @click="tab = 'settings'">Settings</button>
+        <button :class="{ active: tab === 'principal', disabled: !mountConnected }" @click="tab = 'principal'">Montura</button>
+        <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }" @click="tab = 'movimiento'">Movimiento</button>
+        <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
+        <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
+        <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }" @click="tab = 'sensores'">Sensores</button>
+        <button :class="{ active: tab === 'settings', disabled: !mountConnected }" @click="tab = 'settings'">Settings</button>
     </nav>
 
-    <!-- ═══ Principal ═══ -->
+    <!-- ═══ Montura ═══ -->
     <section class="tab-content" x-show="tab === 'principal'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
+        </div>
 
         <div class="panel">
             <div class="panel-header"><strong>Actions</strong></div>
@@ -254,9 +271,114 @@
 
     </section>
 
-    <!-- ═══ Banners ═══ -->
-    <div class="fatal-banner" x-show="isError" x-text="fatalMessage()"></div>
-    <div class="fatal-banner" x-show="isDisconnected && !isError" x-text="disconnectedMessage()"></div>
+    <!-- ═══ Enfoque (EAF: focuser + fan) ═══ -->
+    <section class="tab-content" x-show="tab === 'enfoque'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Focuser</strong></div>
+            <div class="stack">
+                <div class="row">
+                    <span>Posición <b x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></b> pasos</span>
+                    <span>Estado <b x-text="focuserState()"></b></span>
+                    <span>Driver <b x-text="eaf.detected ? (eaf.focuser.driver_ok ? 'OK' : 'error') : '—'"></b></span>
+                </div>
+                <div class="row">
+                    <label class="settings-label">Distancia (pasos)</label>
+                    <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
+                </div>
+                <div class="row">
+                    <button @click="focusMove(-1)" :disabled="focusMoveDisabled()">◀ −</button>
+                    <button class="danger" @click="focusHalt()" :disabled="!eaf.detected || !eaf.focuser.is_moving">HALT</button>
+                    <button @click="focusMove(1)" :disabled="focusMoveDisabled()">+ ▶</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Fan ═══ -->
+    <section class="tab-content" x-show="tab === 'fan'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Ventilador</strong></div>
+            <div class="stack">
+                <div class="fan-head">
+                    <span class="onoff" :class="eaf.detected && eaf.fan.relay_command ? 'on' : 'off'">
+                        <i></i><b x-text="eaf.detected ? (eaf.fan.relay_command ? 'ON' : 'OFF') : '—'"></b>
+                    </span>
+                    <div class="fan-metrics">
+                        <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.output_pwm_pct + '%') : '—'"></b></span>
+                        <span>Estado <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <button :class="{ primary: eaf.fan.mode === 'normal' }" @click="fanSetMode('normal')" :disabled="!eaf.detected">NORMAL</button>
+                    <button :class="{ primary: eaf.fan.mode === 'soft' }" @click="fanSetMode('soft')" :disabled="!eaf.detected">SUAVE</button>
+                    <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">APAGADO</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Sensores ═══ -->
+    <section class="tab-content" x-show="tab === 'sensores'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Ambiente</strong></div>
+            <div class="stack">
+                <div class="metric">
+                    <span class="metric-label">Temperatura</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Humedad</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
+                </div>
+                <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
+                    <span class="metric-label">Rocío</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Espejo Primario</strong></div>
+            <div class="stack">
+                <div class="metric">
+                    <span class="metric-label">Temperatura</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+                <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
+                    <span class="metric-label">Δ vs ambiente</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Vibración</strong></div>
+            <div class="stack">
+                <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
+                    <span class="metric-label">RMS total</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Banner (errores temporales de acciones) ═══ -->
     <div class="error-banner" x-show="errorMessage" x-text="errorMessage" x-transition.opacity.duration.200ms></div>
 
 </div>

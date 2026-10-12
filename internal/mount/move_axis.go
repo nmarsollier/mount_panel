@@ -3,13 +3,13 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 )
 
 // MoveAxis moves a single axis (0 = RA, 1 = DEC) continuously at the given
 // rate in deg/s. The ESP clamps the rate to its safe ceiling.
 func (m *Mount) MoveAxis(axis int, rate float64) error {
-	req := proto.ControlRequest{}
+	req := mountproto.ControlRequest{}
 	switch axis {
 	case 0:
 		req.ManualRaDps = &rate
@@ -24,7 +24,7 @@ func (m *Mount) MoveAxis(axis int, rate float64) error {
 // MoveAxisSpeed sets both axes' manual rates at once (deg/s); a zero rate
 // stops that axis. Used by the joystick "hold to move" control.
 func (m *Mount) MoveAxisSpeed(raRate, decRate float64) error {
-	return m.control(proto.ControlRequest{
+	return m.control(mountproto.ControlRequest{
 		ManualRaDps:  &raRate,
 		ManualDecDps: &decRate,
 	})

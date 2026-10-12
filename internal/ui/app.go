@@ -5,6 +5,7 @@ package ui
 import (
 	"context"
 
+	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
 	"github.com/nmarsollier/nrm_ha_go/internal/mount"
 )
 
@@ -107,4 +108,24 @@ func (a *App) SetTime(_ string) error {
 // SetLocation updates the site latitude, longitude and elevation in one write.
 func (a *App) SetLocation(lat, lon, elevation float64) error {
 	return mount.Get().SetSite(lat, lon, int(elevation))
+}
+
+// EAFStatus returns the accessory (focuser/fan) snapshot for the UI.
+func (a *App) EAFStatus() eaf.Status {
+	return eaf.Get().Status()
+}
+
+// FocusMove moves the focuser a relative number of steps.
+func (a *App) FocusMove(delta int64) error {
+	return eaf.Get().MoveBy(delta)
+}
+
+// FocusHalt stops the focuser.
+func (a *App) FocusHalt() error {
+	return eaf.Get().Halt()
+}
+
+// FanSetMode selects the fan mode: "normal", "soft" or "off".
+func (a *App) FanSetMode(mode string) error {
+	return eaf.Get().SetFanMode(mode)
 }

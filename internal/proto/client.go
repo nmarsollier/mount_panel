@@ -12,12 +12,15 @@ import (
 	"go.bug.st/serial"
 )
 
-// defaultTimeout is the round-trip timeout once a mount is connected.
-const defaultTimeout = 5 * time.Second
+// DefaultTimeout is the round-trip timeout once a device is connected.
+const DefaultTimeout = 5 * time.Second
 
-// Client talks to the mount over the USB CDC-ACM protocol. It owns the serial
-// port, a background reader that routes responses by request id, and the
-// request/response bookkeeping. A single request is in flight at a time.
+var errTimeout = errors.New("serial request timed out")
+
+// Client owns a serial port and correlates length-prefixed JSON responses to
+// the request that asked for them. It is transport-only: it knows nothing about
+// the mount or accessory message contracts, only that every response carries an
+// `id` at its top level. A single request is in flight at a time.
 type Client struct {
 	port serial.Port
 	name string
@@ -28,23 +31,32 @@ type Client struct {
 	nextID    uint32
 	timeout   time.Duration
 
+	failMu  sync.Mutex // guards failErr (first reason the link dropped)
+	failErr error
+
 	closeOnce sync.Once   // closes the port exactly once
 	closed    atomic.Bool // set before the port is closed
 	closeErr  error       // port.Close result
 	done      chan struct{}
 }
 
-// Open connects to the given serial port and starts the reader goroutine.
+// Open connects to the given serial port and starts the reader goroutine. It
+// claims the port exclusively; a second Open (or detector) on the same port
+// fails until the first client closes.
 func Open(name string) (*Client, error) {
-	p, err := openPort(name)
+	if !ClaimPort(name) {
+		return nil, errors.New("serial port already in use")
+	}
+	p, err := OpenPort(name)
 	if err != nil {
+		ReleasePort(name)
 		return nil, err
 	}
-	return newClient(p, name, defaultTimeout), nil
+	return NewClient(p, name, DefaultTimeout), nil
 }
 
-// newClient builds a Client on an open port and starts its reader goroutine.
-func newClient(p serial.Port, name string, timeout time.Duration) *Client {
+// NewClient builds a Client on an open port and starts its reader goroutine.
+func NewClient(p serial.Port, name string, timeout time.Duration) *Client {
 	c := &Client{
 		port:    p,
 		name:    name,
@@ -66,22 +78,35 @@ func (c *Client) Done() <-chan struct{} {
 	return c.done
 }
 
+// SetTimeout changes the round-trip timeout, used after a detect handshake.
+func (c *Client) SetTimeout(d time.Duration) {
+	c.timeout = d
+}
+
+// NextID allocates a fresh request id for this connection. Ids start at 1; 0 is
+// reserved for events.
+func (c *Client) NextID() uint32 {
+	return atomic.AddUint32(&c.nextID, 1)
+}
+
 // Close releases the serial port. It is idempotent and does not acquire the
-// request mutex, so a failing roundTrip can call it to interrupt a blocked
-// read or write without deadlocking on reqMu.
+// request mutex, so a failing RoundTrip can call it to interrupt a blocked
+// read or write without deadlocking on reqMu. It also closes Done so a blocked
+// connection loop wakes even when the reader goroutine is stuck in Read.
 func (c *Client) Close() error {
 	c.closed.Store(true)
 	c.closeOnce.Do(func() {
 		c.closeErr = c.port.Close()
+		ReleasePort(c.name)
+		close(c.done)
 	})
 	return c.closeErr
 }
 
 // readLoop reads frames from the serial port and dispatches them to the
-// pending request waiting on that id.
+// pending request waiting on that id. Every exit path goes through fail, which
+// closes the client and Done, so the owner can reconnect.
 func (c *Client) readLoop() {
-	defer close(c.done)
-
 	buf := make([]byte, 4096)
 	var scanner frameScanner
 
@@ -102,13 +127,15 @@ func (c *Client) readLoop() {
 
 // dispatch routes a response body to the request waiting on its id.
 func (c *Client) dispatch(body []byte) {
-	var env envelope
-	if err := json.Unmarshal(body, &env); err != nil {
+	var id struct {
+		ID uint32 `json:"id"`
+	}
+	if err := json.Unmarshal(body, &id); err != nil {
 		return
 	}
 
 	c.pendingMu.Lock()
-	ch, ok := c.pending[env.ID]
+	ch, ok := c.pending[id.ID]
 	c.pendingMu.Unlock()
 
 	if ok {
@@ -137,27 +164,37 @@ func (c *Client) failAll(err error) {
 
 // fail invalidates the connection: it wakes every pending request and closes
 // the port, which unblocks the reader and tears the session down so the owner
-// can reconnect. It does not acquire reqMu, so roundTrip may call it safely.
+// can reconnect. It does not acquire reqMu, so RoundTrip may call it safely.
 func (c *Client) fail(err error) {
+	c.failMu.Lock()
+	if c.failErr == nil {
+		c.failErr = err
+	}
+	c.failMu.Unlock()
+
 	c.failAll(err)
 	c.Close()
 }
 
-// roundTrip sends a request and waits for the response with the matching id.
-func (c *Client) roundTrip(ctx context.Context, reqType string, payload any) (json.RawMessage, error) {
+// Err returns the first error that tore the connection down, or nil when the
+// client was closed cleanly.
+func (c *Client) Err() error {
+	c.failMu.Lock()
+	defer c.failMu.Unlock()
+	return c.failErr
+}
+
+// RoundTrip sends a framed request body and waits for the response with the
+// matching id.
+func (c *Client) RoundTrip(ctx context.Context, id uint32, body []byte) (json.RawMessage, error) {
 	c.reqMu.Lock()
 	defer c.reqMu.Unlock()
 
 	if c.closed.Load() {
 		return nil, errors.New("serial connection closed")
 	}
-
-	c.nextID++
-	id := c.nextID
-
-	body, err := buildRequest(reqType, id, payload)
-	if err != nil {
-		return nil, err
+	if len(body) > maxFrame {
+		return nil, errors.New("request frame too large")
 	}
 
 	ch := make(chan json.RawMessage, 1)
@@ -184,54 +221,4 @@ func (c *Client) roundTrip(ctx context.Context, reqType string, payload any) (js
 		c.fail(errTimeout)
 		return nil, errTimeout
 	}
-}
-
-// request performs a round trip and unmarshals the response into out, checking
-// the shared ok/error envelope first.
-func (c *Client) request(ctx context.Context, reqType string, payload any, out any) error {
-	raw, err := c.roundTrip(ctx, reqType, payload)
-	if err != nil {
-		return err
-	}
-
-	var env envelope
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return err
-	}
-	if !env.OK {
-		return &Error{Message: env.Error}
-	}
-
-	if out != nil {
-		return json.Unmarshal(raw, out)
-	}
-	return nil
-}
-
-// buildRequest flattens a family payload into the common request envelope.
-func buildRequest(reqType string, id uint32, payload any) ([]byte, error) {
-	m := map[string]any{"type": reqType, "id": id}
-
-	if payload != nil {
-		b, err := json.Marshal(payload)
-		if err != nil {
-			return nil, err
-		}
-		var fields map[string]any
-		if err := json.Unmarshal(b, &fields); err != nil {
-			return nil, err
-		}
-		for k, v := range fields {
-			m[k] = v
-		}
-	}
-
-	body, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	if len(body) > maxFrame {
-		return nil, errors.New("request frame too large")
-	}
-	return body, nil
 }

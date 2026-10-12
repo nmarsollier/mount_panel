@@ -4,14 +4,17 @@ Keep this file in a simple format so it can be read and edited quickly.
 
 ## Sibling project (firmware)
 
-This gateway talks to the mount's firmware over USB CDC-ACM. The firmware lives
-in **another local repo**:
+This gateway talks to two ESP32-S3 devices over USB CDC-ACM. Each firmware lives
+in its own local repo:
 
-- **`~/Dev/nrm_ha`** — ESP32-S3 firmware (the NRM-HA project). The serial
-  protocol spec is in `main/proto/README.md`, and its rules in `CLAUDE.md`.
+- **`~/Dev/nrm_ha`** — mount firmware (the NRM-HA project). Serial protocol spec
+  in `main/proto/README.md`, rules in `CLAUDE.md`.
+- **`~/Dev/nrm_bft_eaf`** — accessory firmware (focuser/fan/environment, the
+  "NRM-EAF" project). Serial protocol spec in `main/proto/README.md`. It speaks
+  `proto=2`, `role="accessories"`; much of it is still mock (fan, sensors).
 
-When firmware references are needed — the exact message formats or what the mount
-exposes — look there.
+When firmware references are needed — the exact message formats or what each
+device exposes — look there.
 
 ## Project definition
 
@@ -27,22 +30,34 @@ Layers, from the outside in:
 
 ```
 N.I.N.A. / PHD2 ──HTTP──▶ Alpaca REST (GIN) ──┐
-                                               ├─▶ Mount ──▶ Proto (serial CDC)
-Desktop UI (Wails) ──bindings──▶ ui ───────────┘
+                                               ├─▶ Mount ──▶ MountProto ──┐
+Desktop UI (Wails) ──bindings──▶ ui ───────────┘                          ├─▶ Proto (serial CDC)
+                            ui ──▶ EAF ──▶ EAFProto ─────────────────────┘
 ```
 
-- **proto/** — serial protocol client: framing (u32 LE length + JSON), the 5
-  message families (`capabilities`, `state`, `config`, `control`, `action`), and
-  port detection (enumerates + `capabilities` handshake to verify it is a mount).
-  This is the layer that talks over the serial port.
+- **proto/** — shared serial transport: framing (u32 LE length + JSON), port
+  opening and a generic request/response correlator by `id`. Knows nothing about
+  the mount or accessory message contracts.
+- **mountproto/** — the mount message contract: the 5 families (`capabilities`,
+  `state`, `config`, `control`, `action`) as typed requests, plus mount port
+  detection (`capabilities` handshake).
+- **eafproto/** — the accessory (EAF) message contract: `proto=2`,
+  `role="accessories"`, `target`/`action`/`op`/`params` with a `session`/`boot_id`
+  envelope. Focuser move/halt, fan mode and state reads.
 - **mount/** — mount model: manages the connection (detection, **auto-reconnect**
   and hot-unplug detection) and translates high-level operations (slew, move
-  axis, guide, track, park…) into `proto` calls. No state cache: every read
-  fetches a fresh snapshot over the serial link.
-- **alpaca/** — Alpaca REST server with GIN: ITelescopeV4 endpoints (properties +
-  methods) and `management`. Translates Alpaca → `mount` → `proto`.
-  - **alpaca/server/** — GIN engine (singleton) + logging middleware.
-- **ui/** — Wails binding (`App`): exposes `mount` to the desktop frontend.
+  axis, guide, track, park…) into `mountproto` calls. No state cache.
+- **eaf/** — accessory model: manages the second serial link and exposes focuser
+  and fan operations to the UI. No state cache.
+- **alpaca_mount/** — Alpaca REST server for the telescope: ITelescopeV4 endpoints
+  (properties + methods) plus `management` and UDP discovery. Translates
+  Alpaca → `mount` → `mountproto`. `Start()` builds the router and registers
+  both the telescope and the focuser.
+  - **alpaca_mount/server/** — shared GIN framework (engine singleton, response
+    envelope, param parsing, error numbers, server identity).
+- **alpaca_eaf/** — Alpaca REST server for the focuser: IFocuserV4 endpoints,
+  translating Alpaca → `eaf` → `eafproto`.
+- **ui/** — Wails binding (`App`): exposes `mount` and `eaf` to the desktop UI.
 - **frontend/** — web assets (HTML/CSS/JS Alpine.js) served by Wails, which call
   `window.go.ui.App.*`.
 - **tools/** — cross-cutting: `logx` (logger) and `env` (config).
@@ -83,7 +98,11 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 
 ## Package relationships (dependencies)
 
-- `alpaca` → `mount` → `proto`, and `ui` → `mount` (no reverse dependencies).
-- `proto` is self-contained: it handles the serial port, framing, the
-  request/response with `id`, port detection and the disconnection signal.
+- `alpaca_mount` → `mount` → `mountproto` → `proto`; `alpaca_mount` →
+  `alpaca_eaf` and `alpaca_eaf` → `eaf` → `eafproto` → `proto` (no reverse
+  dependencies). Both `alpaca_mount` and `alpaca_eaf` use
+  `alpaca_mount/server` for the shared HTTP framework.
+- `ui` → `mount` and `ui` → `eaf`.
+- `proto` is self-contained: serial port, framing, request/response with `id`,
+  and the disconnection signal.
 - `tools/*` depends on no other package; the others may use `tools`.

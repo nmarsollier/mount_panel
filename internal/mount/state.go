@@ -1,14 +1,14 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/proto"
+import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 
 // slewingState reports whether the state snapshot shows a slew in progress.
-func slewingState(s *proto.StateResponse) bool {
+func slewingState(s *mountproto.StateResponse) bool {
 	return s.State == "slewing"
 }
 
 // trackingState reports whether any automatic tracking mode is active.
-func trackingState(s *proto.StateResponse) bool {
+func trackingState(s *mountproto.StateResponse) bool {
 	if s.State == "error" {
 		return false
 	}
@@ -16,7 +16,7 @@ func trackingState(s *proto.StateResponse) bool {
 }
 
 // pierSideState returns 0 (pierEast) or 1 (pierWest).
-func pierSideState(s *proto.StateResponse) int {
+func pierSideState(s *mountproto.StateResponse) int {
 	if s.PierSide == "west" {
 		return 1
 	}

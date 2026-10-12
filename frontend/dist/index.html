@@ -91,6 +91,43 @@ body {
     text-transform: uppercase;
 }
 
+.conn-status {
+    display: flex;
+    gap: 6px;
+}
+
+.conn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    border: 1px solid var(--border);
+    background: var(--btn-bg);
+    text-transform: uppercase;
+}
+
+.conn-chip i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.conn-chip.conn-on {
+    color: #4ade80;
+    border-color: #14532d;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.15);
+}
+
+.conn-chip.conn-off {
+    color: #fbbf24;
+    border-color: #5c4a12;
+}
+
 .header-coords {
     display: flex;
     gap: 16px;
@@ -162,6 +199,13 @@ body {
     box-shadow: 0 0 14px var(--accent-glow);
 }
 
+.tabs button.disabled {
+    background: #17171c;
+    border-color: #23232a;
+    color: #4d4d57;
+    box-shadow: none;
+}
+
 /* ═══ Tab content ═══ */
 
 .tab-content {
@@ -207,6 +251,98 @@ body {
     font-size: 10px;
     color: var(--text-dim);
     font-weight: normal;
+}
+
+.status {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+}
+
+.status-ok {
+    color: #4ade80;
+    border-color: #14532d;
+    background: rgba(74, 222, 128, 0.08);
+}
+
+.status-error {
+    color: #f87171;
+    border-color: var(--danger);
+    background: rgba(220, 38, 38, 0.10);
+}
+
+.fan-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fan-metrics {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.fan-metrics b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.onoff {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid;
+}
+
+.onoff i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.onoff.on {
+    color: #4ade80;
+    border-color: #14532d;
+    background: rgba(74, 222, 128, 0.10);
+}
+
+.onoff.off {
+    color: #9ca3af;
+    border-color: #3a3345;
+    background: rgba(156, 163, 175, 0.08);
+}
+
+.metric {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.metric-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+}
+
+.metric-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
 }
 
 /* ═══ Rows / buttons ═══ */
@@ -279,6 +415,14 @@ button:disabled {
 
 .grow {
     flex: 1;
+}
+
+/* ═══ Stack (vertical spacing) ═══ */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* ═══ Axis pad (shared: manual slew + joystick) ═══ */
@@ -596,7 +740,16 @@ input::placeholder {
     <header class="header">
         <div class="header-top">
             <span class="brand">NRM-HA</span>
-            <span class="status-badge" x-text="statusText" :class="{ 'status-error': isError, 'status-off': isDisconnected }"></span>
+            <div class="conn-status">
+                <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+                      :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+                    <i></i>Mount
+                </span>
+                <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+                      :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+                    <i></i>EAF
+                </span>
+            </div>
         </div>
         <div class="header-coords">
             <span><i>RA</i><b x-text="status.ra"></b></span>
@@ -615,13 +768,21 @@ input::placeholder {
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-        <button :class="{ active: tab === 'principal' }" @click="tab = 'principal'">Principal</button>
-        <button :class="{ active: tab === 'movimiento' }" @click="tab = 'movimiento'">Movimiento</button>
-        <button :class="{ active: tab === 'settings' }" @click="tab = 'settings'">Settings</button>
+        <button :class="{ active: tab === 'principal', disabled: !mountConnected }" @click="tab = 'principal'">Montura</button>
+        <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }" @click="tab = 'movimiento'">Movimiento</button>
+        <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
+        <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
+        <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }" @click="tab = 'sensores'">Sensores</button>
+        <button :class="{ active: tab === 'settings', disabled: !mountConnected }" @click="tab = 'settings'">Settings</button>
     </nav>
 
-    <!-- ═══ Principal ═══ -->
+    <!-- ═══ Montura ═══ -->
     <section class="tab-content" x-show="tab === 'principal'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
+        </div>
 
         <div class="panel">
             <div class="panel-header"><strong>Actions</strong></div>
@@ -834,9 +995,114 @@ input::placeholder {
 
     </section>
 
-    <!-- ═══ Banners ═══ -->
-    <div class="fatal-banner" x-show="isError" x-text="fatalMessage()"></div>
-    <div class="fatal-banner" x-show="isDisconnected && !isError" x-text="disconnectedMessage()"></div>
+    <!-- ═══ Enfoque (EAF: focuser + fan) ═══ -->
+    <section class="tab-content" x-show="tab === 'enfoque'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Focuser</strong></div>
+            <div class="stack">
+                <div class="row">
+                    <span>Posición <b x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></b> pasos</span>
+                    <span>Estado <b x-text="focuserState()"></b></span>
+                    <span>Driver <b x-text="eaf.detected ? (eaf.focuser.driver_ok ? 'OK' : 'error') : '—'"></b></span>
+                </div>
+                <div class="row">
+                    <label class="settings-label">Distancia (pasos)</label>
+                    <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
+                </div>
+                <div class="row">
+                    <button @click="focusMove(-1)" :disabled="focusMoveDisabled()">◀ −</button>
+                    <button class="danger" @click="focusHalt()" :disabled="!eaf.detected || !eaf.focuser.is_moving">HALT</button>
+                    <button @click="focusMove(1)" :disabled="focusMoveDisabled()">+ ▶</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Fan ═══ -->
+    <section class="tab-content" x-show="tab === 'fan'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Ventilador</strong></div>
+            <div class="stack">
+                <div class="fan-head">
+                    <span class="onoff" :class="eaf.detected && eaf.fan.relay_command ? 'on' : 'off'">
+                        <i></i><b x-text="eaf.detected ? (eaf.fan.relay_command ? 'ON' : 'OFF') : '—'"></b>
+                    </span>
+                    <div class="fan-metrics">
+                        <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.output_pwm_pct + '%') : '—'"></b></span>
+                        <span>Estado <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <button :class="{ primary: eaf.fan.mode === 'normal' }" @click="fanSetMode('normal')" :disabled="!eaf.detected">NORMAL</button>
+                    <button :class="{ primary: eaf.fan.mode === 'soft' }" @click="fanSetMode('soft')" :disabled="!eaf.detected">SUAVE</button>
+                    <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">APAGADO</button>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Sensores ═══ -->
+    <section class="tab-content" x-show="tab === 'sensores'">
+
+        <div class="panel">
+            <div class="panel-header"><strong>Estado</strong></div>
+            <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Ambiente</strong></div>
+            <div class="stack">
+                <div class="metric">
+                    <span class="metric-label">Temperatura</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Humedad</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
+                </div>
+                <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
+                    <span class="metric-label">Rocío</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Espejo Primario</strong></div>
+            <div class="stack">
+                <div class="metric">
+                    <span class="metric-label">Temperatura</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+                <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
+                    <span class="metric-label">Δ vs ambiente</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><strong>Vibración</strong></div>
+            <div class="stack">
+                <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
+                    <span class="metric-label">RMS total</span>
+                    <span class="metric-value" x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ═══ Banner (errores temporales de acciones) ═══ -->
     <div class="error-banner" x-show="errorMessage" x-text="errorMessage" x-transition.opacity.duration.200ms></div>
 
 </div>
@@ -850,9 +1116,9 @@ input::placeholder {
         status: {ra: '--:--:--', dec: '--:--:--'},
         lst: '--:--:--',
         pierSide: '--',
-        statusText: 'UNKNOWN',
         isError: false,
         isDisconnected: false,
+        mountConnected: false,
         hasPower: true,
         debug: {},
         serverSettings: {lat: 0, lon: 0, elevation: 0},
@@ -871,6 +1137,12 @@ input::placeholder {
         selectedTracking: null,
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
+        eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
+              focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
+              fan: {mode: '', output_pwm_pct: 0, target_pwm_pct: 0, relay_command: false, power_ok: false, delta_c: null, thermal_stage: '', reason: ''},
+              environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
+              vibration: {rms_total: 0}},
+        focusStep: 100,
 
         /* Show an error message for 5 seconds, then auto-clear. */
         showError(msg) {
@@ -885,12 +1157,12 @@ input::placeholder {
         run(promise) {
             return promise
                 .then(() => this.fetchStatus())
+                .then(() => this.fetchEAFStatus())
                 .catch(e => this.showError(String(e)));
         },
 
         fetchStatus() {
             app().Status().then(j => {
-                this.statusText = j.status || 'UNKNOWN';
                 this.status = {ra: j.ra || '--:--:--', dec: j.dec || '--:--:--'};
                 this.lst = j.lst || '--:--:--';
                 this.pierSide = j.pier_side || '--';
@@ -900,6 +1172,7 @@ input::placeholder {
                 this.isParked = (j.status === 'parked');
                 this.isError = (j.status === 'error');
                 this.isDisconnected = (j.status === 'disconnected');
+                this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
                 this.debug = j.debug || {};
 
@@ -1031,6 +1304,43 @@ input::placeholder {
             );
         },
 
+        /* --- Enfoque (EAF: focuser + fan) --- */
+        fetchEAFStatus() {
+            app().EAFStatus().then(j => {
+                if (j) this.eaf = j;
+            }).catch(() => {
+            });
+        },
+
+        focusMoveDisabled() {
+            if (!this.eaf.detected) return true;
+            if (this.eaf.health === 'fault') return true;
+            if (!this.eaf.power) return true;
+            if (this.eaf.focuser.is_moving) return true;
+            return false;
+        },
+
+        focuserState() {
+            if (!this.eaf.detected) return '—';
+            if (this.eaf.focuser.is_moving) return 'moviendo';
+            const s = this.eaf.focuser.op_status;
+            if (s && s !== 'idle') return s;
+            return 'quieto';
+        },
+
+        focusMove(dir) {
+            const step = Math.max(1, Math.round(this.focusStep || 100));
+            this.run(app().FocusMove(dir * step));
+        },
+
+        focusHalt() {
+            this.run(app().FocusHalt());
+        },
+
+        fanSetMode(mode) {
+            this.run(app().FanSetMode(mode));
+        },
+
         fmtUptime(s) {
             if (s == null) return '—';
             const h = Math.floor(s / 3600);
@@ -1052,9 +1362,40 @@ input::placeholder {
             return 'Mount not connected — plug in and power the mount. Reconnecting…';
         },
 
+        mountStatusText() {
+            if (this.isError) return this.fatalMessage();
+            if (this.isDisconnected) return this.disconnectedMessage();
+            return 'Ok';
+        },
+
+        mountStatusClass() {
+            return (this.isError || this.isDisconnected) ? 'status-error' : 'status-ok';
+        },
+
+        eafStatusText() {
+            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            return 'Ok';
+        },
+
+        eafStatusClass() {
+            return (!this.eaf.detected || this.eaf.health === 'fault') ? 'status-error' : 'status-ok';
+        },
+
+        sensorStatusText() {
+            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok') return 'Fallo de sensores: ' + this.eaf.sensor_health;
+            return 'Sensores OK';
+        },
+
+        sensorStatusClass() {
+            return (!this.eaf.detected || (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok')) ? 'status-error' : 'status-ok';
+        },
+
         init() {
             this.fetchStatus();
-            setInterval(() => this.fetchStatus(), 1000);
+            this.fetchEAFStatus();
+            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); }, 1000);
         }
     }
 }

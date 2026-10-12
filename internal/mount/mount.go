@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
 )
 
@@ -23,7 +23,7 @@ const retryInterval = 2 * time.Second
 type Mount struct {
 	mu sync.RWMutex
 
-	conn *proto.Client // nil = disconnected
+	conn *mountproto.Client // nil = disconnected
 
 	// App-owned transient state (reset on restart, not persisted).
 	targetRa  float64
@@ -63,6 +63,7 @@ func Init(serialPort string) {
 // connectLoop keeps the serial link up: it connects, waits for the link to
 // drop, then reconnects.
 func (m *Mount) connectLoop() {
+	logx.Info(mountCtx(), "connect loop started")
 	for {
 		c, err := m.tryConnect()
 		if err != nil {
@@ -72,21 +73,25 @@ func (m *Mount) connectLoop() {
 		}
 
 		<-c.Done() // block until the link drops
-		logx.Warn(mountCtx(), "mount disconnected")
+		reason := ""
+		if err := c.Err(); err != nil {
+			reason = ": " + err.Error()
+		}
+		logx.Warn(mountCtx(), "mount disconnected"+reason)
 		m.disconnect(c)
 	}
 }
 
 // tryConnect opens and verifies the mount, then provides the UTC clock.
-func (m *Mount) tryConnect() (*proto.Client, error) {
+func (m *Mount) tryConnect() (*mountproto.Client, error) {
 	var (
-		c   *proto.Client
+		c   *mountproto.Client
 		err error
 	)
 	if m.serialPort != "" {
-		c, err = proto.Open(m.serialPort)
+		c, err = mountproto.Open(m.serialPort)
 	} else {
-		c, err = proto.Detect()
+		c, err = mountproto.Detect()
 	}
 	if err != nil {
 		return nil, err
@@ -96,6 +101,8 @@ func (m *Mount) tryConnect() (*proto.Client, error) {
 	m.conn = c
 	m.mu.Unlock()
 
+	logx.Info(mountCtx(), "connected on "+c.PortName())
+
 	if err := m.provideTime(); err != nil {
 		m.disconnect(c)
 		return nil, err
@@ -104,7 +111,7 @@ func (m *Mount) tryConnect() (*proto.Client, error) {
 }
 
 // disconnect closes the client and clears the connection.
-func (m *Mount) disconnect(c *proto.Client) {
+func (m *Mount) disconnect(c *mountproto.Client) {
 	c.Close()
 	m.mu.Lock()
 	if m.conn == c {
@@ -114,7 +121,7 @@ func (m *Mount) disconnect(c *proto.Client) {
 }
 
 // getConn returns the current serial connection, or an error when disconnected.
-func (m *Mount) getConn() (*proto.Client, error) {
+func (m *Mount) getConn() (*mountproto.Client, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.conn == nil {
@@ -124,7 +131,7 @@ func (m *Mount) getConn() (*proto.Client, error) {
 }
 
 // action sends an action request on the current connection.
-func (m *Mount) action(req proto.ActionRequest) error {
+func (m *Mount) action(req mountproto.ActionRequest) error {
 	c, err := m.getConn()
 	if err != nil {
 		return err
@@ -133,7 +140,7 @@ func (m *Mount) action(req proto.ActionRequest) error {
 }
 
 // control sends a control request on the current connection.
-func (m *Mount) control(req proto.ControlRequest) error {
+func (m *Mount) control(req mountproto.ControlRequest) error {
 	c, err := m.getConn()
 	if err != nil {
 		return err
@@ -168,7 +175,7 @@ func (m *Mount) timeSyncLoop() {
 }
 
 // fetchState returns a fresh state snapshot.
-func (m *Mount) fetchState() (*proto.StateResponse, error) {
+func (m *Mount) fetchState() (*mountproto.StateResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
 		return nil, err
@@ -177,7 +184,7 @@ func (m *Mount) fetchState() (*proto.StateResponse, error) {
 }
 
 // fetchConfig returns the current configuration.
-func (m *Mount) fetchConfig() (*proto.ConfigResponse, error) {
+func (m *Mount) fetchConfig() (*mountproto.ConfigResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
 		return nil, err
@@ -186,7 +193,7 @@ func (m *Mount) fetchConfig() (*proto.ConfigResponse, error) {
 }
 
 // fetchCaps returns the mount capabilities.
-func (m *Mount) fetchCaps() (*proto.CapabilitiesResponse, error) {
+func (m *Mount) fetchCaps() (*mountproto.CapabilitiesResponse, error) {
 	c, err := m.getConn()
 	if err != nil {
 		return nil, err
@@ -210,7 +217,7 @@ func (m *Mount) provideTime() error {
 	if manual != nil {
 		utc = *manual
 	}
-	_, err = c.ConfigSet(proto.ConfigRequest{Utc: &utc})
+	_, err = c.ConfigSet(mountproto.ConfigRequest{Utc: &utc})
 	return err
 }
 

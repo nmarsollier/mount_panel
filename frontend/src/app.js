@@ -7,9 +7,9 @@ function mountApp() {
         status: {ra: '--:--:--', dec: '--:--:--'},
         lst: '--:--:--',
         pierSide: '--',
-        statusText: 'UNKNOWN',
         isError: false,
         isDisconnected: false,
+        mountConnected: false,
         hasPower: true,
         debug: {},
         serverSettings: {lat: 0, lon: 0, elevation: 0},
@@ -28,6 +28,12 @@ function mountApp() {
         selectedTracking: null,
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
+        eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
+              focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
+              fan: {mode: '', output_pwm_pct: 0, target_pwm_pct: 0, relay_command: false, power_ok: false, delta_c: null, thermal_stage: '', reason: ''},
+              environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
+              vibration: {rms_total: 0}},
+        focusStep: 100,
 
         /* Show an error message for 5 seconds, then auto-clear. */
         showError(msg) {
@@ -42,12 +48,12 @@ function mountApp() {
         run(promise) {
             return promise
                 .then(() => this.fetchStatus())
+                .then(() => this.fetchEAFStatus())
                 .catch(e => this.showError(String(e)));
         },
 
         fetchStatus() {
             app().Status().then(j => {
-                this.statusText = j.status || 'UNKNOWN';
                 this.status = {ra: j.ra || '--:--:--', dec: j.dec || '--:--:--'};
                 this.lst = j.lst || '--:--:--';
                 this.pierSide = j.pier_side || '--';
@@ -57,6 +63,7 @@ function mountApp() {
                 this.isParked = (j.status === 'parked');
                 this.isError = (j.status === 'error');
                 this.isDisconnected = (j.status === 'disconnected');
+                this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
                 this.debug = j.debug || {};
 
@@ -188,6 +195,43 @@ function mountApp() {
             );
         },
 
+        /* --- Enfoque (EAF: focuser + fan) --- */
+        fetchEAFStatus() {
+            app().EAFStatus().then(j => {
+                if (j) this.eaf = j;
+            }).catch(() => {
+            });
+        },
+
+        focusMoveDisabled() {
+            if (!this.eaf.detected) return true;
+            if (this.eaf.health === 'fault') return true;
+            if (!this.eaf.power) return true;
+            if (this.eaf.focuser.is_moving) return true;
+            return false;
+        },
+
+        focuserState() {
+            if (!this.eaf.detected) return '—';
+            if (this.eaf.focuser.is_moving) return 'moviendo';
+            const s = this.eaf.focuser.op_status;
+            if (s && s !== 'idle') return s;
+            return 'quieto';
+        },
+
+        focusMove(dir) {
+            const step = Math.max(1, Math.round(this.focusStep || 100));
+            this.run(app().FocusMove(dir * step));
+        },
+
+        focusHalt() {
+            this.run(app().FocusHalt());
+        },
+
+        fanSetMode(mode) {
+            this.run(app().FanSetMode(mode));
+        },
+
         fmtUptime(s) {
             if (s == null) return '—';
             const h = Math.floor(s / 3600);
@@ -209,9 +253,40 @@ function mountApp() {
             return 'Mount not connected — plug in and power the mount. Reconnecting…';
         },
 
+        mountStatusText() {
+            if (this.isError) return this.fatalMessage();
+            if (this.isDisconnected) return this.disconnectedMessage();
+            return 'Ok';
+        },
+
+        mountStatusClass() {
+            return (this.isError || this.isDisconnected) ? 'status-error' : 'status-ok';
+        },
+
+        eafStatusText() {
+            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            return 'Ok';
+        },
+
+        eafStatusClass() {
+            return (!this.eaf.detected || this.eaf.health === 'fault') ? 'status-error' : 'status-ok';
+        },
+
+        sensorStatusText() {
+            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok') return 'Fallo de sensores: ' + this.eaf.sensor_health;
+            return 'Sensores OK';
+        },
+
+        sensorStatusClass() {
+            return (!this.eaf.detected || (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok')) ? 'status-error' : 'status-ok';
+        },
+
         init() {
             this.fetchStatus();
-            setInterval(() => this.fetchStatus(), 1000);
+            this.fetchEAFStatus();
+            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); }, 1000);
         }
     }
 }

@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/proto"
+import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 
 // Limits parameters accepted by the ESP's action:limits command.
 const (
@@ -15,5 +15,5 @@ const (
 // SetLimits fixes home or an axis limit from the current physical position, or
 // clears the limits (LimitsClear).
 func (m *Mount) SetLimits(param string) error {
-	return m.action(proto.ActionRequest{Action: "limits", Param: param})
+	return m.action(mountproto.ActionRequest{Action: "limits", Param: param})
 }

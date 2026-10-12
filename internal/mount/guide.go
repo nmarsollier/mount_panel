@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
 )
 
 var guideDirections = [...]string{"north", "south", "east", "west"}
@@ -15,7 +15,7 @@ func (m *Mount) PulseGuide(direction int, durationMs int) error {
 		return errors.New("Invalid guide direction")
 	}
 	d := uint32(durationMs)
-	return m.action(proto.ActionRequest{
+	return m.action(mountproto.ActionRequest{
 		Action:     "guide",
 		Direction:  guideDirections[direction],
 		DurationMs: &d,
@@ -24,10 +24,10 @@ func (m *Mount) PulseGuide(direction int, durationMs int) error {
 
 // SetGuideRateRA stores the RA guide rate in deg/s.
 func (m *Mount) SetGuideRateRA(rate float64) error {
-	return m.configWrite(proto.ConfigRequest{GuideRateRa: &rate})
+	return m.configWrite(mountproto.ConfigRequest{GuideRateRa: &rate})
 }
 
 // SetGuideRateDec stores the DEC guide rate in deg/s.
 func (m *Mount) SetGuideRateDec(rate float64) error {
-	return m.configWrite(proto.ConfigRequest{GuideRateDec: &rate})
+	return m.configWrite(mountproto.ConfigRequest{GuideRateDec: &rate})
 }

@@ -83,6 +83,43 @@ body {
     text-transform: uppercase;
 }
 
+.conn-status {
+    display: flex;
+    gap: 6px;
+}
+
+.conn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    border: 1px solid var(--border);
+    background: var(--btn-bg);
+    text-transform: uppercase;
+}
+
+.conn-chip i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.conn-chip.conn-on {
+    color: #4ade80;
+    border-color: #14532d;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.15);
+}
+
+.conn-chip.conn-off {
+    color: #fbbf24;
+    border-color: #5c4a12;
+}
+
 .header-coords {
     display: flex;
     gap: 16px;
@@ -154,6 +191,13 @@ body {
     box-shadow: 0 0 14px var(--accent-glow);
 }
 
+.tabs button.disabled {
+    background: #17171c;
+    border-color: #23232a;
+    color: #4d4d57;
+    box-shadow: none;
+}
+
 /* ═══ Tab content ═══ */
 
 .tab-content {
@@ -199,6 +243,98 @@ body {
     font-size: 10px;
     color: var(--text-dim);
     font-weight: normal;
+}
+
+.status {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+}
+
+.status-ok {
+    color: #4ade80;
+    border-color: #14532d;
+    background: rgba(74, 222, 128, 0.08);
+}
+
+.status-error {
+    color: #f87171;
+    border-color: var(--danger);
+    background: rgba(220, 38, 38, 0.10);
+}
+
+.fan-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fan-metrics {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.fan-metrics b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.onoff {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid;
+}
+
+.onoff i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.onoff.on {
+    color: #4ade80;
+    border-color: #14532d;
+    background: rgba(74, 222, 128, 0.10);
+}
+
+.onoff.off {
+    color: #9ca3af;
+    border-color: #3a3345;
+    background: rgba(156, 163, 175, 0.08);
+}
+
+.metric {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.metric-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+}
+
+.metric-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
 }
 
 /* ═══ Rows / buttons ═══ */
@@ -271,6 +407,14 @@ button:disabled {
 
 .grow {
     flex: 1;
+}
+
+/* ═══ Stack (vertical spacing) ═══ */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* ═══ Axis pad (shared: manual slew + joystick) ═══ */
