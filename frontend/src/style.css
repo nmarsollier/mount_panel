@@ -274,7 +274,7 @@ body {
 .fan-metrics {
     display: flex;
     gap: 16px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 
@@ -324,17 +324,21 @@ body {
 }
 
 .metric-label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 
 .metric-value {
-    font-family: var(--mono);
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text);
+}
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: center;
 }
 
 /* ═══ Rows / buttons ═══ */

@@ -12,8 +12,8 @@ type FocuserMoveResponse struct {
 	TargetCounter int64  `json:"target_counter"`
 }
 
-// FocuserHaltResponse is the result of stopping the focuser.
-type FocuserHaltResponse struct {
+// FocuserStopResponse is the result of stopping the focuser.
+type FocuserStopResponse struct {
 	IsMoving      bool   `json:"is_moving"`
 	CounterSteps  int64  `json:"counter_steps"`
 	CancelledOpID string `json:"cancelled_op_id"`
@@ -34,12 +34,12 @@ func (c *Client) FocuserMove(deltaSteps int64, expectedCounter int64) (*FocuserM
 	return &out.Data, nil
 }
 
-// FocuserHalt stops the focuser and returns the final counter.
-func (c *Client) FocuserHalt() (*FocuserHaltResponse, error) {
+// FocuserStop stops the focuser and returns the final counter.
+func (c *Client) FocuserStop() (*FocuserStopResponse, error) {
 	out := struct {
-		Data FocuserHaltResponse `json:"data"`
+		Data FocuserStopResponse `json:"data"`
 	}{}
-	if err := c.request(context.Background(), "action", "focuser", "halt", nil, &out); err != nil {
+	if err := c.request(context.Background(), "action", "focuser", "stop", nil, &out); err != nil {
 		return nil, err
 	}
 	return &out.Data, nil

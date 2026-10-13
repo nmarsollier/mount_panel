@@ -8,7 +8,7 @@ type DeviceState struct {
 	PowerExternalPresent bool    `json:"power_external_present"`
 	Health               string  `json:"health"`
 	FocuserBusy          bool    `json:"focuser_busy"`
-	FanMode              string  `json:"fan_mode"`
+	FanPower             bool    `json:"fan_power"`
 	SensorHealth         string  `json:"sensor_health"`
 	ResetReason          string  `json:"reset_reason"`
 	Faults               []Fault `json:"faults"`
@@ -54,22 +54,17 @@ type FocuserState struct {
 		OpenLoadA        bool  `json:"open_load_a"`
 		OpenLoadB        bool  `json:"open_load_b"`
 	} `json:"driver"`
+	Error *string `json:"error"`
 }
 
-// FanState is the fan snapshot: the selected mode and the outputs applied by
-// the local thermal regulation.
+// FanState is the fan snapshot: the power channel (relay), the speed channel
+// (PWM 0..100 %) and the tachometer reading when available.
 type FanState struct {
-	Mode           string   `json:"mode"`
-	ModeRev        int      `json:"mode_rev"`
-	Source         string   `json:"source"`
-	OutputPWMPct   int      `json:"output_pwm_pct"`
-	TargetPWMPct   int      `json:"target_pwm_pct"`
-	RelayCommand   bool     `json:"relay_command"`
-	PowerAvailable bool     `json:"power_available"`
-	DeltaC         *float64 `json:"delta_c"`
-	ThermalStage   string   `json:"thermal_stage"`
-	Reason         string   `json:"reason"`
-	LastChangeMs   int64    `json:"last_change_ms"`
+	Error          *string `json:"error"`
+	Power          bool    `json:"power"`
+	Speed          int     `json:"speed"`
+	PowerAvailable bool    `json:"power_available"`
+	RPM            *int    `json:"rpm"`
 }
 
 // EnvironmentState is the environment snapshot: ambient/mirror temperatures,

@@ -120,12 +120,17 @@ func (a *App) FocusMove(delta int64) error {
 	return eaf.Get().MoveBy(delta)
 }
 
-// FocusHalt stops the focuser.
-func (a *App) FocusHalt() error {
-	return eaf.Get().Halt()
+// FocusStop stops the focuser.
+func (a *App) FocusStop() error {
+	return eaf.Get().Stop()
 }
 
-// FanSetMode selects the fan mode: "normal", "soft" or "off".
-func (a *App) FanSetMode(mode string) error {
-	return eaf.Get().SetFanMode(mode)
+// FanSetPower switches the fan's 12 V relay.
+func (a *App) FanSetPower(on bool) error {
+	return eaf.Get().SetFanPower(on)
+}
+
+// FanSetSpeed sets the fan PWM duty (0..100 %).
+func (a *App) FanSetSpeed(pct int) error {
+	return eaf.Get().SetFanSpeed(pct)
 }

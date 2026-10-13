@@ -2,389 +2,426 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>NRM-HA</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231a1a2e' stroke='%234fc3f7' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%234fc3f7'/%3E%3Cline x1='16' y1='6' x2='16' y2='2' stroke='%234fc3f7' stroke-width='2'/%3E%3C/svg%3E">
-    <!--INLINE_CSS-->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NRM-HA</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231a1a2e' stroke='%234fc3f7' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%234fc3f7'/%3E%3Cline x1='16' y1='6' x2='16' y2='2' stroke='%234fc3f7' stroke-width='2'/%3E%3C/svg%3E">
+  <!--INLINE_CSS-->
 </head>
 
 <body>
-<div class="app" x-data="mountApp()">
+  <div class="app" x-data="mountApp()">
 
     <!-- ═══ Header ═══ -->
     <header class="header">
-        <div class="header-top">
-            <span class="brand">NRM-HA</span>
-            <div class="conn-status">
-                <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-                      :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
-                    <i></i>Mount
-                </span>
-                <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-                      :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
-                    <i></i>EAF
-                </span>
-            </div>
+      <div class="header-top">
+        <span class="brand">NRM-HA</span>
+        <div class="conn-status">
+          <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+            :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+            <i></i>Mount
+          </span>
+          <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+            <i></i>EAF
+          </span>
         </div>
-        <div class="header-coords">
-            <span><i>RA</i><b x-text="status.ra"></b></span>
-            <span><i>DEC</i><b x-text="status.dec"></b></span>
-            <span><i>LST</i><b x-text="lst"></b></span>
-        </div>
-        <div class="header-info">
-            <span>Tracking <b x-text="serverTracking"></b></span>
-            <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
-            <span>Pier <b x-text="pierSide"></b></span>
-            <span>Lat <b x-text="serverSettings.lat"></b></span>
-            <span>Lon <b x-text="serverSettings.lon"></b></span>
-            <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
-        </div>
+      </div>
+      <div class="header-coords">
+        <span><i>RA</i><b x-text="status.ra"></b></span>
+        <span><i>DEC</i><b x-text="status.dec"></b></span>
+        <span><i>LST</i><b x-text="lst"></b></span>
+      </div>
+      <div class="header-info">
+        <span>Tracking <b x-text="serverTracking"></b></span>
+        <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
+        <span>Pier <b x-text="pierSide"></b></span>
+        <span>Lat <b x-text="serverSettings.lat"></b></span>
+        <span>Lon <b x-text="serverSettings.lon"></b></span>
+        <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
+      </div>
     </header>
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-        <button :class="{ active: tab === 'principal', disabled: !mountConnected }" @click="tab = 'principal'">Montura</button>
-        <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }" @click="tab = 'movimiento'">Movimiento</button>
-        <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
-        <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
-        <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }" @click="tab = 'sensores'">Sensores</button>
-        <button :class="{ active: tab === 'settings', disabled: !mountConnected }" @click="tab = 'settings'">Settings</button>
+      <button :class="{ active: tab === 'principal', disabled: !mountConnected }"
+        @click="tab = 'principal'">Montura</button>
+      <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }"
+        @click="tab = 'movimiento'">Movimiento</button>
+      <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
+      <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
+      <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }"
+        @click="tab = 'sensores'">Sensores</button>
+      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
+        @click="tab = 'settings'">Settings</button>
     </nav>
 
     <!-- ═══ Montura ═══ -->
     <section class="tab-content" x-show="tab === 'principal'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
-        </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Actions</strong></div>
-            <div class="row">
-                <button class="danger" @click="stop()" :disabled="isError">STOP</button>
-                <button @click="home()" :disabled="isError">HOME</button>
-                <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
-                <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
-                <button class="danger" @click="reset()">RESET</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Actions</strong></div>
+        <div class="row">
+          <button class="danger" @click="stop()" :disabled="isError">STOP</button>
+          <button @click="home()" :disabled="isError">HOME</button>
+          <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
+          <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
+          <button class="danger" @click="reset()">RESET</button>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
-            <div class="joy-layout">
-                <div class="joy-speed">
-                    <label>Speed</label>
-                    <select x-model.number="joySpeed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
+        <div class="joy-layout">
+          <div class="joy-speed">
+            <label>Speed</label>
+            <select x-model.number="joySpeed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA +">▶</button>
             </div>
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Tracking</strong></div>
-            <div class="row">
-                <select x-model.number="selectedTracking" class="grow">
-                    <template x-for="(m, i) in trackingOptions" :key="i">
-                        <option :value="i" x-text="m"></option>
-                    </template>
-                </select>
-                <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Tracking</strong></div>
+        <div class="row">
+          <select x-model.number="selectedTracking" class="grow">
+            <template x-for="(m, i) in trackingOptions" :key="i">
+              <option :value="i" x-text="m"></option>
+            </template>
+          </select>
+          <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Movimiento ═══ -->
     <section class="tab-content" x-show="tab === 'movimiento'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Manual Slew</strong></div>
-            <div class="slew-layout">
-                <div class="slew-controls">
-                    <div class="slew-field">
-                        <label>Degrees</label>
-                        <input type="text" inputmode="decimal" x-model.number="slew.degrees">
-                    </div>
-                    <div class="slew-field">
-                        <label>Speed</label>
-                        <select x-model.number="slew.speed">
-                            <option value="1">1×</option>
-                            <option value="2">2×</option>
-                            <option value="3">3×</option>
-                            <option value="4">4×</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button @click="doSlew('ra', -1)" :disabled="isError" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button @click="doSlew('ra', 1)" :disabled="isError" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button @click="doSlew('dec', -1)" :disabled="isError" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button @click="doSlew('dec', 1)" :disabled="isError" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Manual Slew</strong></div>
+        <div class="slew-layout">
+          <div class="slew-controls">
+            <div class="slew-field">
+              <label>Degrees</label>
+              <input type="text" inputmode="decimal" x-model.number="slew.degrees">
             </div>
+            <div class="slew-field">
+              <label>Speed</label>
+              <select x-model.number="slew.speed">
+                <option value="1">1×</option>
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="4">4×</option>
+              </select>
+            </div>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button @click="doSlew('ra', -1)" :disabled="isError" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button @click="doSlew('ra', 1)" :disabled="isError" title="RA +">▶</button>
+            </div>
+            <div class="axis-row">
+              <button @click="doSlew('dec', -1)" :disabled="isError" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button @click="doSlew('dec', 1)" :disabled="isError" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
-            <div class="joy-layout">
-                <div class="joy-speed">
-                    <label>Speed</label>
-                    <select x-model.number="joySpeed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
+        <div class="joy-layout">
+          <div class="joy-speed">
+            <label>Speed</label>
+            <select x-model.number="joySpeed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA +">▶</button>
             </div>
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Slew to Coordinates</strong></div>
-            <div class="slew-coords">
-                <div class="slew-field">
-                    <label>RA</label>
-                    <div class="coord-fields">
-                        <input type="text" inputmode="numeric" placeholder="HH" x-model.number="slewTarget.ra.h">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.ra.m">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.ra.s">
-                    </div>
-                </div>
-                <div class="slew-field">
-                    <label>DEC</label>
-                    <div class="coord-fields">
-                        <input type="text" inputmode="decimal" placeholder="±DD" x-model.number="slewTarget.dec.d">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.dec.m">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.dec.s">
-                    </div>
-                </div>
-                <div class="slew-field">
-                    <label>Speed</label>
-                    <select x-model.number="slewTarget.speed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <button class="primary wide" @click="doSlewToCoordinates()" :disabled="isError">SLEW</button>
+      <div class="panel">
+        <div class="panel-header"><strong>Slew to Coordinates</strong></div>
+        <div class="slew-coords">
+          <div class="slew-field">
+            <label>RA</label>
+            <div class="coord-fields">
+              <input type="text" inputmode="numeric" placeholder="HH" x-model.number="slewTarget.ra.h">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.ra.m">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.ra.s">
             </div>
+          </div>
+          <div class="slew-field">
+            <label>DEC</label>
+            <div class="coord-fields">
+              <input type="text" inputmode="decimal" placeholder="±DD" x-model.number="slewTarget.dec.d">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.dec.m">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.dec.s">
+            </div>
+          </div>
+          <div class="slew-field">
+            <label>Speed</label>
+            <select x-model.number="slewTarget.speed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <button class="primary wide" @click="doSlewToCoordinates()" :disabled="isError">SLEW</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Settings ═══ -->
     <section class="tab-content" x-show="tab === 'settings'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Debug</strong></div>
-            <div class="debug-grid">
-                <div class="debug-group">
-                    <div class="debug-label">RA Axis</div>
-                    <div class="debug-row"><span>Angle</span> <span x-text="debug.ra_axis_deg?.toFixed(4) + '°'"></span></div>
-                    <div class="debug-row"><span>Steps</span> <span x-text="debug.ra_steps"></span></div>
-                    <div class="debug-row"><span>Speed</span> <span x-text="debug.ra_speed?.toFixed(6) + ' °/s'"></span></div>
-                </div>
-                <div class="debug-group">
-                    <div class="debug-label">DEC Axis</div>
-                    <div class="debug-row"><span>Angle</span> <span x-text="debug.dec_axis_deg?.toFixed(4) + '°'"></span></div>
-                    <div class="debug-row"><span>Steps</span> <span x-text="debug.dec_steps"></span></div>
-                    <div class="debug-row"><span>Speed</span> <span x-text="debug.dec_speed?.toFixed(6) + ' °/s'"></span></div>
-                </div>
-                <div class="debug-group">
-                    <div class="debug-label">Limits (°)</div>
-                    <div class="debug-row"><span>RA</span> <span x-text="'[' + debug.limits?.ra_min + ', ' + debug.limits?.ra_max + ']'"></span></div>
-                    <div class="debug-row"><span>DEC</span> <span x-text="'[' + debug.limits?.dec_min + ', ' + debug.limits?.dec_max + ']'"></span></div>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Debug</strong></div>
+        <div class="debug-grid">
+          <div class="debug-group">
+            <div class="debug-label">RA Axis</div>
+            <div class="debug-row"><span>Angle</span> <span x-text="debug.ra_axis_deg?.toFixed(4) + '°'"></span></div>
+            <div class="debug-row"><span>Steps</span> <span x-text="debug.ra_steps"></span></div>
+            <div class="debug-row"><span>Speed</span> <span x-text="debug.ra_speed?.toFixed(6) + ' °/s'"></span></div>
+          </div>
+          <div class="debug-group">
+            <div class="debug-label">DEC Axis</div>
+            <div class="debug-row"><span>Angle</span> <span x-text="debug.dec_axis_deg?.toFixed(4) + '°'"></span></div>
+            <div class="debug-row"><span>Steps</span> <span x-text="debug.dec_steps"></span></div>
+            <div class="debug-row"><span>Speed</span> <span x-text="debug.dec_speed?.toFixed(6) + ' °/s'"></span></div>
+          </div>
+          <div class="debug-group">
+            <div class="debug-label">Limits (°)</div>
+            <div class="debug-row"><span>RA</span> <span
+                x-text="'[' + debug.limits?.ra_min + ', ' + debug.limits?.ra_max + ']'"></span></div>
+            <div class="debug-row"><span>DEC</span> <span
+                x-text="'[' + debug.limits?.dec_min + ', ' + debug.limits?.dec_max + ']'"></span></div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Settings</strong></div>
-            <div class="settings-row">
-                <span class="settings-label">Date &amp; time</span>
-                <span class="settings-value" x-text="mountTime">--</span>
-                <button @click="updateTime()">Update</button>
-            </div>
-            <div class="settings-row">
-                <span class="settings-label">Location</span>
-                <span class="settings-fields">
-                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat" @input="settingsDirty = true" class="settings-input" title="Latitude">
-                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon" @input="settingsDirty = true" class="settings-input" title="Longitude">
-                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation" @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
-                </span>
-                <button @click="updateSettings()">Update</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Settings</strong></div>
+        <div class="settings-row">
+          <span class="settings-label">Date &amp; time</span>
+          <span class="settings-value" x-text="mountTime">--</span>
+          <button @click="updateTime()">Update</button>
         </div>
+        <div class="settings-row">
+          <span class="settings-label">Location</span>
+          <span class="settings-fields">
+            <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat"
+              @input="settingsDirty = true" class="settings-input" title="Latitude">
+            <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon"
+              @input="settingsDirty = true" class="settings-input" title="Longitude">
+            <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation"
+              @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
+          </span>
+          <button @click="updateSettings()">Update</button>
+        </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Set current position as</strong></div>
-            <div class="row">
-                <button @click="setLimit('set_home')" :disabled="isError">HOME</button>
-                <button @click="setLimit('set_ra_left')" :disabled="isError">RA Left</button>
-                <button @click="setLimit('set_ra_right')" :disabled="isError">RA Right</button>
-                <button @click="setLimit('set_dec_left')" :disabled="isError">DEC Left</button>
-                <button @click="setLimit('set_dec_right')" :disabled="isError">DEC Right</button>
-                <button class="danger" @click="setLimit('clear_limits')" :disabled="isError">Clear</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Set current position as</strong></div>
+        <div class="row">
+          <button @click="setLimit('set_home')" :disabled="isError">HOME</button>
+          <button @click="setLimit('set_ra_left')" :disabled="isError">RA Left</button>
+          <button @click="setLimit('set_ra_right')" :disabled="isError">RA Right</button>
+          <button @click="setLimit('set_dec_left')" :disabled="isError">DEC Left</button>
+          <button @click="setLimit('set_dec_right')" :disabled="isError">DEC Right</button>
+          <button class="danger" @click="setLimit('clear_limits')" :disabled="isError">Clear</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Enfoque (EAF: focuser + fan) ═══ -->
     <section class="tab-content" x-show="tab === 'enfoque'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="stack">
+          <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+          <div class="metric">
+            <span class="metric-label">Posición</span>
+            <span class="metric-value" x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Focuser</strong></div>
-            <div class="stack">
-                <div class="row">
-                    <span>Posición <b x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></b> pasos</span>
-                    <span>Estado <b x-text="focuserState()"></b></span>
-                    <span>Driver <b x-text="eaf.detected ? (eaf.focuser.driver_ok ? 'OK' : 'error') : '—'"></b></span>
-                </div>
-                <div class="row">
-                    <label class="settings-label">Distancia (pasos)</label>
-                    <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
-                </div>
-                <div class="row">
-                    <button @click="focusMove(-1)" :disabled="focusMoveDisabled()">◀ −</button>
-                    <button class="danger" @click="focusHalt()" :disabled="!eaf.detected || !eaf.focuser.is_moving">HALT</button>
-                    <button @click="focusMove(1)" :disabled="focusMoveDisabled()">+ ▶</button>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Focuser</strong></div>
+        <div class="stack">
+          <div class="joy-layout">
+            <div class="joy-speed">
+              <label>Distancia (pasos)</label>
+              <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
             </div>
+            <div class="axis-grid">
+              <div class="axis-row">
+                <button class="joy-btn" @click="focusMove(-1)" :disabled="focusMoveDisabled()" title="Foco −">◀</button>
+                <span class="axis-label">Foco</span>
+                <button class="joy-btn" @click="focusMove(1)" :disabled="focusMoveDisabled()" title="Foco +">▶</button>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="danger" @click="focusStop()"
+              :disabled="!eaf.detected || !eaf.focuser.is_moving">STOP</button>
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Fan ═══ -->
     <section class="tab-content" x-show="tab === 'fan'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Ventilador</strong></div>
-            <div class="stack">
-                <div class="fan-head">
-                    <span class="onoff" :class="eaf.detected && eaf.fan.relay_command ? 'on' : 'off'">
-                        <i></i><b x-text="eaf.detected ? (eaf.fan.relay_command ? 'ON' : 'OFF') : '—'"></b>
-                    </span>
-                    <div class="fan-metrics">
-                        <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.output_pwm_pct + '%') : '—'"></b></span>
-                        <span>Estado <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
-                    </div>
-                </div>
-                <div class="row">
-                    <button :class="{ primary: eaf.fan.mode === 'normal' }" @click="fanSetMode('normal')" :disabled="!eaf.detected">NORMAL</button>
-                    <button :class="{ primary: eaf.fan.mode === 'soft' }" @click="fanSetMode('soft')" :disabled="!eaf.detected">SUAVE</button>
-                    <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">APAGADO</button>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Ventilador</strong></div>
+        <div class="stack">
+          <div class="fan-head">
+            <span class="onoff" :class="eaf.detected && eaf.fan.power ? 'on' : 'off'">
+              <i></i><b x-text="eaf.detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
+            </span>
+            <div class="fan-metrics">
+              <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+              <span>RPM <b x-text="eaf.detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
             </div>
+          </div>
+          <div class="row">
+            <button class="primary" @click="fanSetPower(!eaf.fan.power)" :disabled="!eaf.detected"
+              x-text="eaf.fan.power ? 'APAGAR' : 'ENCENDER'"></button>
+            <label class="settings-label">Velocidad</label>
+            <input type="range" min="0" max="100" step="5" class="grow" x-model.number="eaf.fan.speed"
+              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.detected">
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Sensores ═══ -->
     <section class="tab-content" x-show="tab === 'sensores'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
-        </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Ambiente</strong></div>
-            <div class="stack">
-                <div class="metric">
-                    <span class="metric-label">Temperatura</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Humedad</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
-                </div>
-                <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
-                    <span class="metric-label">Rocío</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Ambiente</strong></div>
+        <div class="sensor-grid">
+          <div class="stack">
+            <div class="metric">
+              <span class="metric-label">Temperatura</span>
+              <span class="metric-value"
+                x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
             </div>
+            <div class="metric">
+              <span class="metric-label">Humedad</span>
+              <span class="metric-value"
+                x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
+            </div>
+          </div>
+          <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
+            <span class="metric-label">Rocío</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Espejo Primario</strong></div>
-            <div class="stack">
-                <div class="metric">
-                    <span class="metric-label">Temperatura</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-                <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
-                    <span class="metric-label">Δ vs ambiente</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Espejo Primario</strong></div>
+        <div class="sensor-grid">
+          <div class="metric">
+            <span class="metric-label">Temperatura</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
+          <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
+            <span class="metric-label">Δ</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Vibración</strong></div>
-            <div class="stack">
-                <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
-                    <span class="metric-label">RMS total</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Vibración</strong></div>
+        <div class="stack">
+          <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
+            <span class="metric-label">RMS total</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Banner (errores temporales de acciones) ═══ -->
     <div class="error-banner" x-show="errorMessage" x-text="errorMessage" x-transition.opacity.duration.200ms></div>
 
-</div>
+  </div>
 
-<!--INLINE_JS-->
-<!--INLINE_ALPINE-->
+  <!--INLINE_JS-->
+  <!--INLINE_ALPINE-->
 </body>
 
 </html>

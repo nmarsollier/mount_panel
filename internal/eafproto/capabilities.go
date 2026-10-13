@@ -31,10 +31,9 @@ type AccessoryCaps struct {
 		TempComp      bool `json:"temp_comp"`
 	} `json:"focuser"`
 	Fan struct {
-		Modes []string `json:"modes"`
-		PWM   bool     `json:"pwm"`
-		Relay bool     `json:"relay"`
-		Tach  bool     `json:"tach"`
+		Power bool `json:"power"`
+		Speed bool `json:"speed"`
+		RPM   bool `json:"rpm"`
 	} `json:"fan"`
 	Sensors struct {
 		Ambient   string `json:"ambient"`

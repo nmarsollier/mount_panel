@@ -2,11 +2,12 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>NRM-HA</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231a1a2e' stroke='%234fc3f7' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%234fc3f7'/%3E%3Cline x1='16' y1='6' x2='16' y2='2' stroke='%234fc3f7' stroke-width='2'/%3E%3C/svg%3E">
-    <style>/* ═══════════════════════════════════════════════════
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NRM-HA</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231a1a2e' stroke='%234fc3f7' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%234fc3f7'/%3E%3Cline x1='16' y1='6' x2='16' y2='2' stroke='%234fc3f7' stroke-width='2'/%3E%3C/svg%3E">
+  <style>/* ═══════════════════════════════════════════════════
    NRM-HA — Morado + Rojo (compact desktop layout)
    ═══════════════════════════════════════════════════ */
 
@@ -282,7 +283,7 @@ body {
 .fan-metrics {
     display: flex;
     gap: 16px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 
@@ -332,17 +333,21 @@ body {
 }
 
 .metric-label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 
 .metric-value {
-    font-family: var(--mono);
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text);
+}
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: center;
 }
 
 /* ═══ Rows / buttons ═══ */
@@ -734,380 +739,416 @@ input::placeholder {
 </head>
 
 <body>
-<div class="app" x-data="mountApp()">
+  <div class="app" x-data="mountApp()">
 
     <!-- ═══ Header ═══ -->
     <header class="header">
-        <div class="header-top">
-            <span class="brand">NRM-HA</span>
-            <div class="conn-status">
-                <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-                      :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
-                    <i></i>Mount
-                </span>
-                <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-                      :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
-                    <i></i>EAF
-                </span>
-            </div>
+      <div class="header-top">
+        <span class="brand">NRM-HA</span>
+        <div class="conn-status">
+          <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+            :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+            <i></i>Mount
+          </span>
+          <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+            <i></i>EAF
+          </span>
         </div>
-        <div class="header-coords">
-            <span><i>RA</i><b x-text="status.ra"></b></span>
-            <span><i>DEC</i><b x-text="status.dec"></b></span>
-            <span><i>LST</i><b x-text="lst"></b></span>
-        </div>
-        <div class="header-info">
-            <span>Tracking <b x-text="serverTracking"></b></span>
-            <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
-            <span>Pier <b x-text="pierSide"></b></span>
-            <span>Lat <b x-text="serverSettings.lat"></b></span>
-            <span>Lon <b x-text="serverSettings.lon"></b></span>
-            <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
-        </div>
+      </div>
+      <div class="header-coords">
+        <span><i>RA</i><b x-text="status.ra"></b></span>
+        <span><i>DEC</i><b x-text="status.dec"></b></span>
+        <span><i>LST</i><b x-text="lst"></b></span>
+      </div>
+      <div class="header-info">
+        <span>Tracking <b x-text="serverTracking"></b></span>
+        <span>Power <b x-text="hasPower ? 'ON' : 'OFF'" :class="{ 'power-off': !hasPower }"></b></span>
+        <span>Pier <b x-text="pierSide"></b></span>
+        <span>Lat <b x-text="serverSettings.lat"></b></span>
+        <span>Lon <b x-text="serverSettings.lon"></b></span>
+        <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
+      </div>
     </header>
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-        <button :class="{ active: tab === 'principal', disabled: !mountConnected }" @click="tab = 'principal'">Montura</button>
-        <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }" @click="tab = 'movimiento'">Movimiento</button>
-        <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
-        <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
-        <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }" @click="tab = 'sensores'">Sensores</button>
-        <button :class="{ active: tab === 'settings', disabled: !mountConnected }" @click="tab = 'settings'">Settings</button>
+      <button :class="{ active: tab === 'principal', disabled: !mountConnected }"
+        @click="tab = 'principal'">Montura</button>
+      <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }"
+        @click="tab = 'movimiento'">Movimiento</button>
+      <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
+      <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
+      <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }"
+        @click="tab = 'sensores'">Sensores</button>
+      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
+        @click="tab = 'settings'">Settings</button>
     </nav>
 
     <!-- ═══ Montura ═══ -->
     <section class="tab-content" x-show="tab === 'principal'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
-        </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Actions</strong></div>
-            <div class="row">
-                <button class="danger" @click="stop()" :disabled="isError">STOP</button>
-                <button @click="home()" :disabled="isError">HOME</button>
-                <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
-                <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
-                <button class="danger" @click="reset()">RESET</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Actions</strong></div>
+        <div class="row">
+          <button class="danger" @click="stop()" :disabled="isError">STOP</button>
+          <button @click="home()" :disabled="isError">HOME</button>
+          <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
+          <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
+          <button class="danger" @click="reset()">RESET</button>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
-            <div class="joy-layout">
-                <div class="joy-speed">
-                    <label>Speed</label>
-                    <select x-model.number="joySpeed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
+        <div class="joy-layout">
+          <div class="joy-speed">
+            <label>Speed</label>
+            <select x-model.number="joySpeed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA +">▶</button>
             </div>
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Tracking</strong></div>
-            <div class="row">
-                <select x-model.number="selectedTracking" class="grow">
-                    <template x-for="(m, i) in trackingOptions" :key="i">
-                        <option :value="i" x-text="m"></option>
-                    </template>
-                </select>
-                <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Tracking</strong></div>
+        <div class="row">
+          <select x-model.number="selectedTracking" class="grow">
+            <template x-for="(m, i) in trackingOptions" :key="i">
+              <option :value="i" x-text="m"></option>
+            </template>
+          </select>
+          <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Movimiento ═══ -->
     <section class="tab-content" x-show="tab === 'movimiento'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Manual Slew</strong></div>
-            <div class="slew-layout">
-                <div class="slew-controls">
-                    <div class="slew-field">
-                        <label>Degrees</label>
-                        <input type="text" inputmode="decimal" x-model.number="slew.degrees">
-                    </div>
-                    <div class="slew-field">
-                        <label>Speed</label>
-                        <select x-model.number="slew.speed">
-                            <option value="1">1×</option>
-                            <option value="2">2×</option>
-                            <option value="3">3×</option>
-                            <option value="4">4×</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button @click="doSlew('ra', -1)" :disabled="isError" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button @click="doSlew('ra', 1)" :disabled="isError" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button @click="doSlew('dec', -1)" :disabled="isError" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button @click="doSlew('dec', 1)" :disabled="isError" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Manual Slew</strong></div>
+        <div class="slew-layout">
+          <div class="slew-controls">
+            <div class="slew-field">
+              <label>Degrees</label>
+              <input type="text" inputmode="decimal" x-model.number="slew.degrees">
             </div>
+            <div class="slew-field">
+              <label>Speed</label>
+              <select x-model.number="slew.speed">
+                <option value="1">1×</option>
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="4">4×</option>
+              </select>
+            </div>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button @click="doSlew('ra', -1)" :disabled="isError" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button @click="doSlew('ra', 1)" :disabled="isError" title="RA +">▶</button>
+            </div>
+            <div class="axis-row">
+              <button @click="doSlew('dec', -1)" :disabled="isError" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button @click="doSlew('dec', 1)" :disabled="isError" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
-            <div class="joy-layout">
-                <div class="joy-speed">
-                    <label>Speed</label>
-                    <select x-model.number="joySpeed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <div class="axis-grid">
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA −">◀</button>
-                        <span class="axis-label">RA</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')" @pointerleave="joyStop('ra')" title="RA +">▶</button>
-                    </div>
-                    <div class="axis-row">
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC −">◀</button>
-                        <span class="axis-label">DEC</span>
-                        <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')" @pointerleave="joyStop('dec')" title="DEC +">▶</button>
-                    </div>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
+        <div class="joy-layout">
+          <div class="joy-speed">
+            <label>Speed</label>
+            <select x-model.number="joySpeed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div class="axis-grid">
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA −">◀</button>
+              <span class="axis-label">RA</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
+                @pointerleave="joyStop('ra')" title="RA +">▶</button>
             </div>
+            <div class="axis-row">
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC −">◀</button>
+              <span class="axis-label">DEC</span>
+              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
+                @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Slew to Coordinates</strong></div>
-            <div class="slew-coords">
-                <div class="slew-field">
-                    <label>RA</label>
-                    <div class="coord-fields">
-                        <input type="text" inputmode="numeric" placeholder="HH" x-model.number="slewTarget.ra.h">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.ra.m">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.ra.s">
-                    </div>
-                </div>
-                <div class="slew-field">
-                    <label>DEC</label>
-                    <div class="coord-fields">
-                        <input type="text" inputmode="decimal" placeholder="±DD" x-model.number="slewTarget.dec.d">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.dec.m">
-                        <span class="coord-sep">:</span>
-                        <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.dec.s">
-                    </div>
-                </div>
-                <div class="slew-field">
-                    <label>Speed</label>
-                    <select x-model.number="slewTarget.speed">
-                        <option value="1">1×</option>
-                        <option value="2">2×</option>
-                        <option value="3">3×</option>
-                        <option value="4">4×</option>
-                    </select>
-                </div>
-                <button class="primary wide" @click="doSlewToCoordinates()" :disabled="isError">SLEW</button>
+      <div class="panel">
+        <div class="panel-header"><strong>Slew to Coordinates</strong></div>
+        <div class="slew-coords">
+          <div class="slew-field">
+            <label>RA</label>
+            <div class="coord-fields">
+              <input type="text" inputmode="numeric" placeholder="HH" x-model.number="slewTarget.ra.h">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.ra.m">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.ra.s">
             </div>
+          </div>
+          <div class="slew-field">
+            <label>DEC</label>
+            <div class="coord-fields">
+              <input type="text" inputmode="decimal" placeholder="±DD" x-model.number="slewTarget.dec.d">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="numeric" placeholder="MM" x-model.number="slewTarget.dec.m">
+              <span class="coord-sep">:</span>
+              <input type="text" inputmode="decimal" placeholder="SS" x-model.number="slewTarget.dec.s">
+            </div>
+          </div>
+          <div class="slew-field">
+            <label>Speed</label>
+            <select x-model.number="slewTarget.speed">
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <button class="primary wide" @click="doSlewToCoordinates()" :disabled="isError">SLEW</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Settings ═══ -->
     <section class="tab-content" x-show="tab === 'settings'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Debug</strong></div>
-            <div class="debug-grid">
-                <div class="debug-group">
-                    <div class="debug-label">RA Axis</div>
-                    <div class="debug-row"><span>Angle</span> <span x-text="debug.ra_axis_deg?.toFixed(4) + '°'"></span></div>
-                    <div class="debug-row"><span>Steps</span> <span x-text="debug.ra_steps"></span></div>
-                    <div class="debug-row"><span>Speed</span> <span x-text="debug.ra_speed?.toFixed(6) + ' °/s'"></span></div>
-                </div>
-                <div class="debug-group">
-                    <div class="debug-label">DEC Axis</div>
-                    <div class="debug-row"><span>Angle</span> <span x-text="debug.dec_axis_deg?.toFixed(4) + '°'"></span></div>
-                    <div class="debug-row"><span>Steps</span> <span x-text="debug.dec_steps"></span></div>
-                    <div class="debug-row"><span>Speed</span> <span x-text="debug.dec_speed?.toFixed(6) + ' °/s'"></span></div>
-                </div>
-                <div class="debug-group">
-                    <div class="debug-label">Limits (°)</div>
-                    <div class="debug-row"><span>RA</span> <span x-text="'[' + debug.limits?.ra_min + ', ' + debug.limits?.ra_max + ']'"></span></div>
-                    <div class="debug-row"><span>DEC</span> <span x-text="'[' + debug.limits?.dec_min + ', ' + debug.limits?.dec_max + ']'"></span></div>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Debug</strong></div>
+        <div class="debug-grid">
+          <div class="debug-group">
+            <div class="debug-label">RA Axis</div>
+            <div class="debug-row"><span>Angle</span> <span x-text="debug.ra_axis_deg?.toFixed(4) + '°'"></span></div>
+            <div class="debug-row"><span>Steps</span> <span x-text="debug.ra_steps"></span></div>
+            <div class="debug-row"><span>Speed</span> <span x-text="debug.ra_speed?.toFixed(6) + ' °/s'"></span></div>
+          </div>
+          <div class="debug-group">
+            <div class="debug-label">DEC Axis</div>
+            <div class="debug-row"><span>Angle</span> <span x-text="debug.dec_axis_deg?.toFixed(4) + '°'"></span></div>
+            <div class="debug-row"><span>Steps</span> <span x-text="debug.dec_steps"></span></div>
+            <div class="debug-row"><span>Speed</span> <span x-text="debug.dec_speed?.toFixed(6) + ' °/s'"></span></div>
+          </div>
+          <div class="debug-group">
+            <div class="debug-label">Limits (°)</div>
+            <div class="debug-row"><span>RA</span> <span
+                x-text="'[' + debug.limits?.ra_min + ', ' + debug.limits?.ra_max + ']'"></span></div>
+            <div class="debug-row"><span>DEC</span> <span
+                x-text="'[' + debug.limits?.dec_min + ', ' + debug.limits?.dec_max + ']'"></span></div>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Settings</strong></div>
-            <div class="settings-row">
-                <span class="settings-label">Date &amp; time</span>
-                <span class="settings-value" x-text="mountTime">--</span>
-                <button @click="updateTime()">Update</button>
-            </div>
-            <div class="settings-row">
-                <span class="settings-label">Location</span>
-                <span class="settings-fields">
-                    <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat" @input="settingsDirty = true" class="settings-input" title="Latitude">
-                    <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon" @input="settingsDirty = true" class="settings-input" title="Longitude">
-                    <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation" @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
-                </span>
-                <button @click="updateSettings()">Update</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Settings</strong></div>
+        <div class="settings-row">
+          <span class="settings-label">Date &amp; time</span>
+          <span class="settings-value" x-text="mountTime">--</span>
+          <button @click="updateTime()">Update</button>
         </div>
+        <div class="settings-row">
+          <span class="settings-label">Location</span>
+          <span class="settings-fields">
+            <input type="text" inputmode="decimal" placeholder="Lat" x-model.number="settingsDraft.lat"
+              @input="settingsDirty = true" class="settings-input" title="Latitude">
+            <input type="text" inputmode="decimal" placeholder="Lon" x-model.number="settingsDraft.lon"
+              @input="settingsDirty = true" class="settings-input" title="Longitude">
+            <input type="text" inputmode="numeric" placeholder="Elev" x-model.number="settingsDraft.elevation"
+              @input="settingsDirty = true" class="settings-input settings-input-short" title="Elevation (m)">
+          </span>
+          <button @click="updateSettings()">Update</button>
+        </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Set current position as</strong></div>
-            <div class="row">
-                <button @click="setLimit('set_home')" :disabled="isError">HOME</button>
-                <button @click="setLimit('set_ra_left')" :disabled="isError">RA Left</button>
-                <button @click="setLimit('set_ra_right')" :disabled="isError">RA Right</button>
-                <button @click="setLimit('set_dec_left')" :disabled="isError">DEC Left</button>
-                <button @click="setLimit('set_dec_right')" :disabled="isError">DEC Right</button>
-                <button class="danger" @click="setLimit('clear_limits')" :disabled="isError">Clear</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Set current position as</strong></div>
+        <div class="row">
+          <button @click="setLimit('set_home')" :disabled="isError">HOME</button>
+          <button @click="setLimit('set_ra_left')" :disabled="isError">RA Left</button>
+          <button @click="setLimit('set_ra_right')" :disabled="isError">RA Right</button>
+          <button @click="setLimit('set_dec_left')" :disabled="isError">DEC Left</button>
+          <button @click="setLimit('set_dec_right')" :disabled="isError">DEC Right</button>
+          <button class="danger" @click="setLimit('clear_limits')" :disabled="isError">Clear</button>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Enfoque (EAF: focuser + fan) ═══ -->
     <section class="tab-content" x-show="tab === 'enfoque'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="stack">
+          <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
+          <div class="metric">
+            <span class="metric-label">Posición</span>
+            <span class="metric-value" x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Focuser</strong></div>
-            <div class="stack">
-                <div class="row">
-                    <span>Posición <b x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></b> pasos</span>
-                    <span>Estado <b x-text="focuserState()"></b></span>
-                    <span>Driver <b x-text="eaf.detected ? (eaf.focuser.driver_ok ? 'OK' : 'error') : '—'"></b></span>
-                </div>
-                <div class="row">
-                    <label class="settings-label">Distancia (pasos)</label>
-                    <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
-                </div>
-                <div class="row">
-                    <button @click="focusMove(-1)" :disabled="focusMoveDisabled()">◀ −</button>
-                    <button class="danger" @click="focusHalt()" :disabled="!eaf.detected || !eaf.focuser.is_moving">HALT</button>
-                    <button @click="focusMove(1)" :disabled="focusMoveDisabled()">+ ▶</button>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Focuser</strong></div>
+        <div class="stack">
+          <div class="joy-layout">
+            <div class="joy-speed">
+              <label>Distancia (pasos)</label>
+              <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
             </div>
+            <div class="axis-grid">
+              <div class="axis-row">
+                <button class="joy-btn" @click="focusMove(-1)" :disabled="focusMoveDisabled()" title="Foco −">◀</button>
+                <span class="axis-label">Foco</span>
+                <button class="joy-btn" @click="focusMove(1)" :disabled="focusMoveDisabled()" title="Foco +">▶</button>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="danger" @click="focusStop()"
+              :disabled="!eaf.detected || !eaf.focuser.is_moving">STOP</button>
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Fan ═══ -->
     <section class="tab-content" x-show="tab === 'fan'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Ventilador</strong></div>
-            <div class="stack">
-                <div class="fan-head">
-                    <span class="onoff" :class="eaf.detected && eaf.fan.relay_command ? 'on' : 'off'">
-                        <i></i><b x-text="eaf.detected ? (eaf.fan.relay_command ? 'ON' : 'OFF') : '—'"></b>
-                    </span>
-                    <div class="fan-metrics">
-                        <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.output_pwm_pct + '%') : '—'"></b></span>
-                        <span>Estado <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
-                    </div>
-                </div>
-                <div class="row">
-                    <button :class="{ primary: eaf.fan.mode === 'normal' }" @click="fanSetMode('normal')" :disabled="!eaf.detected">NORMAL</button>
-                    <button :class="{ primary: eaf.fan.mode === 'soft' }" @click="fanSetMode('soft')" :disabled="!eaf.detected">SUAVE</button>
-                    <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">APAGADO</button>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Ventilador</strong></div>
+        <div class="stack">
+          <div class="fan-head">
+            <span class="onoff" :class="eaf.detected && eaf.fan.power ? 'on' : 'off'">
+              <i></i><b x-text="eaf.detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
+            </span>
+            <div class="fan-metrics">
+              <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+              <span>RPM <b x-text="eaf.detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
             </div>
+          </div>
+          <div class="row">
+            <button class="primary" @click="fanSetPower(!eaf.fan.power)" :disabled="!eaf.detected"
+              x-text="eaf.fan.power ? 'APAGAR' : 'ENCENDER'"></button>
+            <label class="settings-label">Velocidad</label>
+            <input type="range" min="0" max="100" step="5" class="grow" x-model.number="eaf.fan.speed"
+              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.detected">
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Sensores ═══ -->
     <section class="tab-content" x-show="tab === 'sensores'">
 
-        <div class="panel">
-            <div class="panel-header"><strong>Estado</strong></div>
-            <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
-        </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Ambiente</strong></div>
-            <div class="stack">
-                <div class="metric">
-                    <span class="metric-label">Temperatura</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Humedad</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
-                </div>
-                <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
-                    <span class="metric-label">Rocío</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Ambiente</strong></div>
+        <div class="sensor-grid">
+          <div class="stack">
+            <div class="metric">
+              <span class="metric-label">Temperatura</span>
+              <span class="metric-value"
+                x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
             </div>
+            <div class="metric">
+              <span class="metric-label">Humedad</span>
+              <span class="metric-value"
+                x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
+            </div>
+          </div>
+          <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
+            <span class="metric-label">Rocío</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Espejo Primario</strong></div>
-            <div class="stack">
-                <div class="metric">
-                    <span class="metric-label">Temperatura</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-                <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
-                    <span class="metric-label">Δ vs ambiente</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Espejo Primario</strong></div>
+        <div class="sensor-grid">
+          <div class="metric">
+            <span class="metric-label">Temperatura</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
+          <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
+            <span class="metric-label">Δ</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
+          </div>
         </div>
+      </div>
 
-        <div class="panel">
-            <div class="panel-header"><strong>Vibración</strong></div>
-            <div class="stack">
-                <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
-                    <span class="metric-label">RMS total</span>
-                    <span class="metric-value" x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel-header"><strong>Vibración</strong></div>
+        <div class="stack">
+          <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
+            <span class="metric-label">RMS total</span>
+            <span class="metric-value"
+              x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+          </div>
         </div>
+      </div>
 
     </section>
 
     <!-- ═══ Banner (errores temporales de acciones) ═══ -->
     <div class="error-banner" x-show="errorMessage" x-text="errorMessage" x-transition.opacity.duration.200ms></div>
 
-</div>
+  </div>
 
-<script>function mountApp() {
+  <script>function mountApp() {
     // Wails exposes the Go App binding at window.go.<package>.<Struct>.
     const app = () => window.go.ui.App;
 
@@ -1139,7 +1180,7 @@ input::placeholder {
         joyRates: {ra: 0, dec: 0},
         eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
               focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
-              fan: {mode: '', output_pwm_pct: 0, target_pwm_pct: 0, relay_command: false, power_ok: false, delta_c: null, thermal_stage: '', reason: ''},
+              fan: {power: false, speed: 0, power_ok: false, rpm: null},
               environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
               vibration: {rms_total: 0}},
         focusStep: 100,
@@ -1320,25 +1361,21 @@ input::placeholder {
             return false;
         },
 
-        focuserState() {
-            if (!this.eaf.detected) return '—';
-            if (this.eaf.focuser.is_moving) return 'moviendo';
-            const s = this.eaf.focuser.op_status;
-            if (s && s !== 'idle') return s;
-            return 'quieto';
-        },
-
         focusMove(dir) {
             const step = Math.max(1, Math.round(this.focusStep || 100));
             this.run(app().FocusMove(dir * step));
         },
 
-        focusHalt() {
-            this.run(app().FocusHalt());
+        focusStop() {
+            this.run(app().FocusStop());
         },
 
-        fanSetMode(mode) {
-            this.run(app().FanSetMode(mode));
+        fanSetPower(on) {
+            this.run(app().FanSetPower(on));
+        },
+
+        fanSetSpeed(pct) {
+            this.run(app().FanSetSpeed(pct));
         },
 
         fmtUptime(s) {
@@ -1375,6 +1412,7 @@ input::placeholder {
         eafStatusText() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            if (this.eaf.focuser.is_moving) return 'Moviendo';
             return 'Ok';
         },
 
@@ -1400,7 +1438,7 @@ input::placeholder {
     }
 }
 </script>
-<script>(()=>{var ee=!1,re=!1,W=[],ne=-1,ie=!1;function Ve(t){Dn(t)}function Ue(){ie=!0}function qe(){ie=!1,We()}function Dn(t){W.includes(t)||W.push(t),We()}function Ke(t){let e=W.indexOf(t);e!==-1&&e>ne&&W.splice(e,1)}function We(){if(!re&&!ee){if(ie)return;ee=!0,queueMicrotask(In)}}function In(){ee=!1,re=!0;for(let t=0;t<W.length;t++)W[t](),ne=t;W.length=0,ne=-1,re=!1}var C,R,j,se,oe=!0;function Ge(t){oe=!1,t(),oe=!0}function Je(t){C=t.reactive,j=t.release,R=e=>t.effect(e,{scheduler:r=>{oe?Ve(r):r()}}),se=t.raw}function ae(t){R=t}function Ye(t){let e=()=>{};return[n=>{let i=R(n);return t._x_effects||(t._x_effects=new Set,t._x_runEffects=()=>{t._x_effects.forEach(o=>o())}),t._x_effects.add(i),e=()=>{i!==void 0&&(t._x_effects.delete(i),j(i))},i},()=>{e()}]}function St(t,e){let r=!0,n,i,o=R(()=>{let s=t(),a=JSON.stringify(s);if(!r&&(typeof s=="object"||s!==n)){let c=typeof n=="object"?JSON.parse(i):n;queueMicrotask(()=>{e(s,c)})}n=s,i=a,r=!1});return()=>j(o)}async function Xe(t){Ue();try{await t(),await Promise.resolve()}finally{qe()}}var Ze=[],Qe=[],tr=[];function er(t){tr.push(t)}function et(t,e){typeof e=="function"?(t._x_cleanups||(t._x_cleanups=[]),t._x_cleanups.push(e)):(e=t,Qe.push(e))}function At(t){Ze.push(t)}function Ot(t,e,r){t._x_attributeCleanups||(t._x_attributeCleanups={}),t._x_attributeCleanups[e]||(t._x_attributeCleanups[e]=[]),t._x_attributeCleanups[e].push(r)}function ce(t,e){t._x_attributeCleanups&&Object.entries(t._x_attributeCleanups).forEach(([r,n])=>{(e===void 0||e.includes(r))&&(n.forEach(i=>i()),delete t._x_attributeCleanups[r])})}function rr(t){for(t._x_effects?.forEach(Ke);t._x_cleanups?.length;)t._x_cleanups.pop()()}var le=new MutationObserver(pe),ue=!1;function ut(){le.observe(document,{subtree:!0,childList:!0,attributes:!0,attributeOldValue:!0}),ue=!0}function fe(){kn(),le.disconnect(),ue=!1}var lt=[];function kn(){let t=le.takeRecords();lt.push(()=>t.length>0&&pe(t));let e=lt.length;queueMicrotask(()=>{if(lt.length===e)for(;lt.length>0;)lt.shift()()})}function m(t){if(!ue)return t();fe();let e=t();return ut(),e}var de=!1,vt=[];function nr(){de=!0}function ir(){de=!1,pe(vt),vt=[]}function pe(t){if(de){vt=vt.concat(t);return}let e=[],r=new Set,n=new Map,i=new Map;for(let o=0;o<t.length;o++)if(!t[o].target._x_ignoreMutationObserver&&(t[o].type==="childList"&&(t[o].removedNodes.forEach(s=>{s.nodeType===1&&s._x_marker&&r.add(s)}),t[o].addedNodes.forEach(s=>{if(s.nodeType===1){if(r.has(s)){r.delete(s);return}s._x_marker||e.push(s)}})),t[o].type==="attributes")){let s=t[o].target,a=t[o].attributeName,c=t[o].oldValue,l=()=>{n.has(s)||n.set(s,[]),n.get(s).push({name:a,value:s.getAttribute(a)})},u=()=>{i.has(s)||i.set(s,[]),i.get(s).push(a)};s.hasAttribute(a)&&c===null?l():s.hasAttribute(a)?(u(),l()):u()}i.forEach((o,s)=>{ce(s,o)}),n.forEach((o,s)=>{Ze.forEach(a=>a(s,o))});for(let o of r)e.some(s=>s.contains(o))||Qe.forEach(s=>s(o));for(let o of e)o.isConnected&&tr.forEach(s=>s(o));e=null,r=null,n=null,i=null}function Ct(t){return P(F(t))}function N(t,e,r){return t._x_dataStack=[e,...F(r||t)],()=>{t._x_dataStack=t._x_dataStack.filter(n=>n!==e)}}function F(t){return t._x_dataStack?t._x_dataStack:typeof ShadowRoot=="function"&&t instanceof ShadowRoot?F(t.host):t.parentNode?F(t.parentNode):[]}function P(t){return new Proxy({objects:t},$n)}function or(t,e){return t===null||t===Object.prototype?null:Object.prototype.hasOwnProperty.call(t,e)?t:or(Object.getPrototypeOf(t),e)}var $n={ownKeys({objects:t}){return Array.from(new Set(t.flatMap(e=>Object.keys(e))))},has({objects:t},e){return e==Symbol.unscopables?!1:t.some(r=>Object.prototype.hasOwnProperty.call(r,e)||Reflect.has(r,e))},get({objects:t},e,r){return e=="toJSON"?Ln:Reflect.get(t.find(n=>Reflect.has(n,e))||{},e,r)},set({objects:t},e,r,n){let i;for(let s of t)if(i=or(s,e),i)break;i||(i=t[t.length-1]);let o=Object.getOwnPropertyDescriptor(i,e);return o?.set&&o?.get?o.set.call(n,r)||!0:Reflect.set(i,e,r)}};function Ln(){return Reflect.ownKeys(this).reduce((e,r)=>(e[r]=Reflect.get(this,r),e),{})}function rt(t){let e=n=>typeof n=="object"&&!Array.isArray(n)&&n!==null,r=(n,i="")=>{Object.entries(Object.getOwnPropertyDescriptors(n)).forEach(([o,{value:s,enumerable:a}])=>{if(a===!1||s===void 0||typeof s=="object"&&s!==null&&s.__v_skip)return;let c=i===""?o:`${i}.${o}`;typeof s=="object"&&s!==null&&s._x_interceptor?n[o]=s.initialize(t,c,o):e(s)&&s!==n&&!(s instanceof Element)&&r(s,c)})};return r(t)}function Tt(t,e=()=>{}){let r={initialValue:void 0,_x_interceptor:!0,initialize(n,i,o){return t(this.initialValue,()=>jn(n,i),s=>me(n,i,s),i,o)}};return e(r),n=>{if(typeof n=="object"&&n!==null&&n._x_interceptor){let i=r.initialize.bind(r);r.initialize=(o,s,a)=>{let c=n.initialize(o,s,a);return r.initialValue=c,i(o,s,a)}}else r.initialValue=n;return r}}function jn(t,e){return e.split(".").reduce((r,n)=>r[n],t)}function me(t,e,r){if(typeof e=="string"&&(e=e.split(".")),e.length===1)t[e[0]]=r;else{if(e.length===0)throw error;return t[e[0]]||(t[e[0]]={}),me(t[e[0]],e.slice(1),r)}}var sr={};function x(t,e){sr[t]=e}function H(t,e){let r=Fn(e);return Object.entries(sr).forEach(([n,i])=>{Object.defineProperty(t,`${n}`,{get(){return i(e,r)},enumerable:!1})}),t}function Fn(t){let[e,r]=he(t),n={interceptor:Tt,...e};return et(t,r),n}function ar(t,e,r,...n){try{return r(...n)}catch(i){nt(i,t,e)}}function nt(...t){return cr(...t)}var cr=Bn;function lr(t){cr=t}function Bn(t,e,r=void 0){t=Object.assign(t??{message:"No error message given."},{el:e,expression:r}),console.warn(`Alpine Expression Error: ${t.message}
+  <script>(()=>{var ee=!1,re=!1,W=[],ne=-1,ie=!1;function Ve(t){Dn(t)}function Ue(){ie=!0}function qe(){ie=!1,We()}function Dn(t){W.includes(t)||W.push(t),We()}function Ke(t){let e=W.indexOf(t);e!==-1&&e>ne&&W.splice(e,1)}function We(){if(!re&&!ee){if(ie)return;ee=!0,queueMicrotask(In)}}function In(){ee=!1,re=!0;for(let t=0;t<W.length;t++)W[t](),ne=t;W.length=0,ne=-1,re=!1}var C,R,j,se,oe=!0;function Ge(t){oe=!1,t(),oe=!0}function Je(t){C=t.reactive,j=t.release,R=e=>t.effect(e,{scheduler:r=>{oe?Ve(r):r()}}),se=t.raw}function ae(t){R=t}function Ye(t){let e=()=>{};return[n=>{let i=R(n);return t._x_effects||(t._x_effects=new Set,t._x_runEffects=()=>{t._x_effects.forEach(o=>o())}),t._x_effects.add(i),e=()=>{i!==void 0&&(t._x_effects.delete(i),j(i))},i},()=>{e()}]}function St(t,e){let r=!0,n,i,o=R(()=>{let s=t(),a=JSON.stringify(s);if(!r&&(typeof s=="object"||s!==n)){let c=typeof n=="object"?JSON.parse(i):n;queueMicrotask(()=>{e(s,c)})}n=s,i=a,r=!1});return()=>j(o)}async function Xe(t){Ue();try{await t(),await Promise.resolve()}finally{qe()}}var Ze=[],Qe=[],tr=[];function er(t){tr.push(t)}function et(t,e){typeof e=="function"?(t._x_cleanups||(t._x_cleanups=[]),t._x_cleanups.push(e)):(e=t,Qe.push(e))}function At(t){Ze.push(t)}function Ot(t,e,r){t._x_attributeCleanups||(t._x_attributeCleanups={}),t._x_attributeCleanups[e]||(t._x_attributeCleanups[e]=[]),t._x_attributeCleanups[e].push(r)}function ce(t,e){t._x_attributeCleanups&&Object.entries(t._x_attributeCleanups).forEach(([r,n])=>{(e===void 0||e.includes(r))&&(n.forEach(i=>i()),delete t._x_attributeCleanups[r])})}function rr(t){for(t._x_effects?.forEach(Ke);t._x_cleanups?.length;)t._x_cleanups.pop()()}var le=new MutationObserver(pe),ue=!1;function ut(){le.observe(document,{subtree:!0,childList:!0,attributes:!0,attributeOldValue:!0}),ue=!0}function fe(){kn(),le.disconnect(),ue=!1}var lt=[];function kn(){let t=le.takeRecords();lt.push(()=>t.length>0&&pe(t));let e=lt.length;queueMicrotask(()=>{if(lt.length===e)for(;lt.length>0;)lt.shift()()})}function m(t){if(!ue)return t();fe();let e=t();return ut(),e}var de=!1,vt=[];function nr(){de=!0}function ir(){de=!1,pe(vt),vt=[]}function pe(t){if(de){vt=vt.concat(t);return}let e=[],r=new Set,n=new Map,i=new Map;for(let o=0;o<t.length;o++)if(!t[o].target._x_ignoreMutationObserver&&(t[o].type==="childList"&&(t[o].removedNodes.forEach(s=>{s.nodeType===1&&s._x_marker&&r.add(s)}),t[o].addedNodes.forEach(s=>{if(s.nodeType===1){if(r.has(s)){r.delete(s);return}s._x_marker||e.push(s)}})),t[o].type==="attributes")){let s=t[o].target,a=t[o].attributeName,c=t[o].oldValue,l=()=>{n.has(s)||n.set(s,[]),n.get(s).push({name:a,value:s.getAttribute(a)})},u=()=>{i.has(s)||i.set(s,[]),i.get(s).push(a)};s.hasAttribute(a)&&c===null?l():s.hasAttribute(a)?(u(),l()):u()}i.forEach((o,s)=>{ce(s,o)}),n.forEach((o,s)=>{Ze.forEach(a=>a(s,o))});for(let o of r)e.some(s=>s.contains(o))||Qe.forEach(s=>s(o));for(let o of e)o.isConnected&&tr.forEach(s=>s(o));e=null,r=null,n=null,i=null}function Ct(t){return P(F(t))}function N(t,e,r){return t._x_dataStack=[e,...F(r||t)],()=>{t._x_dataStack=t._x_dataStack.filter(n=>n!==e)}}function F(t){return t._x_dataStack?t._x_dataStack:typeof ShadowRoot=="function"&&t instanceof ShadowRoot?F(t.host):t.parentNode?F(t.parentNode):[]}function P(t){return new Proxy({objects:t},$n)}function or(t,e){return t===null||t===Object.prototype?null:Object.prototype.hasOwnProperty.call(t,e)?t:or(Object.getPrototypeOf(t),e)}var $n={ownKeys({objects:t}){return Array.from(new Set(t.flatMap(e=>Object.keys(e))))},has({objects:t},e){return e==Symbol.unscopables?!1:t.some(r=>Object.prototype.hasOwnProperty.call(r,e)||Reflect.has(r,e))},get({objects:t},e,r){return e=="toJSON"?Ln:Reflect.get(t.find(n=>Reflect.has(n,e))||{},e,r)},set({objects:t},e,r,n){let i;for(let s of t)if(i=or(s,e),i)break;i||(i=t[t.length-1]);let o=Object.getOwnPropertyDescriptor(i,e);return o?.set&&o?.get?o.set.call(n,r)||!0:Reflect.set(i,e,r)}};function Ln(){return Reflect.ownKeys(this).reduce((e,r)=>(e[r]=Reflect.get(this,r),e),{})}function rt(t){let e=n=>typeof n=="object"&&!Array.isArray(n)&&n!==null,r=(n,i="")=>{Object.entries(Object.getOwnPropertyDescriptors(n)).forEach(([o,{value:s,enumerable:a}])=>{if(a===!1||s===void 0||typeof s=="object"&&s!==null&&s.__v_skip)return;let c=i===""?o:`${i}.${o}`;typeof s=="object"&&s!==null&&s._x_interceptor?n[o]=s.initialize(t,c,o):e(s)&&s!==n&&!(s instanceof Element)&&r(s,c)})};return r(t)}function Tt(t,e=()=>{}){let r={initialValue:void 0,_x_interceptor:!0,initialize(n,i,o){return t(this.initialValue,()=>jn(n,i),s=>me(n,i,s),i,o)}};return e(r),n=>{if(typeof n=="object"&&n!==null&&n._x_interceptor){let i=r.initialize.bind(r);r.initialize=(o,s,a)=>{let c=n.initialize(o,s,a);return r.initialValue=c,i(o,s,a)}}else r.initialValue=n;return r}}function jn(t,e){return e.split(".").reduce((r,n)=>r[n],t)}function me(t,e,r){if(typeof e=="string"&&(e=e.split(".")),e.length===1)t[e[0]]=r;else{if(e.length===0)throw error;return t[e[0]]||(t[e[0]]={}),me(t[e[0]],e.slice(1),r)}}var sr={};function x(t,e){sr[t]=e}function H(t,e){let r=Fn(e);return Object.entries(sr).forEach(([n,i])=>{Object.defineProperty(t,`${n}`,{get(){return i(e,r)},enumerable:!1})}),t}function Fn(t){let[e,r]=he(t),n={interceptor:Tt,...e};return et(t,r),n}function ar(t,e,r,...n){try{return r(...n)}catch(i){nt(i,t,e)}}function nt(...t){return cr(...t)}var cr=Bn;function lr(t){cr=t}function Bn(t,e,r=void 0){t=Object.assign(t??{message:"No error message given."},{el:e,expression:r}),console.warn(`Alpine Expression Error: ${t.message}
 
 ${r?'Expression: "'+r+`"
 

@@ -50,12 +50,12 @@ func isCounterChanged(err error) bool {
 	return errors.As(err, &e) && e.Code == "COUNTER_CHANGED"
 }
 
-// Halt stops the focuser immediately.
-func (e *EAF) Halt() error {
+// Stop stops the focuser immediately.
+func (e *EAF) Stop() error {
 	c, err := e.getConn()
 	if err != nil {
 		return err
 	}
-	_, err = c.FocuserHalt()
+	_, err = c.FocuserStop()
 	return err
 }

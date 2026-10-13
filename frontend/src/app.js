@@ -30,7 +30,7 @@ function mountApp() {
         joyRates: {ra: 0, dec: 0},
         eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
               focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
-              fan: {mode: '', output_pwm_pct: 0, target_pwm_pct: 0, relay_command: false, power_ok: false, delta_c: null, thermal_stage: '', reason: ''},
+              fan: {power: false, speed: 0, power_ok: false, rpm: null},
               environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
               vibration: {rms_total: 0}},
         focusStep: 100,
@@ -211,25 +211,21 @@ function mountApp() {
             return false;
         },
 
-        focuserState() {
-            if (!this.eaf.detected) return '—';
-            if (this.eaf.focuser.is_moving) return 'moviendo';
-            const s = this.eaf.focuser.op_status;
-            if (s && s !== 'idle') return s;
-            return 'quieto';
-        },
-
         focusMove(dir) {
             const step = Math.max(1, Math.round(this.focusStep || 100));
             this.run(app().FocusMove(dir * step));
         },
 
-        focusHalt() {
-            this.run(app().FocusHalt());
+        focusStop() {
+            this.run(app().FocusStop());
         },
 
-        fanSetMode(mode) {
-            this.run(app().FanSetMode(mode));
+        fanSetPower(on) {
+            this.run(app().FanSetPower(on));
+        },
+
+        fanSetSpeed(pct) {
+            this.run(app().FanSetSpeed(pct));
         },
 
         fmtUptime(s) {
@@ -266,6 +262,7 @@ function mountApp() {
         eafStatusText() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            if (this.eaf.focuser.is_moving) return 'Moviendo';
             return 'Ok';
         },
 

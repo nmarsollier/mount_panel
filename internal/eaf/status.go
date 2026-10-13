@@ -27,14 +27,10 @@ type FocuserView struct {
 
 // FanView is the fan subset shown in the UI.
 type FanView struct {
-	Mode         string   `json:"mode"`
-	OutputPWMPct int      `json:"output_pwm_pct"`
-	TargetPWMPct int      `json:"target_pwm_pct"`
-	RelayCommand bool     `json:"relay_command"`
-	PowerOK      bool     `json:"power_ok"`
-	DeltaC       *float64 `json:"delta_c"`
-	ThermalStage string   `json:"thermal_stage"`
-	Reason       string   `json:"reason"`
+	Power   bool `json:"power"`
+	Speed   int  `json:"speed"`
+	PowerOK bool `json:"power_ok"`
+	RPM     *int `json:"rpm"`
 }
 
 // EnvironmentView is the environment subset shown in the UI.
@@ -86,14 +82,10 @@ func (e *EAF) Status() Status {
 		logx.Warn(eafCtx(), "state/fan: "+err.Error())
 	} else {
 		st.Fan = FanView{
-			Mode:         fan.Mode,
-			OutputPWMPct: fan.OutputPWMPct,
-			TargetPWMPct: fan.TargetPWMPct,
-			RelayCommand: fan.RelayCommand,
-			PowerOK:      fan.PowerAvailable,
-			DeltaC:       fan.DeltaC,
-			ThermalStage: fan.ThermalStage,
-			Reason:       fan.Reason,
+			Power:   fan.Power,
+			Speed:   fan.Speed,
+			PowerOK: fan.PowerAvailable,
+			RPM:     fan.RPM,
 		}
 	}
 	if env, err := c.StateEnvironment(); err != nil {

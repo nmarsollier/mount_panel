@@ -25,7 +25,7 @@ func putMove(c *gin.Context) {
 // putHalt stops the focuser.
 func putHalt(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	if err := eaf.Get().Halt(); err != nil {
+	if err := eaf.Get().Stop(); err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
 		return
 	}
