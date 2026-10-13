@@ -16,40 +16,27 @@ function mountApp() {
         settingsDraft: {lat: 0, lon: 0, elevation: 0},
         settingsDirty: false,
         mountTime: '--',
-        timeAutoSet: false,
-        errorMessage: '',
-        errorTimer: null,
         slew: {degrees: 5, speed: 4},
         joySpeed: 4,
         slewTarget: {ra: {h: 0, m: 0, s: 0}, dec: {d: 0, m: 0, s: 0}, speed: 4},
         serverTracking: 'none',
-        isHome: false,
         isParked: false,
         selectedTracking: null,
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
-        eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
-              focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
-              fan: {power: false, speed: 0, power_ok: false, rpm: null},
-              environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
-              vibration: {rms_total: 0}},
+        eaf: {detected: false, power: false, health: 'unknown',
+              focuser: {counter_steps: 0, is_moving: false, enabled: true},
+              fan: {mode: 'off', power: false, speed: 0, rpm: null},
+              environment: {error: null, ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0},
+              vibration: {error: null, rms_total: 0}},
         focusStep: 100,
 
-        /* Show an error message for 5 seconds, then auto-clear. */
-        showError(msg) {
-            this.errorMessage = msg;
-            if (this.errorTimer) clearTimeout(this.errorTimer);
-            this.errorTimer = setTimeout(() => {
-                this.errorMessage = '';
-            }, 5000);
-        },
-
-        /* Run a binding promise, refresh status, and surface errors. */
+        /* Run a binding promise and refresh status. */
         run(promise) {
             return promise
                 .then(() => this.fetchStatus())
                 .then(() => this.fetchEAFStatus())
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         fetchStatus() {
@@ -59,7 +46,6 @@ function mountApp() {
                 this.pierSide = j.pier_side || '--';
                 this.mountTime = j.time || '--';
                 this.serverTracking = j.tracking || 'none';
-                this.isHome = j.is_home || false;
                 this.isParked = (j.status === 'parked');
                 this.isError = (j.status === 'error');
                 this.isDisconnected = (j.status === 'disconnected');
@@ -125,13 +111,13 @@ function mountApp() {
             const dps = speeds[this.joySpeed] || 6.0;
             this.joyRates[axis] = dir * dps;
             app().MoveAxisSpeed(this.joyRates.ra, this.joyRates.dec)
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         joyStop(axis) {
             this.joyRates[axis] = 0;
             app().MoveAxisSpeed(this.joyRates.ra, this.joyRates.dec)
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         doSlew(axis, dir) {
@@ -150,11 +136,11 @@ function mountApp() {
             const ds = this.slewTarget.dec.s;
 
             if (isNaN(rh) || rh < 0 || rh > 23 || isNaN(rm) || rm < 0 || rm > 59 || isNaN(rs) || rs < 0 || rs >= 60) {
-                this.showError('Invalid RA — H: 0–23, M: 0–59, S: 0–59.999');
+                console.warn('Invalid RA — H: 0–23, M: 0–59, S: 0–59.999');
                 return;
             }
             if (isNaN(dd) || dd < -180 || dd > 180 || isNaN(dm) || dm < 0 || dm > 59 || isNaN(ds) || ds < 0 || ds >= 60) {
-                this.showError('Invalid DEC — D: −180…+180, M: 0–59, S: 0–59.999');
+                console.warn('Invalid DEC — D: −180…+180, M: 0–59, S: 0–59.999');
                 return;
             }
 
@@ -170,7 +156,7 @@ function mountApp() {
             const d = this.settingsDraft;
             const lat = parseFloat(d.lat), lon = parseFloat(d.lon), elev = parseFloat(d.elev);
             if (isNaN(lat) || isNaN(lon) || isNaN(elev)) {
-                this.showError('Location fields must be valid numbers');
+                console.warn('Location fields must be valid numbers');
                 return null;
             }
             return {lat, lon, elev};
@@ -207,6 +193,7 @@ function mountApp() {
             if (!this.eaf.detected) return true;
             if (this.eaf.health === 'fault') return true;
             if (!this.eaf.power) return true;
+            if (!this.eaf.focuser.enabled) return true;
             if (this.eaf.focuser.is_moving) return true;
             return false;
         },
@@ -220,22 +207,25 @@ function mountApp() {
             this.run(app().FocusStop());
         },
 
-        fanSetPower(on) {
-            this.run(app().FanSetPower(on));
+        focusToggleEnabled() {
+            this.run(app().FocusSetEnabled(!this.eaf.focuser.enabled));
+        },
+
+        focuserHeaderState() {
+            if (!this.eaf.detected) return '—';
+            if (this.eaf.health === 'fault') return 'Fallo';
+            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
+            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            return 'Ok';
+        },
+
+        fanSetMode(mode) {
+            this.run(app().FanSetMode(mode));
         },
 
         fanSetSpeed(pct) {
-            this.run(app().FanSetSpeed(pct));
-        },
-
-        fmtUptime(s) {
-            if (s == null) return '—';
-            const h = Math.floor(s / 3600);
-            const m = Math.floor((s % 3600) / 60);
-            const sec = s % 60;
-            if (h > 0) return h + 'h ' + m + 'm ' + sec + 's';
-            if (m > 0) return m + 'm ' + sec + 's';
-            return sec + 's';
+            const v = Math.max(1, Math.min(100, Math.round(pct)));
+            this.run(app().FanSetSpeed(v));
         },
 
         fatalMessage() {
@@ -262,22 +252,30 @@ function mountApp() {
         eafStatusText() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
             if (this.eaf.focuser.is_moving) return 'Moviendo';
             return 'Ok';
         },
 
         eafStatusClass() {
-            return (!this.eaf.detected || this.eaf.health === 'fault') ? 'status-error' : 'status-ok';
+            if (!this.eaf.detected || this.eaf.health === 'fault') return 'status-error';
+            if (!this.eaf.focuser.enabled) return 'status-warn';
+            return 'status-ok';
         },
 
-        sensorStatusText() {
+        sensorOk(key) {
+            if (!this.eaf.detected) return false;
+            if (key === 'ambiente' || key === 'espejo') return this.eaf.environment.error == null;
+            if (key === 'vibracion') return this.eaf.vibration.error == null;
+            return false;
+        },
+
+        sensorError() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
-            if (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok') return 'Fallo de sensores: ' + this.eaf.sensor_health;
-            return 'Sensores OK';
-        },
-
-        sensorStatusClass() {
-            return (!this.eaf.detected || (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok')) ? 'status-error' : 'status-ok';
+            const errs = [];
+            if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
+            if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);
+            return errs.join(' · ');
         },
 
         init() {

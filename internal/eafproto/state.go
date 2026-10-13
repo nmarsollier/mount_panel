@@ -38,6 +38,7 @@ type FocuserState struct {
 	TargetCounter  int64   `json:"target_counter"`
 	ExecutedSteps  int64   `json:"executed_steps"`
 	SpeedStepsS    float64 `json:"speed_steps_s"`
+	Enabled        bool    `json:"enabled"`
 	EnabledCommand bool    `json:"enabled_command"`
 	Guard          struct {
 		Enabled    bool  `json:"enabled"`
@@ -57,12 +58,14 @@ type FocuserState struct {
 	Error *string `json:"error"`
 }
 
-// FanState is the fan snapshot: the power channel (relay), the speed channel
-// (PWM 0..100 %) and the tachometer reading when available.
+// FanState is the fan snapshot: the mode (off/auto/manual), the relay power,
+// the effective and manual speeds, and the tachometer reading when available.
 type FanState struct {
 	Error          *string `json:"error"`
+	Mode           string  `json:"mode"`
 	Power          bool    `json:"power"`
 	Speed          int     `json:"speed"`
+	ManualSpeed    int     `json:"manual_speed"`
 	PowerAvailable bool    `json:"power_available"`
 	RPM            *int    `json:"rpm"`
 }
@@ -70,6 +73,7 @@ type FanState struct {
 // EnvironmentState is the environment snapshot: ambient/mirror temperatures,
 // humidity and dew point (mock values until the sensors are ported).
 type EnvironmentState struct {
+	Error               *string `json:"error"`
 	AmbientC            float64 `json:"ambient_c"`
 	HumidityPct         float64 `json:"humidity_pct"`
 	MirrorC             float64 `json:"mirror_c"`

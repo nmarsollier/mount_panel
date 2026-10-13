@@ -14,7 +14,6 @@
 :root {
     --bg: #0c0a14;
     --panel: #120f1c;
-    --panel-raised: #18142a;
     --border: #251f3a;
     --accent: #7c3aed;
     --accent-bright: #a78bfa;
@@ -80,18 +79,6 @@ body {
     text-shadow: 0 0 18px var(--danger-glow);
 }
 
-.status-badge {
-    padding: 2px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .5px;
-    background: var(--btn-bg);
-    color: var(--text-accent);
-    border: 1px solid var(--accent);
-    text-transform: uppercase;
-}
-
 .conn-status {
     display: flex;
     gap: 6px;
@@ -129,6 +116,25 @@ body {
     border-color: #5c4a12;
 }
 
+.conn-chip.conn-error {
+    color: #f87171;
+    border-color: #7f1d1d;
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.15);
+}
+
+.sensor-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.sensor-error {
+    font-size: 12px;
+    font-weight: 500;
+    color: #f87171;
+}
+
 .header-coords {
     display: flex;
     gap: 16px;
@@ -162,6 +168,10 @@ body {
     gap: 12px;
     font-size: 11px;
     color: var(--text-dim);
+}
+
+.header-info + .header-info {
+    margin-top: 4px;
 }
 
 .header-info b {
@@ -225,6 +235,16 @@ body {
     margin-bottom: 7px;
 }
 
+.panel-row {
+    display: flex;
+    gap: 7px;
+}
+
+.panel-row .panel {
+    flex: 1;
+    min-width: 0;
+}
+
 .panel-header {
     display: flex;
     align-items: center;
@@ -272,6 +292,12 @@ body {
     color: #f87171;
     border-color: var(--danger);
     background: rgba(220, 38, 38, 0.10);
+}
+
+.status-warn {
+    color: #fbbf24;
+    border-color: #5c4a12;
+    background: rgba(251, 191, 36, 0.10);
 }
 
 .fan-head {
@@ -672,54 +698,6 @@ input::placeholder {
     word-break: break-all;
 }
 
-/* ═══ Banners (overlay at bottom) ═══ */
-
-.error-banner {
-    position: fixed;
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
-    padding: 9px 14px;
-    border-radius: 8px;
-    background: #1a0c12;
-    border: 1px solid var(--danger);
-    color: #fca5a5;
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    box-shadow: 0 0 20px var(--danger-glow);
-    z-index: 10;
-}
-
-.fatal-banner {
-    position: fixed;
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
-    padding: 10px 16px;
-    border-radius: 8px;
-    background: #1a0008;
-    border: 2px solid var(--danger);
-    color: #f87171;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    box-shadow: 0 0 26px rgba(220, 38, 38, 0.35);
-    z-index: 10;
-}
-
-.status-error {
-    background: var(--danger) !important;
-    color: #fff !important;
-    border-color: var(--danger) !important;
-}
-
-.status-off {
-    background: #3a2a08 !important;
-    color: #fbbf24 !important;
-    border-color: #f59e0b !important;
-}
-
 .power-off {
     color: var(--danger);
     font-weight: 600;
@@ -769,6 +747,12 @@ input::placeholder {
         <span>Lon <b x-text="serverSettings.lon"></b></span>
         <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
       </div>
+      <div class="header-info">
+        <span>Temperatura <b x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(1) + '°C') : '—'"></b></span>
+        <span>Focuser <b x-text="focuserHeaderState()"></b></span>
+        <span>Fan <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+        <span>Vibración <b x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></b></span>
+      </div>
     </header>
 
     <!-- ═══ Tabs ═══ -->
@@ -777,12 +761,12 @@ input::placeholder {
         @click="tab = 'principal'">Montura</button>
       <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }"
         @click="tab = 'movimiento'">Movimiento</button>
+      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
+        @click="tab = 'settings'">Settings</button>
       <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
       <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
       <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }"
         @click="tab = 'sensores'">Sensores</button>
-      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
-        @click="tab = 'settings'">Settings</button>
     </nav>
 
     <!-- ═══ Montura ═══ -->
@@ -804,46 +788,48 @@ input::placeholder {
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
-        <div class="joy-layout">
-          <div class="joy-speed">
-            <label>Speed</label>
-            <select x-model.number="joySpeed">
-              <option value="1">1×</option>
-              <option value="2">2×</option>
-              <option value="3">3×</option>
-              <option value="4">4×</option>
-            </select>
-          </div>
-          <div class="axis-grid">
-            <div class="axis-row">
-              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
-                @pointerleave="joyStop('ra')" title="RA −">◀</button>
-              <span class="axis-label">RA</span>
-              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
-                @pointerleave="joyStop('ra')" title="RA +">▶</button>
+      <div class="panel-row">
+        <div class="panel">
+          <div class="panel-header"><strong>Move Axis</strong><span class="hint">hold to move</span></div>
+          <div class="joy-layout">
+            <div class="joy-speed">
+              <label>Speed</label>
+              <select x-model.number="joySpeed">
+                <option value="1">1×</option>
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="4">4×</option>
+              </select>
             </div>
-            <div class="axis-row">
-              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
-                @pointerleave="joyStop('dec')" title="DEC −">◀</button>
-              <span class="axis-label">DEC</span>
-              <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
-                @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+            <div class="axis-grid">
+              <div class="axis-row">
+                <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', -1)" @pointerup="joyStop('ra')"
+                  @pointerleave="joyStop('ra')" title="RA −">◀</button>
+                <span class="axis-label">RA</span>
+                <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('ra', 1)" @pointerup="joyStop('ra')"
+                  @pointerleave="joyStop('ra')" title="RA +">▶</button>
+              </div>
+              <div class="axis-row">
+                <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', -1)" @pointerup="joyStop('dec')"
+                  @pointerleave="joyStop('dec')" title="DEC −">◀</button>
+                <span class="axis-label">DEC</span>
+                <button class="joy-btn" :disabled="isError" @pointerdown="joyStart('dec', 1)" @pointerup="joyStop('dec')"
+                  @pointerleave="joyStop('dec')" title="DEC +">▶</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header"><strong>Tracking</strong></div>
-        <div class="row">
-          <select x-model.number="selectedTracking" class="grow">
-            <template x-for="(m, i) in trackingOptions" :key="i">
-              <option :value="i" x-text="m"></option>
-            </template>
-          </select>
-          <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
+        <div class="panel">
+          <div class="panel-header"><strong>Tracking</strong></div>
+          <div class="row">
+            <select x-model.number="selectedTracking" class="grow">
+              <template x-for="(m, i) in trackingOptions" :key="i">
+                <option :value="i" x-text="m"></option>
+              </template>
+            </select>
+            <button class="primary" @click="setTracking()" :disabled="isError">Set</button>
+          </div>
         </div>
       </div>
 
@@ -1050,6 +1036,8 @@ input::placeholder {
           <div class="row">
             <button class="danger" @click="focusStop()"
               :disabled="!eaf.detected || !eaf.focuser.is_moving">STOP</button>
+            <button @click="focusToggleEnabled()" :disabled="!eaf.detected"
+              x-text="eaf.focuser.enabled ? 'DESHABILITAR' : 'HABILITAR'"></button>
           </div>
         </div>
       </div>
@@ -1067,16 +1055,21 @@ input::placeholder {
               <i></i><b x-text="eaf.detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
             </span>
             <div class="fan-metrics">
+              <span>Modo <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
               <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
               <span>RPM <b x-text="eaf.detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
             </div>
           </div>
           <div class="row">
-            <button class="primary" @click="fanSetPower(!eaf.fan.power)" :disabled="!eaf.detected"
-              x-text="eaf.fan.power ? 'APAGAR' : 'ENCENDER'"></button>
+            <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">OFF</button>
+            <button :class="{ primary: eaf.fan.mode === 'auto' }" @click="fanSetMode('auto')" :disabled="!eaf.detected">AUTO</button>
+            <button :class="{ primary: eaf.fan.mode === 'manual' }" @click="fanSetMode('manual')" :disabled="!eaf.detected">MANUAL</button>
+          </div>
+          <div class="row">
             <label class="settings-label">Velocidad</label>
-            <input type="range" min="0" max="100" step="5" class="grow" x-model.number="eaf.fan.speed"
-              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.detected">
+            <input type="range" min="0" max="100" step="1" class="grow" x-model.number="eaf.fan.speed"
+              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.detected || eaf.fan.mode !== 'manual'">
+            <span class="settings-value" x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></span>
           </div>
         </div>
       </div>
@@ -1088,7 +1081,12 @@ input::placeholder {
 
       <div class="panel">
         <div class="panel-header"><strong>Estado</strong></div>
-        <div class="status" :class="sensorStatusClass()" x-text="sensorStatusText()"></div>
+        <div class="sensor-status">
+          <span class="conn-chip" :class="sensorOk('ambiente') ? 'conn-on' : 'conn-error'"><i></i>Ambiente</span>
+          <span class="conn-chip" :class="sensorOk('espejo') ? 'conn-on' : 'conn-error'"><i></i>Temperatura Espejo</span>
+          <span class="conn-chip" :class="sensorOk('vibracion') ? 'conn-on' : 'conn-error'"><i></i>Vibración</span>
+          <span class="sensor-error" x-show="sensorError()" x-text="sensorError()"></span>
+        </div>
       </div>
 
       <div class="panel">
@@ -1143,9 +1141,6 @@ input::placeholder {
 
     </section>
 
-    <!-- ═══ Banner (errores temporales de acciones) ═══ -->
-    <div class="error-banner" x-show="errorMessage" x-text="errorMessage" x-transition.opacity.duration.200ms></div>
-
   </div>
 
   <script>function mountApp() {
@@ -1166,40 +1161,27 @@ input::placeholder {
         settingsDraft: {lat: 0, lon: 0, elevation: 0},
         settingsDirty: false,
         mountTime: '--',
-        timeAutoSet: false,
-        errorMessage: '',
-        errorTimer: null,
         slew: {degrees: 5, speed: 4},
         joySpeed: 4,
         slewTarget: {ra: {h: 0, m: 0, s: 0}, dec: {d: 0, m: 0, s: 0}, speed: 4},
         serverTracking: 'none',
-        isHome: false,
         isParked: false,
         selectedTracking: null,
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
-        eaf: {detected: false, boot_id: '', power: false, health: 'unknown', sensor_health: '',
-              focuser: {counter_steps: 0, is_moving: false, op_status: '', driver_ok: false},
-              fan: {power: false, speed: 0, power_ok: false, rpm: null},
-              environment: {ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0, mirror_dew_margin_c: 0},
-              vibration: {rms_total: 0}},
+        eaf: {detected: false, power: false, health: 'unknown',
+              focuser: {counter_steps: 0, is_moving: false, enabled: true},
+              fan: {mode: 'off', power: false, speed: 0, rpm: null},
+              environment: {error: null, ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0},
+              vibration: {error: null, rms_total: 0}},
         focusStep: 100,
 
-        /* Show an error message for 5 seconds, then auto-clear. */
-        showError(msg) {
-            this.errorMessage = msg;
-            if (this.errorTimer) clearTimeout(this.errorTimer);
-            this.errorTimer = setTimeout(() => {
-                this.errorMessage = '';
-            }, 5000);
-        },
-
-        /* Run a binding promise, refresh status, and surface errors. */
+        /* Run a binding promise and refresh status. */
         run(promise) {
             return promise
                 .then(() => this.fetchStatus())
                 .then(() => this.fetchEAFStatus())
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         fetchStatus() {
@@ -1209,7 +1191,6 @@ input::placeholder {
                 this.pierSide = j.pier_side || '--';
                 this.mountTime = j.time || '--';
                 this.serverTracking = j.tracking || 'none';
-                this.isHome = j.is_home || false;
                 this.isParked = (j.status === 'parked');
                 this.isError = (j.status === 'error');
                 this.isDisconnected = (j.status === 'disconnected');
@@ -1275,13 +1256,13 @@ input::placeholder {
             const dps = speeds[this.joySpeed] || 6.0;
             this.joyRates[axis] = dir * dps;
             app().MoveAxisSpeed(this.joyRates.ra, this.joyRates.dec)
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         joyStop(axis) {
             this.joyRates[axis] = 0;
             app().MoveAxisSpeed(this.joyRates.ra, this.joyRates.dec)
-                .catch(e => this.showError(String(e)));
+                .catch(() => {});
         },
 
         doSlew(axis, dir) {
@@ -1300,11 +1281,11 @@ input::placeholder {
             const ds = this.slewTarget.dec.s;
 
             if (isNaN(rh) || rh < 0 || rh > 23 || isNaN(rm) || rm < 0 || rm > 59 || isNaN(rs) || rs < 0 || rs >= 60) {
-                this.showError('Invalid RA — H: 0–23, M: 0–59, S: 0–59.999');
+                console.warn('Invalid RA — H: 0–23, M: 0–59, S: 0–59.999');
                 return;
             }
             if (isNaN(dd) || dd < -180 || dd > 180 || isNaN(dm) || dm < 0 || dm > 59 || isNaN(ds) || ds < 0 || ds >= 60) {
-                this.showError('Invalid DEC — D: −180…+180, M: 0–59, S: 0–59.999');
+                console.warn('Invalid DEC — D: −180…+180, M: 0–59, S: 0–59.999');
                 return;
             }
 
@@ -1320,7 +1301,7 @@ input::placeholder {
             const d = this.settingsDraft;
             const lat = parseFloat(d.lat), lon = parseFloat(d.lon), elev = parseFloat(d.elev);
             if (isNaN(lat) || isNaN(lon) || isNaN(elev)) {
-                this.showError('Location fields must be valid numbers');
+                console.warn('Location fields must be valid numbers');
                 return null;
             }
             return {lat, lon, elev};
@@ -1357,6 +1338,7 @@ input::placeholder {
             if (!this.eaf.detected) return true;
             if (this.eaf.health === 'fault') return true;
             if (!this.eaf.power) return true;
+            if (!this.eaf.focuser.enabled) return true;
             if (this.eaf.focuser.is_moving) return true;
             return false;
         },
@@ -1370,22 +1352,25 @@ input::placeholder {
             this.run(app().FocusStop());
         },
 
-        fanSetPower(on) {
-            this.run(app().FanSetPower(on));
+        focusToggleEnabled() {
+            this.run(app().FocusSetEnabled(!this.eaf.focuser.enabled));
+        },
+
+        focuserHeaderState() {
+            if (!this.eaf.detected) return '—';
+            if (this.eaf.health === 'fault') return 'Fallo';
+            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
+            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            return 'Ok';
+        },
+
+        fanSetMode(mode) {
+            this.run(app().FanSetMode(mode));
         },
 
         fanSetSpeed(pct) {
-            this.run(app().FanSetSpeed(pct));
-        },
-
-        fmtUptime(s) {
-            if (s == null) return '—';
-            const h = Math.floor(s / 3600);
-            const m = Math.floor((s % 3600) / 60);
-            const sec = s % 60;
-            if (h > 0) return h + 'h ' + m + 'm ' + sec + 's';
-            if (m > 0) return m + 'm ' + sec + 's';
-            return sec + 's';
+            const v = Math.max(1, Math.min(100, Math.round(pct)));
+            this.run(app().FanSetSpeed(v));
         },
 
         fatalMessage() {
@@ -1412,22 +1397,30 @@ input::placeholder {
         eafStatusText() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
+            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
             if (this.eaf.focuser.is_moving) return 'Moviendo';
             return 'Ok';
         },
 
         eafStatusClass() {
-            return (!this.eaf.detected || this.eaf.health === 'fault') ? 'status-error' : 'status-ok';
+            if (!this.eaf.detected || this.eaf.health === 'fault') return 'status-error';
+            if (!this.eaf.focuser.enabled) return 'status-warn';
+            return 'status-ok';
         },
 
-        sensorStatusText() {
+        sensorOk(key) {
+            if (!this.eaf.detected) return false;
+            if (key === 'ambiente' || key === 'espejo') return this.eaf.environment.error == null;
+            if (key === 'vibracion') return this.eaf.vibration.error == null;
+            return false;
+        },
+
+        sensorError() {
             if (!this.eaf.detected) return 'No detectado — conectá el controlador';
-            if (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok') return 'Fallo de sensores: ' + this.eaf.sensor_health;
-            return 'Sensores OK';
-        },
-
-        sensorStatusClass() {
-            return (!this.eaf.detected || (this.eaf.sensor_health && this.eaf.sensor_health !== 'ok')) ? 'status-error' : 'status-ok';
+            const errs = [];
+            if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
+            if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);
+            return errs.join(' · ');
         },
 
         init() {

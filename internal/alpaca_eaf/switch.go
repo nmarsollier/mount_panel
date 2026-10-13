@@ -2,6 +2,8 @@ package alpaca_eaf
 
 import (
 	"encoding/json"
+	"errors"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
@@ -10,13 +12,23 @@ import (
 
 const switchDevice = "/api/v1/switch/0"
 
-// Switch channels: 0 = fan power (the 12 V relay, boolean), 1 = fan speed
-// (PWM 0..100 %). Both are writable.
+// Switch channels exposed by the accessory controller:
+//
+//	0 = Fan Power            (boolean, writable)
+//	1 = Fan Speed            (numeric 0..100 %, writable)
+//	2 = Fan RPM              (numeric, read-only)
+//	3 = Mirror Temperature   (numeric, read-only)
+//	4 = Ambient Temperature  (numeric, read-only)
 const (
-	switchFanPower = 0
-	switchFanSpeed = 1
-	maxSwitch      = 2
+	switchFanPower    = 0
+	switchFanSpeed    = 1
+	switchFanRPM      = 2
+	switchMirrorTemp  = 3
+	switchAmbientTemp = 4
+	maxSwitch         = 5
 )
+
+var errInvalidSwitchID = errors.New("invalid switch id")
 
 // initSwitch registers the Switch V3 endpoints for device 0.
 func initSwitch(engine *gin.Engine) {
@@ -66,13 +78,13 @@ func getInterfaceVersionSwitch(c *gin.Context) {
 	server.WriteInt(c, 3, cid, stx)
 }
 
-// getMaxSwitch returns the number of switch channels (2).
+// getMaxSwitch returns the number of switch channels (5).
 func getMaxSwitch(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	server.WriteInt(c, maxSwitch, cid, stx)
 }
 
-// getCanWrite reports whether a channel is writable (both are).
+// getCanWrite reports whether a channel is writable (only power and speed).
 func getCanWrite(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	id, ok := server.ParamInt(c, "Id")
@@ -80,7 +92,7 @@ func getCanWrite(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "Invalid Id", cid, stx)
 		return
 	}
-	server.WriteBool(c, true, cid, stx)
+	server.WriteBool(c, id == switchFanPower || id == switchFanSpeed, cid, stx)
 }
 
 // getSwitch reports the boolean state of a channel (true = non-minimum value).
@@ -112,7 +124,7 @@ func getSwitchValue(c *gin.Context) {
 		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
 		return
 	}
-	server.WriteInt(c, v, cid, stx)
+	server.WriteFloat(c, v, cid, stx)
 }
 
 // getSwitchName returns the channel name.
@@ -149,13 +161,18 @@ func setSwitchName(c *gin.Context) {
 	server.WriteOK(c, cid, stx)
 }
 
-// getMinSwitchValue returns the minimum value (0 for both channels).
+// getMinSwitchValue returns the minimum value of a channel.
 func getMinSwitchValue(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteInt(c, 0, cid, stx)
+	id, ok := server.ParamInt(c, "Id")
+	if !ok || id < 0 || id >= maxSwitch {
+		server.WriteError(c, server.ErrInvalidValue, "Invalid Id", cid, stx)
+		return
+	}
+	server.WriteFloat(c, switchMin(id), cid, stx)
 }
 
-// getMaxSwitchValue returns the maximum value (1 for power, 100 for speed).
+// getMaxSwitchValue returns the maximum value of a channel.
 func getMaxSwitchValue(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	id, ok := server.ParamInt(c, "Id")
@@ -163,21 +180,22 @@ func getMaxSwitchValue(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "Invalid Id", cid, stx)
 		return
 	}
-	if id == switchFanPower {
-		server.WriteInt(c, 1, cid, stx)
-		return
-	}
-	server.WriteInt(c, 100, cid, stx)
+	server.WriteFloat(c, switchMax(id), cid, stx)
 }
 
-// getSwitchStep returns the value step (1 for both channels).
+// getSwitchStep returns the value step of a channel.
 func getSwitchStep(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteInt(c, 1, cid, stx)
+	id, ok := server.ParamInt(c, "Id")
+	if !ok || id < 0 || id >= maxSwitch {
+		server.WriteError(c, server.ErrInvalidValue, "Invalid Id", cid, stx)
+		return
+	}
+	server.WriteFloat(c, switchStep(id), cid, stx)
 }
 
-// setSwitch sets a channel's boolean state. For power it switches the relay;
-// for speed it selects the minimum (0) or maximum (100).
+// setSwitch sets a channel's boolean state. For the fan power it selects the
+// minimum (off) or maximum (manual); for speed it selects 1 or 100.
 func setSwitch(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	id, ok := server.ParamInt(c, "Id")
@@ -186,12 +204,20 @@ func setSwitch(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "Invalid Id or State", cid, stx)
 		return
 	}
+	if id != switchFanPower && id != switchFanSpeed {
+		server.WriteError(c, server.ErrNotImplemented, "Channel is read-only", cid, stx)
+		return
+	}
 
 	var err error
 	if id == switchFanPower {
-		err = eaf.Get().SetFanPower(state)
+		mode := "off"
+		if state {
+			mode = "manual"
+		}
+		err = eaf.Get().SetFanMode(mode)
 	} else {
-		speed := 0
+		speed := 1
 		if state {
 			speed = 100
 		}
@@ -208,21 +234,31 @@ func setSwitch(c *gin.Context) {
 func setSwitchValue(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	id, ok := server.ParamInt(c, "Id")
-	value, okValue := server.ParamInt(c, "Value")
+	value, okValue := server.ParamFloat(c, "Value")
 	if !ok || !okValue || id < 0 || id >= maxSwitch {
 		server.WriteError(c, server.ErrInvalidValue, "Invalid Id or Value", cid, stx)
+		return
+	}
+	if id != switchFanPower && id != switchFanSpeed {
+		server.WriteError(c, server.ErrNotImplemented, "Channel is read-only", cid, stx)
 		return
 	}
 
 	var err error
 	if id == switchFanPower {
-		err = eaf.Get().SetFanPower(value != 0)
-	} else {
-		if value < 0 || value > 100 {
-			server.WriteError(c, server.ErrInvalidValue, "Value out of range (0-100)", cid, stx)
-			return
+		mode := "off"
+		if value != 0 {
+			mode = "manual"
 		}
-		err = eaf.Get().SetFanSpeed(value)
+		err = eaf.Get().SetFanMode(mode)
+	} else {
+		speed := int(value)
+		if speed < 1 {
+			speed = 1
+		} else if speed > 100 {
+			speed = 100
+		}
+		err = eaf.Get().SetFanSpeed(speed)
 	}
 	if err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
@@ -271,13 +307,15 @@ func getDeviceStateSwitch(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	entries := []stateEntry{}
 
-	if v, err := switchValue(switchFanPower); err == nil {
-		entries = append(entries, stateEntry{"GetSwitch0", server.RawBool(v != 0)})
-		entries = append(entries, stateEntry{"GetSwitchValue0", server.RawInt(v)})
-	}
-	if v, err := switchValue(switchFanSpeed); err == nil {
-		entries = append(entries, stateEntry{"GetSwitch1", server.RawBool(v != 0)})
-		entries = append(entries, stateEntry{"GetSwitchValue1", server.RawInt(v)})
+	for id := 0; id < maxSwitch; id++ {
+		v, err := switchValue(id)
+		if err != nil {
+			continue
+		}
+		entries = append(entries,
+			stateEntry{switchStateName(id), server.RawBool(v != 0)},
+			stateEntry{switchValueName(id), server.RawFloat(v)},
+		)
 	}
 
 	value, _ := json.Marshal(entries)
@@ -285,8 +323,9 @@ func getDeviceStateSwitch(c *gin.Context) {
 }
 
 // switchValue returns the numeric value of a switch channel.
-func switchValue(id int) (int, error) {
-	if id == switchFanPower {
+func switchValue(id int) (float64, error) {
+	switch id {
+	case switchFanPower:
 		on, err := eaf.Get().FanPower()
 		if err != nil {
 			return 0, err
@@ -295,22 +334,90 @@ func switchValue(id int) (int, error) {
 			return 1, nil
 		}
 		return 0, nil
+	case switchFanSpeed:
+		s, err := eaf.Get().FanSpeed()
+		return float64(s), err
+	case switchFanRPM:
+		r, err := eaf.Get().FanRPM()
+		return float64(r), err
+	case switchMirrorTemp:
+		return eaf.Get().MirrorTemperature()
+	case switchAmbientTemp:
+		return eaf.Get().Temperature()
+	default:
+		return 0, errInvalidSwitchID
 	}
-	return eaf.Get().FanSpeed()
 }
 
 // switchName returns the channel name.
 func switchName(id int) string {
-	if id == switchFanPower {
-		return "Alimentación del ventilador"
+	switch id {
+	case switchFanPower:
+		return "Fan Power"
+	case switchFanSpeed:
+		return "Fan Speed"
+	case switchFanRPM:
+		return "Fan RPM"
+	case switchMirrorTemp:
+		return "Mirror Temperature"
+	case switchAmbientTemp:
+		return "Ambient Temperature"
+	default:
+		return ""
 	}
-	return "Velocidad del ventilador"
 }
 
 // switchDescription returns the channel description.
 func switchDescription(id int) string {
-	if id == switchFanPower {
-		return "Enciende o apaga el relé de 12 V del ventilador"
+	switch id {
+	case switchFanPower:
+		return "Enciende/apaga el relé de 12 V del ventilador"
+	case switchFanSpeed:
+		return "Velocidad PWM del ventilador, en % (0–100)"
+	case switchFanRPM:
+		return "RPM real del ventilador (tacómetro)"
+	case switchMirrorTemp:
+		return "Temperatura del espejo primario (DS18B20)"
+	case switchAmbientTemp:
+		return "Temperatura ambiente (SHT31)"
+	default:
+		return ""
 	}
-	return "Ciclo de trabajo PWM aplicado al ventilador, en % (0–100)"
+}
+
+// switchMin / switchMax / switchStep return the value bounds of a channel.
+func switchMin(id int) float64 {
+	if id == switchMirrorTemp || id == switchAmbientTemp {
+		return -50
+	}
+	return 0
+}
+
+func switchMax(id int) float64 {
+	switch id {
+	case switchFanPower:
+		return 1
+	case switchFanSpeed:
+		return 100
+	case switchFanRPM:
+		return 100000
+	default:
+		return 100
+	}
+}
+
+func switchStep(id int) float64 {
+	if id == switchMirrorTemp || id == switchAmbientTemp {
+		return 0.1
+	}
+	return 1
+}
+
+// switchStateName / switchValueName name the DeviceState entries for a channel.
+func switchStateName(id int) string {
+	return "GetSwitch" + strconv.Itoa(id)
+}
+
+func switchValueName(id int) string {
+	return "GetSwitchValue" + strconv.Itoa(id)
 }

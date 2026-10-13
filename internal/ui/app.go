@@ -10,9 +10,7 @@ import (
 )
 
 // App is the Wails binding between the Alpine.js frontend and the mount.
-type App struct {
-	ctx context.Context
-}
+type App struct{}
 
 // NewApp builds the binding struct handed to wails.Run.
 func NewApp() *App {
@@ -20,8 +18,7 @@ func NewApp() *App {
 }
 
 // Startup is invoked once by Wails at launch.
-func (a *App) Startup(ctx context.Context) {
-	a.ctx = ctx
+func (*App) Startup(context.Context) {
 }
 
 // Status returns the full mount snapshot for the UI.
@@ -125,12 +122,17 @@ func (a *App) FocusStop() error {
 	return eaf.Get().Stop()
 }
 
-// FanSetPower switches the fan's 12 V relay.
-func (a *App) FanSetPower(on bool) error {
-	return eaf.Get().SetFanPower(on)
+// FocusSetEnabled enables or disables the focuser driver.
+func (a *App) FocusSetEnabled(enabled bool) error {
+	return eaf.Get().SetEnabled(enabled)
 }
 
-// FanSetSpeed sets the fan PWM duty (0..100 %).
+// FanSetMode sets the fan mode: "off", "auto" or "manual".
+func (a *App) FanSetMode(mode string) error {
+	return eaf.Get().SetFanMode(mode)
+}
+
+// FanSetSpeed sets the manual fan speed (1..100).
 func (a *App) FanSetSpeed(pct int) error {
 	return eaf.Get().SetFanSpeed(pct)
 }

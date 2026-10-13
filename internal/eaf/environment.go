@@ -26,6 +26,19 @@ func (e *EAF) DewPoint() (float64, error) {
 	return env.DewPointC, nil
 }
 
+// MirrorTemperature returns the mirror temperature in Celsius.
+func (e *EAF) MirrorTemperature() (float64, error) {
+	c, err := e.getConn()
+	if err != nil {
+		return 0, err
+	}
+	env, err := c.StateEnvironment()
+	if err != nil {
+		return 0, err
+	}
+	return env.MirrorC, nil
+}
+
 // AveragePeriod returns the ObservingConditions averaging window, in hours.
 func (e *EAF) AveragePeriod() float64 {
 	e.mu.RLock()

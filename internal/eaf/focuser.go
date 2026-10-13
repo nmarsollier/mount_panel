@@ -59,3 +59,12 @@ func (e *EAF) Stop() error {
 	_, err = c.FocuserStop()
 	return err
 }
+
+// SetEnabled enables or disables the focuser driver (TMC2209 EN pin).
+func (e *EAF) SetEnabled(enabled bool) error {
+	c, err := e.getConn()
+	if err != nil {
+		return err
+	}
+	return c.FocuserSetEnabled(enabled)
+}

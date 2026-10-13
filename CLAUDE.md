@@ -95,6 +95,11 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 - **JSON**: use `encoding/json` directly, no wrappers in `tools`.
 - Comments inside `.go` files are written in **English**.
 - Documentation (`.md` files) is written in **English**.
+- Respect: DRY - YAGNI - KISS.
+- Header documentation describes the business problem or use case the function
+- Only comment code when it is hard for a human to understand.
+- Before any change, read the current state of the file to modify.
+- Never commit or push to GitHub without explicit authorization.
 
 ## Package relationships (dependencies)
 

@@ -23,18 +23,23 @@ type FocuserView struct {
 	IsMoving     bool   `json:"is_moving"`
 	OpStatus     string `json:"op_status"`
 	DriverOK     bool   `json:"driver_ok"`
+	Enabled      bool   `json:"enabled"`
 }
 
 // FanView is the fan subset shown in the UI.
 type FanView struct {
-	Power   bool `json:"power"`
-	Speed   int  `json:"speed"`
-	PowerOK bool `json:"power_ok"`
-	RPM     *int `json:"rpm"`
+	Error       *string `json:"error"`
+	Mode        string  `json:"mode"`
+	Power       bool    `json:"power"`
+	Speed       int     `json:"speed"`
+	ManualSpeed int     `json:"manual_speed"`
+	PowerOK     bool    `json:"power_ok"`
+	RPM         *int    `json:"rpm"`
 }
 
 // EnvironmentView is the environment subset shown in the UI.
 type EnvironmentView struct {
+	Error               *string `json:"error"`
 	AmbientC            float64 `json:"ambient_c"`
 	HumidityPct         float64 `json:"humidity_pct"`
 	MirrorC             float64 `json:"mirror_c"`
@@ -45,6 +50,7 @@ type EnvironmentView struct {
 
 // VibrationView is the vibration subset shown in the UI.
 type VibrationView struct {
+	Error    *string `json:"error"`
 	RmsTotal float64 `json:"rms_total"`
 }
 
@@ -76,22 +82,27 @@ func (e *EAF) Status() Status {
 			IsMoving:     fs.IsMoving,
 			OpStatus:     fs.OpStatus,
 			DriverOK:     fs.Driver.UartOK,
+			Enabled:      fs.Enabled,
 		}
 	}
 	if fan, err := c.StateFan(); err != nil {
 		logx.Warn(eafCtx(), "state/fan: "+err.Error())
 	} else {
 		st.Fan = FanView{
-			Power:   fan.Power,
-			Speed:   fan.Speed,
-			PowerOK: fan.PowerAvailable,
-			RPM:     fan.RPM,
+			Error:       fan.Error,
+			Mode:        fan.Mode,
+			Power:       fan.Power,
+			Speed:       fan.Speed,
+			ManualSpeed: fan.ManualSpeed,
+			PowerOK:     fan.PowerAvailable,
+			RPM:         fan.RPM,
 		}
 	}
 	if env, err := c.StateEnvironment(); err != nil {
 		logx.Warn(eafCtx(), "state/environment: "+err.Error())
 	} else {
 		st.Environment = EnvironmentView{
+			Error:               env.Error,
 			AmbientC:            env.AmbientC,
 			HumidityPct:         env.HumidityPct,
 			MirrorC:             env.MirrorC,
@@ -104,6 +115,7 @@ func (e *EAF) Status() Status {
 		logx.Warn(eafCtx(), "state/vibration: "+err.Error())
 	} else {
 		st.Vibration = VibrationView{
+			Error:    vib.Error,
 			RmsTotal: vib.RmsTotal,
 		}
 	}
