@@ -98,6 +98,11 @@ body {
     text-transform: uppercase;
 }
 
+button.conn-chip {
+    cursor: pointer;
+    font-family: inherit;
+}
+
 .conn-chip i {
     width: 6px;
     height: 6px;
@@ -724,14 +729,16 @@ input::placeholder {
       <div class="header-top">
         <span class="brand">NRM-HA</span>
         <div class="conn-status">
-          <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-            :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+          <button class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+            :title="mountConnected ? 'Mount conectado' : 'Conectar mount'"
+            @click="connectMount()">
             <i></i>Mount
-          </span>
-          <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+          </button>
+          <button class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.detected ? 'EAF conectado' : 'Conectar EAF'"
+            @click="connectEAF()">
             <i></i>EAF
-          </span>
+          </button>
         </div>
       </div>
       <div class="header-coords">
@@ -757,15 +764,15 @@ input::placeholder {
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-      <button :class="{ active: tab === 'principal', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'principal' }"
         @click="tab = 'principal'">Montura</button>
-      <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'movimiento' }"
         @click="tab = 'movimiento'">Movimiento</button>
-      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'settings' }"
         @click="tab = 'settings'">Settings</button>
-      <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
-      <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
-      <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }"
+      <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
+      <button x-show="eaf.detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
+      <button x-show="eaf.detected" :class="{ active: tab === 'sensores' }"
         @click="tab = 'sensores'">Sensores</button>
     </nav>
 
@@ -1219,6 +1226,7 @@ input::placeholder {
                     const idx = this.trackingOptions.indexOf(j.tracking);
                     this.selectedTracking = idx >= 0 ? idx : 0;
                 }
+                this.normalizeTab();
             }).catch(() => {
             });
         },
@@ -1228,6 +1236,14 @@ input::placeholder {
         },
         home() {
             this.run(app().Home());
+        },
+
+        /* Manual connection attempts, triggered from the header chips. */
+        connectMount() {
+            if (!this.mountConnected) this.run(app().ConnectMount());
+        },
+        connectEAF() {
+            if (!this.eaf.detected) this.run(app().ConnectEAF());
         },
         park() {
             this.run(app().Park());
@@ -1330,8 +1346,19 @@ input::placeholder {
         fetchEAFStatus() {
             app().EAFStatus().then(j => {
                 if (j) this.eaf = j;
+                this.normalizeTab();
             }).catch(() => {
             });
+        },
+
+        /* Move to the first visible tab when the active one's device disconnects. */
+        normalizeTab() {
+            const mountTabs = ['principal', 'movimiento', 'settings'];
+            const eafTabs = ['enfoque', 'fan', 'sensores'];
+            const visible = [];
+            if (this.mountConnected) visible.push(...mountTabs);
+            if (this.eaf.detected) visible.push(...eafTabs);
+            if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
         focusMoveDisabled() {
@@ -1381,7 +1408,7 @@ input::placeholder {
         },
 
         disconnectedMessage() {
-            return 'Mount not connected — plug in and power the mount. Reconnecting…';
+            return 'Mount not connected — plug in and power the mount, then click "Mount" above to connect.';
         },
 
         mountStatusText() {
@@ -1395,7 +1422,7 @@ input::placeholder {
         },
 
         eafStatusText() {
-            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
             if (!this.eaf.focuser.enabled) return 'Deshabilitado';
             if (this.eaf.focuser.is_moving) return 'Moviendo';
@@ -1416,7 +1443,7 @@ input::placeholder {
         },
 
         sensorError() {
-            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
             if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);

@@ -25,8 +25,8 @@ func main() {
 	ctx := logx.CtxWithFields(context.Background(),
 		logx.NewFields().Add(logx.CONTROLLER, "Main"))
 
-	// Start the mount model: it connects and reconnects to the ESP in the
-	// background, so the app runs even when the mount is not (yet) plugged in.
+	// Start the mount model: a single connection attempt at startup; the user
+	// re-connects manually from the UI when it is unplugged.
 	mount.Init(env.Get().SerialPort)
 
 	// Start the accessory model (focuser/fan) on its own serial link.

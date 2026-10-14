@@ -18,14 +18,16 @@
       <div class="header-top">
         <span class="brand">NRM-HA</span>
         <div class="conn-status">
-          <span class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-            :title="mountConnected ? 'Mount conectado' : 'Mount no conectado'">
+          <button class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
+            :title="mountConnected ? 'Mount conectado' : 'Conectar mount'"
+            @click="connectMount()">
             <i></i>Mount
-          </span>
-          <span class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.detected ? 'EAF conectado' : 'EAF no conectado'">
+          </button>
+          <button class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.detected ? 'EAF conectado' : 'Conectar EAF'"
+            @click="connectEAF()">
             <i></i>EAF
-          </span>
+          </button>
         </div>
       </div>
       <div class="header-coords">
@@ -51,15 +53,15 @@
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
-      <button :class="{ active: tab === 'principal', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'principal' }"
         @click="tab = 'principal'">Montura</button>
-      <button :class="{ active: tab === 'movimiento', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'movimiento' }"
         @click="tab = 'movimiento'">Movimiento</button>
-      <button :class="{ active: tab === 'settings', disabled: !mountConnected }"
+      <button x-show="mountConnected" :class="{ active: tab === 'settings' }"
         @click="tab = 'settings'">Settings</button>
-      <button :class="{ active: tab === 'enfoque', disabled: !eaf.detected }" @click="tab = 'enfoque'">Enfoque</button>
-      <button :class="{ active: tab === 'fan', disabled: !eaf.detected }" @click="tab = 'fan'">Fan</button>
-      <button :class="{ active: tab === 'sensores', disabled: !eaf.detected }"
+      <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
+      <button x-show="eaf.detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
+      <button x-show="eaf.detected" :class="{ active: tab === 'sensores' }"
         @click="tab = 'sensores'">Sensores</button>
     </nav>
 

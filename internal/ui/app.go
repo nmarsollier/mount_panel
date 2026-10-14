@@ -26,6 +26,17 @@ func (a *App) Status() mount.Status {
 	return mount.Get().Status()
 }
 
+// ConnectMount makes a single manual connection attempt to the mount.
+func (a *App) ConnectMount() error {
+	return mount.Get().Connect()
+}
+
+// ConnectEAF makes a single manual connection attempt to the accessory
+// controller.
+func (a *App) ConnectEAF() error {
+	return eaf.Get().Connect()
+}
+
 // Stop halts everything (slew, tracking and manual motion).
 func (a *App) Stop() error {
 	return mount.Get().Stop()

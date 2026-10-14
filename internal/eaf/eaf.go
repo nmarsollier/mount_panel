@@ -19,8 +19,13 @@ import (
 // link to the accessory controller is down.
 var errNotConnected = errors.New("accessory controller not connected")
 
-// retryInterval is how long to wait before re-attempting a failed connection.
+// retryInterval is the delay between startup connection attempts while the USB
+// device enumerates.
 const retryInterval = 2 * time.Second
+
+// startupAttempts bounds the startup retry loop so it does not spin forever
+// when the accessory never appears; reconnection is then manual, from the UI.
+const startupAttempts = 15
 
 // EAF is the model of the accessory controller: it manages the serial
 // connection and exposes the focuser and fan operations to the UI.
@@ -29,6 +34,7 @@ type EAF struct {
 
 	conn       *eafproto.Client // nil = disconnected
 	serialPort string
+	connecting bool
 
 	// Virtual absolute position (Alpaca, int32 non-negative) and whether a
 	// reference has been established. Reset when the controller reconnects.
@@ -52,35 +58,65 @@ func Get() *EAF {
 	return inst
 }
 
-// Init starts the accessory model and its background connection loop. It does
-// not block: the controller is connected whenever it becomes available.
+// Init starts the accessory model. It makes a single startup connection
+// attempt; further attempts are manual, from the UI, via Connect.
 func Init(serialPort string) {
 	once.Do(func() {
 		inst = &EAF{serialPort: serialPort}
-		go inst.connectLoop()
+		go inst.connectAtStartup()
 	})
 }
 
-// connectLoop keeps the serial link up: it connects, waits for the link to
-// drop, then reconnects.
-func (e *EAF) connectLoop() {
-	logx.Info(eafCtx(), "connect loop started")
-	for {
-		c, err := e.tryConnect()
-		if err != nil {
-			logx.Warn(eafCtx(), "connect failed: "+err.Error())
-			time.Sleep(retryInterval)
-			continue
+// connectAtStartup retries the initial connection until the accessory answers
+// or the startup window elapses. The USB CDC port enumerates asynchronously
+// after launch, so the first attempt can race it; this covers that gap. After
+// the link is up, the connection is managed manually (Connect/watch), so an
+// unplug is not reconnected in the background.
+func (e *EAF) connectAtStartup() {
+	for i := 0; i < startupAttempts; i++ {
+		if e.Connect() == nil && e.IsConnected() {
+			return
 		}
-
-		<-c.Done() // block until the link drops
-		reason := ""
-		if err := c.Err(); err != nil {
-			reason = ": " + err.Error()
-		}
-		logx.Warn(eafCtx(), "accessory disconnected"+reason)
-		e.disconnect(c)
+		time.Sleep(retryInterval)
 	}
+}
+
+// Connect makes a single attempt to open and verify the accessory controller.
+// It is a no-op when the link is already up or a connection attempt is in
+// flight, and returns the error when the attempt fails.
+func (e *EAF) Connect() error {
+	e.mu.Lock()
+	if e.conn != nil || e.connecting {
+		e.mu.Unlock()
+		return nil
+	}
+	e.connecting = true
+	e.mu.Unlock()
+	defer func() {
+		e.mu.Lock()
+		e.connecting = false
+		e.mu.Unlock()
+	}()
+
+	c, err := e.tryConnect()
+	if err != nil {
+		logx.Warn(eafCtx(), "connect failed: "+err.Error())
+		return err
+	}
+	go e.watch(c)
+	return nil
+}
+
+// watch tears the link down when the reader notices it has dropped. The link is
+// not reconnected automatically: the user re-connects from the UI.
+func (e *EAF) watch(c *eafproto.Client) {
+	<-c.Done()
+	reason := ""
+	if err := c.Err(); err != nil {
+		reason = ": " + err.Error()
+	}
+	logx.Warn(eafCtx(), "accessory disconnected"+reason)
+	e.disconnect(c)
 }
 
 // tryConnect opens and verifies the accessory controller.

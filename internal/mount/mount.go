@@ -14,8 +14,13 @@ import (
 // link to the mount is down.
 var errNotConnected = errors.New("mount not connected")
 
-// retryInterval is how long to wait before re-attempting a failed connection.
+// retryInterval is the delay between startup connection attempts while the USB
+// device enumerates.
 const retryInterval = 2 * time.Second
+
+// startupAttempts bounds the startup retry loop so it does not spin forever
+// when the mount never appears; reconnection is then manual, from the UI.
+const startupAttempts = 15
 
 // Mount is the model of the telescope: it manages the serial connection and
 // translates high-level operations into protocol calls. It does not cache the
@@ -37,6 +42,7 @@ type Mount struct {
 	manualUTC *string
 
 	serialPort string
+	connecting bool
 }
 
 var (
@@ -49,37 +55,67 @@ func Get() *Mount {
 	return inst
 }
 
-// Init starts the mount model and its background loops (connection manager and
-// time sync). It does not block: the mount connects whenever the ESP becomes
-// available.
+// Init starts the mount model. It makes a single startup connection attempt and
+// starts the time sync loop; it does not block. Further connection attempts are
+// manual, from the UI, via Connect.
 func Init(serialPort string) {
 	once.Do(func() {
 		inst = &Mount{serialPort: serialPort, selectedTrackingRate: 0}
-		go inst.connectLoop()
 		go inst.timeSyncLoop()
+		go inst.connectAtStartup()
 	})
 }
 
-// connectLoop keeps the serial link up: it connects, waits for the link to
-// drop, then reconnects.
-func (m *Mount) connectLoop() {
-	logx.Info(mountCtx(), "connect loop started")
-	for {
-		c, err := m.tryConnect()
-		if err != nil {
-			logx.Warn(mountCtx(), "connect failed: "+err.Error())
-			time.Sleep(retryInterval)
-			continue
+// connectAtStartup retries the initial connection until the mount answers or
+// the startup window elapses. The USB CDC port enumerates asynchronously after
+// launch, so the first attempt can race it; this covers that gap. After the
+// link is up, the connection is managed manually (Connect/watch), so an unplug
+// is not reconnected in the background.
+func (m *Mount) connectAtStartup() {
+	for i := 0; i < startupAttempts; i++ {
+		if m.Connect() == nil && m.IsConnected() {
+			return
 		}
-
-		<-c.Done() // block until the link drops
-		reason := ""
-		if err := c.Err(); err != nil {
-			reason = ": " + err.Error()
-		}
-		logx.Warn(mountCtx(), "mount disconnected"+reason)
-		m.disconnect(c)
+		time.Sleep(retryInterval)
 	}
+}
+
+// Connect makes a single attempt to open and verify the mount. It is a no-op
+// when the link is already up or a connection attempt is in flight, and returns
+// the error when the attempt fails.
+func (m *Mount) Connect() error {
+	m.mu.Lock()
+	if m.conn != nil || m.connecting {
+		m.mu.Unlock()
+		return nil
+	}
+	m.connecting = true
+	m.mu.Unlock()
+	defer func() {
+		m.mu.Lock()
+		m.connecting = false
+		m.mu.Unlock()
+	}()
+
+	c, err := m.tryConnect()
+	if err != nil {
+		logx.Warn(mountCtx(), "connect failed: "+err.Error())
+		return err
+	}
+	go m.watch(c)
+	return nil
+}
+
+// watch tears the link down when the reader notices it has dropped. The link is
+// not reconnected automatically: the user re-connects from the UI.
+func (m *Mount) watch(c *mountproto.Client) {
+	<-c.Done()
+	reason := ""
+	if err := c.Err(); err != nil {
+		reason = ": " + err.Error()
+	}
+	logx.Warn(mountCtx(), "mount disconnected"+reason)
+	m.disconnect(c)
 }
 
 // tryConnect opens and verifies the mount, then provides the UTC clock.

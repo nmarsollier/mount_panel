@@ -100,6 +100,7 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 - Only comment code when it is hard for a human to understand.
 - Before any change, read the current state of the file to modify.
 - Never commit or push to GitHub without explicit authorization.
+3$
 
 ## Package relationships (dependencies)
 

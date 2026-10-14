@@ -74,6 +74,7 @@ function mountApp() {
                     const idx = this.trackingOptions.indexOf(j.tracking);
                     this.selectedTracking = idx >= 0 ? idx : 0;
                 }
+                this.normalizeTab();
             }).catch(() => {
             });
         },
@@ -83,6 +84,14 @@ function mountApp() {
         },
         home() {
             this.run(app().Home());
+        },
+
+        /* Manual connection attempts, triggered from the header chips. */
+        connectMount() {
+            if (!this.mountConnected) this.run(app().ConnectMount());
+        },
+        connectEAF() {
+            if (!this.eaf.detected) this.run(app().ConnectEAF());
         },
         park() {
             this.run(app().Park());
@@ -185,8 +194,19 @@ function mountApp() {
         fetchEAFStatus() {
             app().EAFStatus().then(j => {
                 if (j) this.eaf = j;
+                this.normalizeTab();
             }).catch(() => {
             });
+        },
+
+        /* Move to the first visible tab when the active one's device disconnects. */
+        normalizeTab() {
+            const mountTabs = ['principal', 'movimiento', 'settings'];
+            const eafTabs = ['enfoque', 'fan', 'sensores'];
+            const visible = [];
+            if (this.mountConnected) visible.push(...mountTabs);
+            if (this.eaf.detected) visible.push(...eafTabs);
+            if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
         focusMoveDisabled() {
@@ -236,7 +256,7 @@ function mountApp() {
         },
 
         disconnectedMessage() {
-            return 'Mount not connected — plug in and power the mount. Reconnecting…';
+            return 'Mount not connected — plug in and power the mount, then click "Mount" above to connect.';
         },
 
         mountStatusText() {
@@ -250,7 +270,7 @@ function mountApp() {
         },
 
         eafStatusText() {
-            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
             if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
             if (!this.eaf.focuser.enabled) return 'Deshabilitado';
             if (this.eaf.focuser.is_moving) return 'Moviendo';
@@ -271,7 +291,7 @@ function mountApp() {
         },
 
         sensorError() {
-            if (!this.eaf.detected) return 'No detectado — conectá el controlador';
+            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
             if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);

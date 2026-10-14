@@ -89,6 +89,11 @@ body {
     text-transform: uppercase;
 }
 
+button.conn-chip {
+    cursor: pointer;
+    font-family: inherit;
+}
+
 .conn-chip i {
     width: 6px;
     height: 6px;
