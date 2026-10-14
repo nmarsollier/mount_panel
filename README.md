@@ -1,4 +1,4 @@
-# nrm_ha_go
+# mount_panel
 
 Desktop gateway and UI for the [nrm_ha](https://github.com/nmarsollier/nrm_ha) mount.
 
@@ -170,20 +170,20 @@ dependency injection. See [`CLAUDE.md`](CLAUDE.md).
 
 ```sh
 make build   # builds the desktop UI (Wails) + the Alpaca server into one binary
-./nrm_ha_go  # or `make run`
+./mount_panel  # or `make run`
 ```
 
 Wails needs the `production` build tag and, on macOS, the
 `UniformTypeIdentifiers` framework — the `Makefile` wraps the exact command:
 
 ```sh
-CGO_LDFLAGS="-framework UniformTypeIdentifiers" go build -tags production -o nrm_ha_go .
+CGO_LDFLAGS="-framework UniformTypeIdentifiers" go build -tags production -o mount_panel .
 ```
 
 On Windows, build a GUI executable without a console window (`make build-windows`):
 
 ```sh
-go build -ldflags "-H=windowsgui" -tags production -o nrm_ha_go.exe .
+go build -ldflags "-H=windowsgui" -tags production -o mount_panel.exe .
 ```
 
 The Windows `.exe`, window and taskbar icon comes from `rsrc_windows_amd64.syso`

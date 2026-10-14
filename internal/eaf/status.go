@@ -1,6 +1,6 @@
 package eaf
 
-import "github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
+import "github.com/nmarsollier/mount_panel/internal/tools/logx"
 
 // Status is the UI snapshot of the accessory controller: connection state plus
 // the focuser, fan, environment and vibration readings, each from a fresh

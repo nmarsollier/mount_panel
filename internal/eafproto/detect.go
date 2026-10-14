@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
+	"github.com/nmarsollier/mount_panel/internal/proto"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 )
 
 // handshakeTimeout is how long a candidate port gets to answer the

@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // slewingState reports whether the state snapshot shows a slew in progress.
 func slewingState(s *mountproto.StateResponse) bool {

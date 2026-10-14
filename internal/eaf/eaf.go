@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/eafproto"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
+	"github.com/nmarsollier/mount_panel/internal/eafproto"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 )
 
 // errNotConnected is returned when an operation is requested but the serial

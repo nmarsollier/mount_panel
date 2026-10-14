@@ -3,7 +3,7 @@ package eaf
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/eafproto"
+	"github.com/nmarsollier/mount_panel/internal/eafproto"
 )
 
 // maxMoveRetries bounds the COUNTER_CHANGED reconciliation loop, so a counter

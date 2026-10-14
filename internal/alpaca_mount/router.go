@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_eaf"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/env"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/tools/env"
 )
 
 const telescope = "/api/v1/telescope/0"

@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+	"github.com/nmarsollier/mount_panel/internal/mountproto"
 )
 
 // rateToMode maps an ASCOM DriveRates value to the protocol tracking mode.

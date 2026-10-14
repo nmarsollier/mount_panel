@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 )
 
 // stateEntry is a single {Name, Value} pair of a DeviceState response.

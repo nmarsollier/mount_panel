@@ -1,4 +1,4 @@
-# nrm_ha_go Development Rules
+# mount_panel Development Rules
 
 Keep this file in a simple format so it can be read and edited quickly.
 

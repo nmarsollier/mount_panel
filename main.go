@@ -10,12 +10,12 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount"
-	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
-	"github.com/nmarsollier/nrm_ha_go/internal/mount"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/env"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
-	"github.com/nmarsollier/nrm_ha_go/internal/ui"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount"
+	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/tools/env"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
+	"github.com/nmarsollier/mount_panel/internal/ui"
 )
 
 //go:embed all:frontend/dist
@@ -38,7 +38,7 @@ func main() {
 	app := ui.NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "NRM-HA",
+		Title:  "Mount Panel",
 		Width:  600,
 		Height: 500,
 		AssetServer: &assetserver.Options{
@@ -48,7 +48,7 @@ func main() {
 		OnBeforeClose: func(ctx context.Context) bool {
 			choice, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
 				Type:          runtime.QuestionDialog,
-				Title:         "Quit NRM-HA",
+				Title:         "Quit Mount Panel",
 				Message:       "Are you sure you want to quit?",
 				Buttons:       []string{"Quit", "Cancel"},
 				DefaultButton: "Cancel",

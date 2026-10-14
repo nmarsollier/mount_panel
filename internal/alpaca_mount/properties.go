@@ -1,11 +1,11 @@
 package alpaca_mount
 
 import (
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/mount"
 )
 
 func getAlignmentMode(c *gin.Context) {

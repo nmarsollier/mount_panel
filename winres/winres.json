@@ -13,7 +13,7 @@
           "name": "",
           "version": ""
         },
-        "description": "NRM-HA mount gateway",
+        "description": "Mount Panel",
         "minimum-os": "win7",
         "execution-level": "as invoker",
         "ui-access": false,
@@ -42,14 +42,14 @@
           "0409": {
             "Comments": "",
             "CompanyName": "",
-            "FileDescription": "NRM-HA mount gateway",
+            "FileDescription": "Mount Panel",
             "FileVersion": "",
             "InternalName": "",
             "LegalCopyright": "",
             "LegalTrademarks": "",
-            "OriginalFilename": "nrm_ha_go.exe",
+            "OriginalFilename": "mount_panel.exe",
             "PrivateBuild": "",
-            "ProductName": "NRM-HA",
+            "ProductName": "Mount Panel",
             "ProductVersion": "",
             "SpecialBuild": ""
           }

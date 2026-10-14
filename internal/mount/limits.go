@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // Limits parameters accepted by the ESP's action:limits command.
 const (

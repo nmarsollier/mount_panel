@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
-	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/eaf"
 )
 
 const switchDevice = "/api/v1/switch/0"

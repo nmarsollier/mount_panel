@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/mount_panel/internal/proto"
 )
 
 // protoVersion is the accessory protocol version.

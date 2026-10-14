@@ -2,7 +2,7 @@ package alpaca_mount
 
 // Telescope device identity — app-level constants.
 const (
-	deviceName   = "NRM-HA"
+	deviceName   = "Mount Panel"
 	deviceType   = "Telescope"
 	deviceNumber = 0
 	uniqueID     = "nrm-ha-telescope-001"

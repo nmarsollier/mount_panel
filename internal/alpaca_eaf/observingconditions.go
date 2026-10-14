@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
-	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/eaf"
 )
 
 const observingConditions = "/api/v1/observingconditions/0"

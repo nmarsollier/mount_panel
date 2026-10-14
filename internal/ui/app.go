@@ -5,8 +5,8 @@ package ui
 import (
 	"context"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
-	"github.com/nmarsollier/nrm_ha_go/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/mount"
 )
 
 // App is the Wails binding between the Alpine.js frontend and the mount.

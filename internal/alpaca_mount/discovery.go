@@ -3,13 +3,13 @@ package alpaca_mount
 import (
 	"context"
 	"encoding/json"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"net"
 	"strings"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/mount"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/env"
-	"github.com/nmarsollier/nrm_ha_go/internal/tools/logx"
+	"github.com/nmarsollier/mount_panel/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/tools/env"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 )
 
 // discoveryPort is the fixed ASCOM Alpaca Discovery Protocol port.

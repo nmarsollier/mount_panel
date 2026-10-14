@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
-	"github.com/nmarsollier/nrm_ha_go/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/mount"
 )
 
 // propertyHandlers are the read-only handlers that fetch from the device. When

@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // Park moves the mount to the park position and marks it parked.
 func (m *Mount) Park() error {

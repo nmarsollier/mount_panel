@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+	"github.com/nmarsollier/mount_panel/internal/mountproto"
 )
 
 // SlewToCoordinates starts an asynchronous slew at speed profile 4 (Alpaca).

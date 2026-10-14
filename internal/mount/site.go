@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // SetSite updates and persists the site location in a single write.
 func (m *Mount) SetSite(lat, lon float64, elevation int) error {

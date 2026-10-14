@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // MoveAxisBy moves a single axis a relative number of degrees (positive or
 // negative), using the requested speed profile (1..4). This is the manual

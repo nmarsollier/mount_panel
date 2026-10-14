@@ -1,6 +1,6 @@
 //go:build integration
 
-// Package alpaca holds the integration tests for the nrm_ha_go Alpaca bridge.
+// Package alpaca holds the integration tests for the mount_panel Alpaca bridge.
 //
 // These tests drive the running bridge over HTTP (like the original Python
 // suite in the firmware repo) and require a live mount + `go run .`. Point

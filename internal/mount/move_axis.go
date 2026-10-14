@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+	"github.com/nmarsollier/mount_panel/internal/mountproto"
 )
 
 // MoveAxis moves a single axis (0 = RA, 1 = DEC) continuously at the given

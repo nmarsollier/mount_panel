@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 )
 
 // Management endpoints use fixed zero transaction ids (no client echo).

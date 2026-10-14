@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/proto"
+	"github.com/nmarsollier/mount_panel/internal/proto"
 )
 
 // Client talks to the mount over the USB CDC-ACM protocol. It wraps the shared

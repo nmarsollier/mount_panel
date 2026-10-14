@@ -1,6 +1,6 @@
 package mount
 
-import "github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+import "github.com/nmarsollier/mount_panel/internal/mountproto"
 
 // UTCDate returns the current UTC date as an ISO 8601 string, as reported by
 // the mount (the device is the time source).

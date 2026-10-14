@@ -1,8 +1,8 @@
 package alpaca_mount
 
 import (
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_eaf"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 )
 
 // configuredDevices returns the devices exposed by the server: the telescope

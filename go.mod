@@ -1,4 +1,4 @@
-module github.com/nmarsollier/nrm_ha_go
+module github.com/nmarsollier/mount_panel
 
 go 1.25.0
 

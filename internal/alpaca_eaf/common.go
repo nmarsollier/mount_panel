@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nmarsollier/nrm_ha_go/internal/alpaca_mount/server"
-	"github.com/nmarsollier/nrm_ha_go/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/eaf"
 )
 
 // getConnected reports whether the client is logically connected.

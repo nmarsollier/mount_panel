@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/nmarsollier/nrm_ha_go/internal/mountproto"
+	"github.com/nmarsollier/mount_panel/internal/mountproto"
 )
 
 var guideDirections = [...]string{"north", "south", "east", "west"}
