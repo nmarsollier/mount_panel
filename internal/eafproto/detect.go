@@ -13,7 +13,7 @@ import (
 // capabilities handshake during detection.
 const handshakeTimeout = 1500 * time.Millisecond
 
-var errNoAccessories = errors.New("no NRM accessory controller found on any serial port")
+var errNoAccessories = errors.New("no EAF accessory controller found on any serial port")
 
 // Detect probes the serial ports and returns a client connected to the
 // accessory controller (device_type="accessories"). Each candidate is claimed

@@ -6,7 +6,7 @@ import (
 )
 
 // TestBuildRequestLocksTheWireShape pins the request envelope to the firmware
-// contract (nrm_bft_eaf/main/proto): the exact top-level keys and which verb
+// contract (eaf_firmware/main/proto): the exact top-level keys and which verb
 // field carries the operation name.
 func TestBuildRequestLocksTheWireShape(t *testing.T) {
 	cases := []struct {

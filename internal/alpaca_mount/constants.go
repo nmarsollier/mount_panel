@@ -5,7 +5,7 @@ const (
 	deviceName   = "Mount Panel"
 	deviceType   = "Telescope"
 	deviceNumber = 0
-	uniqueID     = "nrm-ha-telescope-001"
+	uniqueID     = "bft-telescope-001"
 
 	apertureArea     = 0.0113 // m^2 (120mm)
 	apertureDiameter = 0.120  // m (120mm)

@@ -1,6 +1,6 @@
 # mount_panel
 
-Desktop gateway and UI for the [nrm_ha](https://github.com/nmarsollier/nrm_ha) mount.
+Desktop gateway and UI for the [bft_firmware](https://github.com/nmarsollier/bft_firmware) mount.
 
 It is the **desktop app** that replaces the HTTP/Alpaca server currently running
 inside the ESP32-S3. It talks to the mount over a **USB CDC-ACM serial protocol**
@@ -28,7 +28,7 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
   handles everything that is client-only.
 
 The full protocol spec lives in the firmware:
-[`main/proto/README.md`](https://github.com/nmarsollier/nrm_ha/blob/main/main/proto/README.md).
+[`main/proto/README.md`](https://github.com/nmarsollier/bft_firmware/blob/main/main/proto/README.md).
 
 ---
 
@@ -144,7 +144,7 @@ that case Go could run its own SNTP, but normally `time.Now().UTC()` is enough.
 | **Move N degrees relative** (Manual Slew) | ✅ `action.move` |
 
 Every desktop-UI command has a protocol equivalent. See the protocol at
-[`nrm_ha/main/proto/README.md`](https://github.com/nmarsollier/nrm_ha/blob/main/main/proto/README.md).
+[`bft_firmware/main/proto/README.md`](https://github.com/nmarsollier/bft_firmware/blob/main/main/proto/README.md).
 
 ## Internal architecture (packages)
 

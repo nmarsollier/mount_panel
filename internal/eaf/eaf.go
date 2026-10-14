@@ -1,5 +1,5 @@
 // Package eaf models the accessory controller (focuser, fan, environment) that
-// hangs off the NRM-HA mount over a second USB CDC-ACM link. It mirrors the
+// hangs off the BFT mount over a second USB CDC-ACM link. It mirrors the
 // mount package: a singleton that keeps the serial link up and translates
 // high-level operations into eafproto calls. No state cache: every read
 // fetches a fresh snapshot over the serial link.
@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/nmarsollier/mount_panel/internal/eafproto"
 	"github.com/nmarsollier/mount_panel/internal/tools/logx"
@@ -18,14 +17,6 @@ import (
 // errNotConnected is returned when an operation is requested but the serial
 // link to the accessory controller is down.
 var errNotConnected = errors.New("accessory controller not connected")
-
-// retryInterval is the delay between startup connection attempts while the USB
-// device enumerates.
-const retryInterval = 2 * time.Second
-
-// startupAttempts bounds the startup retry loop so it does not spin forever
-// when the accessory never appears; reconnection is then manual, from the UI.
-const startupAttempts = 15
 
 // EAF is the model of the accessory controller: it manages the serial
 // connection and exposes the focuser and fan operations to the UI.
@@ -63,22 +54,8 @@ func Get() *EAF {
 func Init(serialPort string) {
 	once.Do(func() {
 		inst = &EAF{serialPort: serialPort}
-		go inst.connectAtStartup()
+		go inst.Connect()
 	})
-}
-
-// connectAtStartup retries the initial connection until the accessory answers
-// or the startup window elapses. The USB CDC port enumerates asynchronously
-// after launch, so the first attempt can race it; this covers that gap. After
-// the link is up, the connection is managed manually (Connect/watch), so an
-// unplug is not reconnected in the background.
-func (e *EAF) connectAtStartup() {
-	for i := 0; i < startupAttempts; i++ {
-		if e.Connect() == nil && e.IsConnected() {
-			return
-		}
-		time.Sleep(retryInterval)
-	}
 }
 
 // Connect makes a single attempt to open and verify the accessory controller.

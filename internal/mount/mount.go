@@ -14,14 +14,6 @@ import (
 // link to the mount is down.
 var errNotConnected = errors.New("mount not connected")
 
-// retryInterval is the delay between startup connection attempts while the USB
-// device enumerates.
-const retryInterval = 2 * time.Second
-
-// startupAttempts bounds the startup retry loop so it does not spin forever
-// when the mount never appears; reconnection is then manual, from the UI.
-const startupAttempts = 15
-
 // Mount is the model of the telescope: it manages the serial connection and
 // translates high-level operations into protocol calls. It does not cache the
 // ESP state — every read fetches a fresh snapshot over the serial link.
@@ -62,22 +54,8 @@ func Init(serialPort string) {
 	once.Do(func() {
 		inst = &Mount{serialPort: serialPort, selectedTrackingRate: 0}
 		go inst.timeSyncLoop()
-		go inst.connectAtStartup()
+		go inst.Connect()
 	})
-}
-
-// connectAtStartup retries the initial connection until the mount answers or
-// the startup window elapses. The USB CDC port enumerates asynchronously after
-// launch, so the first attempt can race it; this covers that gap. After the
-// link is up, the connection is managed manually (Connect/watch), so an unplug
-// is not reconnected in the background.
-func (m *Mount) connectAtStartup() {
-	for i := 0; i < startupAttempts; i++ {
-		if m.Connect() == nil && m.IsConnected() {
-			return
-		}
-		time.Sleep(retryInterval)
-	}
 }
 
 // Connect makes a single attempt to open and verify the mount. It is a no-op

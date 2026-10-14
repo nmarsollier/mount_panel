@@ -7,22 +7,23 @@ Keep this file in a simple format so it can be read and edited quickly.
 This gateway talks to two ESP32-S3 devices over USB CDC-ACM. Each firmware lives
 in its own local repo:
 
-- **`~/Dev/nrm_ha`** — mount firmware (the NRM-HA project). Serial protocol spec
-  in `main/proto/README.md`, rules in `CLAUDE.md`.
-- **`~/Dev/nrm_bft_eaf`** — accessory firmware (focuser/fan/environment, the
-  "NRM-EAF" project). Serial protocol spec in `main/proto/README.md`. It speaks
-  `proto=2`, `role="accessories"`; much of it is still mock (fan, sensors).
+- **`~/Dev/bft_firmware`** — mount firmware (the BFT fork mount). Serial protocol
+  spec in `main/proto/README.md`, rules in `CLAUDE.md`.
+- **`~/Dev/eaf_firmware`** — accessory firmware (focuser/fan/environment). Serial
+  protocol spec in `main/proto/README.md`. It speaks `proto=2`,
+  `role="accessories"`, `schema="eaf-accessories"`; only the environment sensors
+  are still mock.
 
 When firmware references are needed — the exact message formats or what each
 device exposes — look there.
 
 ## Project definition
 
-- Desktop gateway and UI for the NRM-HA mount (the `nrm_ha` firmware).
+- Desktop gateway and UI for the BFT mount (the `bft_firmware` firmware).
 - Replaces the HTTP/Alpaca server that currently runs inside the ESP32-S3.
 - Talks to the ESP over a **USB CDC-ACM serial protocol** (length + JSON) and
   exposes **ASCOM Alpaca** (N.I.N.A., PHD2) + a **desktop UI (Wails)**.
-- The protocol spec lives in the firmware: `nrm_ha/main/proto/README.md`.
+- The protocol spec lives in the firmware: `bft_firmware/main/proto/README.md`.
 
 ## Architecture
 

@@ -13,9 +13,9 @@ import (
 // capabilities handshake during detection.
 const handshakeTimeout = 1500 * time.Millisecond
 
-var errNoMount = errors.New("no NRM-HA mount found on any serial port")
+var errNoMount = errors.New("no BFT mount found on any serial port")
 
-// Detect probes the serial ports and returns a client connected to the NRM-HA
+// Detect probes the serial ports and returns a client connected to the BFT
 // mount. Each candidate is claimed atomically before it is probed, so a random
 // serial device is never mistaken for the mount and the accessory detector is
 // never blocked by this one.

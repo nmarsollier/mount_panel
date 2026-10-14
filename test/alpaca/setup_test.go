@@ -8,7 +8,7 @@
 // http://localhost:11111). They are gated behind the `integration` build tag
 // so a plain `go test ./...` does not attempt them.
 //
-// They are a faithful port of ../nrm_ha/test/alpaca (pytest), minus the cases
+// They are a faithful port of ../bft_firmware/test/alpaca (pytest), minus the cases
 // that depend on the firmware's debug REST endpoints (/api/status, /api/limits,
 // /api/slew-to-coordinates), UDP discovery, or the NRM_TEST_MODE snapshot
 // header. Those are t.Skip'd with a reason; the Alpaca-level assertions are
