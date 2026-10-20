@@ -166,6 +166,67 @@ dependency injection. See [`CLAUDE.md`](CLAUDE.md).
 
 ---
 
+## Prerequisites (fresh install)
+
+Everything needed to compile and run from a clean machine. The app is a single
+Go module (`go 1.25.0`) using Wails v2; every Go dependency is fetched by
+`go build` from `go.mod`, so beyond a Go toolchain you only need the platform
+pieces below.
+
+### Common
+
+- **Go 1.25+** — required by `go.mod`.
+  - macOS: `brew install go`
+  - Windows: `winget install GoLang.Go` (or the installer from <https://go.dev/dl/>)
+- **Node.js + npm** — only to rebuild `frontend/dist/index.html` from
+  `frontend/` (`cd frontend && npm run build`). That file is committed, so a
+  plain build does **not** need Node.
+  - macOS: `brew install node`
+  - Windows: `winget install OpenJS.NodeJS.LTS` (or <https://nodejs.org/>)
+
+### macOS
+
+Wails and the serial-port enumerator use **cgo** and link the macOS SDK, so you
+need **Xcode Command Line Tools** (clang + the SDK frameworks: WebKit, Cocoa,
+UniformTypeIdentifiers, IOKit):
+
+```sh
+xcode-select --install
+```
+
+Requires macOS 11+ (for the `UniformTypeIdentifiers` framework). The Makefile
+already passes the extra `-framework UniformTypeIdentifiers` linker flag, so
+nothing else is needed.
+
+### Windows
+
+**No C compiler is needed**: the WebView2, COM and serial-port dependencies are
+all pure Go (Wails v2 loads WebView2 through the pure-Go `go-winloader`), so
+`go build` works straight from a Go install.
+
+The app needs the **WebView2 runtime** at *runtime* (not to compile):
+
+- **Windows 11**: already installed.
+- **Windows 10**: usually installed via Windows Update; otherwise install the
+  "Evergreen" runtime from
+  <https://developer.microsoft.com/microsoft-edge/webview2/>.
+
+### Optional
+
+- **Wails CLI** — not required (the Makefile builds with plain `go build`), but
+  handy to check the environment:
+  ```sh
+  go install github.com/wailsapp/wails/v2/cmd/wails@latest
+  wails doctor
+  ```
+- **go-winres** — only to regenerate the embedded Windows icon resource
+  (`make winres`):
+  ```sh
+  go install github.com/tc-hib/go-winres@latest
+  ```
+
+---
+
 ## How to run
 
 ```sh
