@@ -16,8 +16,8 @@ func TestIdentityVersionCapabilities(t *testing.T) {
 	if got := mustInt(t, c, "interfaceversion"); got != interfaceVersion {
 		t.Errorf("interfaceversion = %d, expected %d", got, interfaceVersion)
 	}
-	if got := mustInt(t, c, "alignmentmode"); got != alignmentMode {
-		t.Errorf("alignmentmode = %d, expected %d", got, alignmentMode)
+	if got := mustInt(t, c, "alignmentmode"); got != 1 && got != 2 {
+		t.Errorf("alignmentmode = %d, want algPolar(1) or algGermanPolar(2)", got)
 	}
 	if got := mustInt(t, c, "equatorialsystem"); got != equatorialSystem {
 		t.Errorf("equatorialsystem = %d, expected %d", got, equatorialSystem)

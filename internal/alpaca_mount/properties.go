@@ -10,7 +10,13 @@ import (
 
 func getAlignmentMode(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteInt(c, 2, cid, stx)
+	// algGermanPolar (2) for a German equatorial (which flips at the meridian),
+	// algPolar (1) for a fork.
+	mode := 1
+	if mount.Get().MeridianFlip() {
+		mode = 2
+	}
+	server.WriteInt(c, mode, cid, stx)
 }
 
 func getAltitude(c *gin.Context) {

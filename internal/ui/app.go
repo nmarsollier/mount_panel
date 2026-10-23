@@ -37,6 +37,16 @@ func (a *App) ConnectEAF() error {
 	return eaf.Get().Connect()
 }
 
+// DisconnectMount closes the serial link to the mount.
+func (a *App) DisconnectMount() {
+	mount.Get().Disconnect()
+}
+
+// DisconnectEAF closes the serial link to the accessory controller.
+func (a *App) DisconnectEAF() {
+	eaf.Get().Disconnect()
+}
+
 // Stop halts everything (slew, tracking and manual motion).
 func (a *App) Stop() error {
 	return mount.Get().Stop()

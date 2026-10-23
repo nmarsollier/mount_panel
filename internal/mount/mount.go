@@ -28,6 +28,7 @@ type Mount struct {
 
 	selectedTrackingRate int // ASCOM DriveRates: 0 sidereal, 1 lunar, 2 solar
 	connected            bool
+	meridianFlip         bool // true = German equatorial (flips); false = fork
 
 	// manualUTC is non-nil when the client set an explicit clock value. While
 	// set, the periodic time sync is disabled so it is not silently overwritten.
@@ -52,7 +53,7 @@ func Get() *Mount {
 // manual, from the UI, via Connect.
 func Init(serialPort string) {
 	once.Do(func() {
-		inst = &Mount{serialPort: serialPort, selectedTrackingRate: 0}
+		inst = &Mount{serialPort: serialPort, selectedTrackingRate: 0, meridianFlip: true}
 		go inst.timeSyncLoop()
 		go inst.Connect()
 	})
@@ -84,6 +85,18 @@ func (m *Mount) Connect() error {
 	return nil
 }
 
+// Disconnect closes the serial link to the mount. It is a no-op when the link
+// is already down.
+func (m *Mount) Disconnect() {
+	m.mu.RLock()
+	c := m.conn
+	m.mu.RUnlock()
+	if c == nil {
+		return
+	}
+	m.disconnect(c)
+}
+
 // watch tears the link down when the reader notices it has dropped. The link is
 // not reconnected automatically: the user re-connects from the UI.
 func (m *Mount) watch(c *mountproto.Client) {
@@ -111,8 +124,16 @@ func (m *Mount) tryConnect() (*mountproto.Client, error) {
 		return nil, err
 	}
 
+	caps, err := c.Capabilities()
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+
 	m.mu.Lock()
 	m.conn = c
+	// Absent meridian_flip (old firmware) means German equatorial, which flips.
+	m.meridianFlip = caps.Capabilities.Caps.MeridianFlip == nil || *caps.Capabilities.Caps.MeridianFlip
 	m.mu.Unlock()
 
 	logx.Info(mountCtx(), "connected on "+c.PortName())
@@ -167,6 +188,16 @@ func (m *Mount) IsConnected() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.conn != nil
+}
+
+// MeridianFlip reports whether the mount is a German equatorial that flips at
+// the meridian (true) or a fork that does not (false). It is read from the
+// capabilities at connect time and defaults to GEM when the firmware does not
+// report meridian_flip.
+func (m *Mount) MeridianFlip() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.meridianFlip
 }
 
 // timeSyncLoop re-sends the UTC clock hourly to correct the ESP RTC drift. It

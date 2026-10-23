@@ -730,13 +730,13 @@ input::placeholder {
         <span class="brand">Mount Panel</span>
         <div class="conn-status">
           <button class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-            :title="mountConnected ? 'Mount conectado' : 'Conectar mount'"
-            @click="connectMount()">
+            :title="mountConnected ? 'Desconectar mount' : 'Conectar mount'"
+            @click="toggleMount()">
             <i></i>Mount
           </button>
           <button class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.detected ? 'EAF conectado' : 'Conectar EAF'"
-            @click="connectEAF()">
+            :title="eaf.detected ? 'Desconectar EAF' : 'Conectar EAF'"
+            @click="toggleEAF()">
             <i></i>EAF
           </button>
         </div>
@@ -1238,12 +1238,20 @@ input::placeholder {
             this.run(app().Home());
         },
 
-        /* Manual connection attempts, triggered from the header chips. */
-        connectMount() {
-            if (!this.mountConnected) this.run(app().ConnectMount());
+        /* Header chips toggle the connection: connect when down, disconnect when up. */
+        toggleMount() {
+            if (this.mountConnected) {
+                this.run(app().DisconnectMount());
+            } else {
+                this.run(app().ConnectMount());
+            }
         },
-        connectEAF() {
-            if (!this.eaf.detected) this.run(app().ConnectEAF());
+        toggleEAF() {
+            if (this.eaf.detected) {
+                this.run(app().DisconnectEAF());
+            } else {
+                this.run(app().ConnectEAF());
+            }
         },
         park() {
             this.run(app().Park());

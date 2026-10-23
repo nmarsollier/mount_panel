@@ -86,12 +86,20 @@ function mountApp() {
             this.run(app().Home());
         },
 
-        /* Manual connection attempts, triggered from the header chips. */
-        connectMount() {
-            if (!this.mountConnected) this.run(app().ConnectMount());
+        /* Header chips toggle the connection: connect when down, disconnect when up. */
+        toggleMount() {
+            if (this.mountConnected) {
+                this.run(app().DisconnectMount());
+            } else {
+                this.run(app().ConnectMount());
+            }
         },
-        connectEAF() {
-            if (!this.eaf.detected) this.run(app().ConnectEAF());
+        toggleEAF() {
+            if (this.eaf.detected) {
+                this.run(app().DisconnectEAF());
+            } else {
+                this.run(app().ConnectEAF());
+            }
         },
         park() {
             this.run(app().Park());

@@ -19,13 +19,13 @@
         <span class="brand">Mount Panel</span>
         <div class="conn-status">
           <button class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-            :title="mountConnected ? 'Mount conectado' : 'Conectar mount'"
-            @click="connectMount()">
+            :title="mountConnected ? 'Desconectar mount' : 'Conectar mount'"
+            @click="toggleMount()">
             <i></i>Mount
           </button>
           <button class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.detected ? 'EAF conectado' : 'Conectar EAF'"
-            @click="connectEAF()">
+            :title="eaf.detected ? 'Desconectar EAF' : 'Conectar EAF'"
+            @click="toggleEAF()">
             <i></i>EAF
           </button>
         </div>

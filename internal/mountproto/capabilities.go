@@ -33,6 +33,10 @@ type MountCaps struct {
 		Slew     bool `json:"slew"`
 		Tracking bool `json:"tracking"`
 		Sync     bool `json:"sync"`
+		// MeridianFlip is a pointer so an absent field (old firmware) is
+		// distinguishable from an explicit false (fork).
+		MeridianFlip *bool `json:"meridian_flip"`
+		PierSide     bool  `json:"pier_side"`
 	} `json:"caps"`
 }
 

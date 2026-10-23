@@ -49,16 +49,29 @@ func TestNinaCorrectAcrossMeridian(t *testing.T) {
 	c := newTestClient(t)
 	setupSiteTime(t, c)
 	lst := mustFloat(t, c, "siderealtime")
-	// just west (HA=+1h) → pierEast
+	gem := germanEquatorial(t, c)
+	// just west (HA=+1h)
 	raW := mathMod(lst-1.0, 24.0)
 	gotoArrival(t, c, raW, -60.0)
-	if mustInt(t, c, "sideofpier") != 0 {
-		t.Error("expected pierEast")
-	}
-	// correct to just east (HA=-1h) → pierWest (flip)
+	sideWest := mustInt(t, c, "sideofpier")
+	// correct to just east (HA=-1h)
 	raE := mathMod(lst+1.0, 24.0)
 	gotoArrival(t, c, raE, -60.0)
-	if mustInt(t, c, "sideofpier") != 1 {
-		t.Error("expected pierWest (flip)")
+	sideEast := mustInt(t, c, "sideofpier")
+
+	if gem {
+		if sideWest != pierEast {
+			t.Errorf("HA=+1h side = %d, want pierEast(0)", sideWest)
+		}
+		if sideEast != pierWest {
+			t.Errorf("HA=-1h side = %d, want pierWest(1) (flip)", sideEast)
+		}
+	} else {
+		if sideWest != pierUnknown {
+			t.Errorf("HA=+1h side = %d, want pierUnknown(-1)", sideWest)
+		}
+		if sideEast != pierUnknown {
+			t.Errorf("HA=-1h side = %d, want pierUnknown(-1)", sideEast)
+		}
 	}
 }

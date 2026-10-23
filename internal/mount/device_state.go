@@ -29,6 +29,11 @@ func (m *Mount) DeviceState() (DeviceState, error) {
 	}
 	alt, az := horizontal(s.Ra, s.Dec, lat, s.Lst)
 
+	side := pierUnknown
+	if m.MeridianFlip() {
+		side = pierSideState(s)
+	}
+
 	return DeviceState{
 		Altitude:       alt,
 		AtHome:         s.AtHome,
@@ -37,7 +42,7 @@ func (m *Mount) DeviceState() (DeviceState, error) {
 		Declination:    s.Dec,
 		IsPulseGuiding: s.Guiding,
 		RightAscension: s.Ra,
-		SideOfPier:     pierSideState(s),
+		SideOfPier:     side,
 		Slewing:        slewingState(s),
 		Tracking:       trackingState(s),
 	}, nil

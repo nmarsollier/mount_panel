@@ -36,14 +36,32 @@ const (
 	defaultBase       = "http://localhost:11111"
 	deviceNumber      = 0
 	interfaceVersion  = 4
-	alignmentMode     = 2
 	equatorialSystem  = 1
 	reportedPosDeg    = 0.1 // budget: reported position tolerance (deg)
 	pollInterval      = 250 * time.Millisecond
 	operationDeadline = 90 * time.Second
 )
 
-// requiredCapabilities are the ones a GEM mount must advertise.
+// ASCOM PierSide values.
+const (
+	pierEast    = 0
+	pierWest    = 1
+	pierUnknown = -1
+)
+
+// germanEquatorial reports whether the connected mount is a German equatorial
+// that flips at the meridian (alignment mode algGermanPolar = 2), rather than a
+// fork (algPolar = 1). The pier-side tests branch on this.
+func germanEquatorial(t *testing.T, c *Client) bool {
+	t.Helper()
+	mode := mustInt(t, c, "alignmentmode")
+	if mode != 1 && mode != 2 {
+		t.Fatalf("alignmentmode = %d, want algPolar(1) or algGermanPolar(2)", mode)
+	}
+	return mode == 2
+}
+
+// requiredCapabilities are the ones the mount must advertise.
 var requiredCapabilities = map[string]string{
 	"slew":        "canslew",
 	"slew_async":  "canslewasync",

@@ -15,7 +15,12 @@ func trackingState(s *mountproto.StateResponse) bool {
 	return s.Tracking != "none"
 }
 
-// pierSideState returns 0 (pierEast) or 1 (pierWest).
+// pierUnknown is the ASCOM PierSide value for a fork mount: it has no side of
+// pier, so SideOfPier and DestinationSideOfPier return it.
+const pierUnknown = -1
+
+// pierSideState returns the ASCOM PierSide (0 pierEast / 1 pierWest) parsed
+// from the protocol pier_side string, for a German equatorial.
 func pierSideState(s *mountproto.StateResponse) int {
 	if s.PierSide == "west" {
 		return 1
@@ -41,11 +46,16 @@ func (m *Mount) Declination() (float64, error) {
 	return s.Dec, nil
 }
 
-// SideOfPier returns 0 (pierEast) or 1 (pierWest).
+// SideOfPier returns pierUnknown (-1) for a fork, or 0 (pierEast) / 1
+// (pierWest) for a German equatorial. The state is still fetched so a
+// disconnected mount reports Not Connected.
 func (m *Mount) SideOfPier() (int, error) {
 	s, err := m.fetchState()
 	if err != nil {
 		return 0, err
+	}
+	if !m.MeridianFlip() {
+		return pierUnknown, nil
 	}
 	return pierSideState(s), nil
 }

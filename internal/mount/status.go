@@ -56,7 +56,7 @@ func (m *Mount) Status() Status {
 		Ra:       "--:--:--",
 		Dec:      "--:--:--",
 		Lst:      "--:--:--",
-		PierSide: "East",
+		PierSide: "Unknown",
 		Time:     "",
 	}
 	st.Debug.Microsteps = 64 // MOTORS_MICROSTEPS (firmware build constant)
@@ -69,10 +69,8 @@ func (m *Mount) Status() Status {
 		st.Dec = formatDec(s.Dec)
 		st.IsHome = s.AtHome
 		st.Lst = formatHours(s.Lst)
-		if s.PierSide == "west" {
-			st.PierSide = "West"
-		} else {
-			st.PierSide = "East"
+		if m.MeridianFlip() {
+			st.PierSide = pierSideLabel(s.PierSide)
 		}
 		st.Debug.RaAxisDeg = s.RaAxisDeg
 		st.Debug.DecAxisDeg = s.DecAxisDeg
@@ -100,6 +98,19 @@ func (m *Mount) Status() Status {
 	}
 
 	return st
+}
+
+// pierSideLabel renders the protocol pier-side string for the UI, defaulting to
+// "Unknown" for anything other than east/west.
+func pierSideLabel(s string) string {
+	switch s {
+	case "west":
+		return "West"
+	case "east":
+		return "East"
+	default:
+		return "Unknown"
+	}
 }
 
 // formatHours renders decimal hours as "HH:MM:SS.ss".

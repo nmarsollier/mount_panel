@@ -174,11 +174,15 @@ func (m *Mount) SiderealTime() (float64, error) {
 }
 
 // DestinationSideOfPier returns the pier side the mount would end on after a
-// slew to the given coordinates, or the current side when unreachable.
+// slew to the given coordinates, or the current side when unreachable. A fork
+// has no side of pier, so it always returns pierUnknown.
 func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) (int, error) {
 	s, err := m.fetchState()
 	if err != nil {
 		return 0, err
+	}
+	if !m.MeridianFlip() {
+		return pierUnknown, nil
 	}
 
 	lim := limits{s.Limits.RaMin, s.Limits.RaMax, s.Limits.DecMin, s.Limits.DecMax}

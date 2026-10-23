@@ -84,6 +84,18 @@ func (e *EAF) Connect() error {
 	return nil
 }
 
+// Disconnect closes the serial link to the accessory controller. It is a no-op
+// when the link is already down.
+func (e *EAF) Disconnect() {
+	e.mu.RLock()
+	c := e.conn
+	e.mu.RUnlock()
+	if c == nil {
+		return
+	}
+	e.disconnect(c)
+}
+
 // watch tears the link down when the reader notices it has dropped. The link is
 // not reconnected automatically: the user re-connects from the UI.
 func (e *EAF) watch(c *eafproto.Client) {
