@@ -71,15 +71,16 @@ type FanState struct {
 }
 
 // EnvironmentState is the environment snapshot: ambient/mirror temperatures,
-// humidity and dew point (mock values until the sensors are ported).
+// humidity and dew point. A field is nil when its sensor is absent or faulted
+// (the firmware reports null, never a fabricated reading).
 type EnvironmentState struct {
-	Error               *string `json:"error"`
-	AmbientC            float64 `json:"ambient_c"`
-	HumidityPct         float64 `json:"humidity_pct"`
-	MirrorC             float64 `json:"mirror_c"`
-	DewPointC           float64 `json:"dew_point_c"`
-	MirrorAmbientDeltaC float64 `json:"mirror_ambient_delta_c"`
-	MirrorDewMarginC    float64 `json:"mirror_dew_margin_c"`
+	Error               *string  `json:"error"`
+	AmbientC            *float64 `json:"ambient_c"`
+	HumidityPct         *float64 `json:"humidity_pct"`
+	MirrorC             *float64 `json:"mirror_c"`
+	DewPointC           *float64 `json:"dew_point_c"`
+	MirrorAmbientDeltaC *float64 `json:"mirror_ambient_delta_c"`
+	MirrorDewMarginC    *float64 `json:"mirror_dew_margin_c"`
 }
 
 // VibrationState is the vibration snapshot (ADXL345 statistics, m/s²). The

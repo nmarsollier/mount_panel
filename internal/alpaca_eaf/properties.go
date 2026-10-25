@@ -1,6 +1,8 @@
 package alpaca_eaf
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
@@ -64,13 +66,24 @@ func getTempCompAvailable(c *gin.Context) {
 	server.WriteBool(c, false, cid, stx)
 }
 
-// getTemperature returns the ambient temperature in Celsius.
+// getTemperature returns the temperature in Celsius (ambient/mirror average).
 func getTemperature(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	v, err := eaf.Get().Temperature()
 	if err != nil {
-		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
+		writeEnvironmentError(c, err, cid, stx)
 		return
 	}
 	server.WriteFloat(c, v, cid, stx)
+}
+
+// writeEnvironmentError maps an environment read failure to Alpaca: an absent
+// sensor is 1024 (not implemented), a broken serial link is 1027 (not
+// connected).
+func writeEnvironmentError(c *gin.Context, err error, cid, stx uint32) {
+	if errors.Is(err, eaf.ErrEnvironmentUnavailable) {
+		server.WriteError(c, server.ErrNotImplemented, err.Error(), cid, stx)
+		return
+	}
+	server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
 }

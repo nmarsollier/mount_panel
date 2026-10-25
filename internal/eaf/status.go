@@ -37,15 +37,16 @@ type FanView struct {
 	RPM         *int    `json:"rpm"`
 }
 
-// EnvironmentView is the environment subset shown in the UI.
+// EnvironmentView is the environment subset shown in the UI. A nil field means
+// the sensor is absent or faulted; the frontend renders it as "—".
 type EnvironmentView struct {
-	Error               *string `json:"error"`
-	AmbientC            float64 `json:"ambient_c"`
-	HumidityPct         float64 `json:"humidity_pct"`
-	MirrorC             float64 `json:"mirror_c"`
-	DewPointC           float64 `json:"dew_point_c"`
-	MirrorAmbientDeltaC float64 `json:"mirror_ambient_delta_c"`
-	MirrorDewMarginC    float64 `json:"mirror_dew_margin_c"`
+	Error               *string  `json:"error"`
+	AmbientC            *float64 `json:"ambient_c"`
+	HumidityPct         *float64 `json:"humidity_pct"`
+	MirrorC             *float64 `json:"mirror_c"`
+	DewPointC           *float64 `json:"dew_point_c"`
+	MirrorAmbientDeltaC *float64 `json:"mirror_ambient_delta_c"`
+	MirrorDewMarginC    *float64 `json:"mirror_dew_margin_c"`
 }
 
 // VibrationView is the vibration subset shown in the UI.

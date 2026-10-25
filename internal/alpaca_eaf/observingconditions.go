@@ -65,7 +65,7 @@ func getHumidity(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	v, err := eaf.Get().Humidity()
 	if err != nil {
-		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
+		writeEnvironmentError(c, err, cid, stx)
 		return
 	}
 	server.WriteFloat(c, v, cid, stx)
@@ -76,7 +76,7 @@ func getDewPoint(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	v, err := eaf.Get().DewPoint()
 	if err != nil {
-		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
+		writeEnvironmentError(c, err, cid, stx)
 		return
 	}
 	server.WriteFloat(c, v, cid, stx)

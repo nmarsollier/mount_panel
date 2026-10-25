@@ -27,7 +27,7 @@ function mountApp() {
         eaf: {detected: false, power: false, health: 'unknown',
               focuser: {counter_steps: 0, is_moving: false, enabled: true},
               fan: {mode: 'off', power: false, speed: 0, rpm: null},
-              environment: {error: null, ambient_c: 0, humidity_pct: 0, mirror_c: 0, dew_point_c: 0, mirror_ambient_delta_c: 0},
+              environment: {error: null, ambient_c: null, humidity_pct: null, mirror_c: null, dew_point_c: null, mirror_ambient_delta_c: null},
               vibration: {error: null, rms_total: 0}},
         focusStep: 100,
 
@@ -254,6 +254,12 @@ function mountApp() {
         fanSetSpeed(pct) {
             const v = Math.max(1, Math.min(100, Math.round(pct)));
             this.run(app().FanSetSpeed(v));
+        },
+
+        /* Render a sensor reading with fixed decimals, or "—" when absent (null). */
+        fmt(v, digits, suffix) {
+            if (v == null) return '—';
+            return v.toFixed(digits) + suffix;
         },
 
         fatalMessage() {

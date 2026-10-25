@@ -44,7 +44,7 @@
         <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
       </div>
       <div class="header-info">
-        <span>Temperatura <b x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(1) + '°C') : '—'"></b></span>
+        <span>Temperatura <b x-text="fmt(eaf.environment.ambient_c, 1, '°C')"></b></span>
         <span>Focuser <b x-text="focuserHeaderState()"></b></span>
         <span>Fan <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
         <span>Vibración <b x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></b></span>
@@ -392,18 +392,18 @@
             <div class="metric">
               <span class="metric-label">Temperatura</span>
               <span class="metric-value"
-                x-text="eaf.detected ? (eaf.environment.ambient_c.toFixed(2) + ' °C') : '—'"></span>
+                x-text="fmt(eaf.environment.ambient_c, 2, ' °C')"></span>
             </div>
             <div class="metric">
               <span class="metric-label">Humedad</span>
               <span class="metric-value"
-                x-text="eaf.detected ? (eaf.environment.humidity_pct.toFixed(1) + ' %') : '—'"></span>
+                x-text="fmt(eaf.environment.humidity_pct, 1, ' %')"></span>
             </div>
           </div>
           <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
             <span class="metric-label">Rocío</span>
             <span class="metric-value"
-              x-text="eaf.detected ? (eaf.environment.dew_point_c.toFixed(2) + ' °C') : '—'"></span>
+              x-text="fmt(eaf.environment.dew_point_c, 2, ' °C')"></span>
           </div>
         </div>
       </div>
@@ -414,12 +414,12 @@
           <div class="metric">
             <span class="metric-label">Temperatura</span>
             <span class="metric-value"
-              x-text="eaf.detected ? (eaf.environment.mirror_c.toFixed(2) + ' °C') : '—'"></span>
+              x-text="fmt(eaf.environment.mirror_c, 2, ' °C')"></span>
           </div>
           <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
             <span class="metric-label">Δ</span>
             <span class="metric-value"
-              x-text="eaf.detected ? (eaf.environment.mirror_ambient_delta_c.toFixed(2) + ' °C') : '—'"></span>
+              x-text="fmt(eaf.environment.mirror_ambient_delta_c, 2, ' °C')"></span>
           </div>
         </div>
       </div>
