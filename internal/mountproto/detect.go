@@ -20,6 +20,9 @@ var errNoMount = errors.New("no BFT mount found on any serial port")
 // serial device is never mistaken for the mount and the accessory detector is
 // never blocked by this one.
 func Detect() (*Client, error) {
+	proto.DetectMu.Lock()
+	defer proto.DetectMu.Unlock()
+
 	ports, err := proto.CandidatePorts()
 	if err != nil {
 		return nil, err

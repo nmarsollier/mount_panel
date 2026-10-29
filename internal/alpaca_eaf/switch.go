@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
-	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/fan"
+	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 const switchDevice = "/api/v1/switch/0"
@@ -35,10 +36,10 @@ func initSwitch(engine *gin.Engine) {
 	g := engine.Group(switchDevice)
 
 	// Common device endpoints.
-	g.GET("/connected", getConnected)
-	g.PUT("/connected", putConnected)
-	g.PUT("/connect", putConnect)
-	g.PUT("/disconnect", putDisconnect)
+	g.GET("/connected", getConnectedSwitch)
+	g.PUT("/connected", putConnectedSwitch)
+	g.PUT("/connect", putConnectSwitch)
+	g.PUT("/disconnect", putDisconnectSwitch)
 	g.GET("/connecting", getConnecting)
 	g.GET("/description", getDescription)
 	g.GET("/driverinfo", getDriverInfo)
@@ -70,6 +71,38 @@ func initSwitch(engine *gin.Engine) {
 	g.PUT("/setasyncvalue", setAsyncValue)
 	g.GET("/statechangecomplete", getStateChangeComplete)
 	g.PUT("/cancelasync", cancelAsync)
+}
+
+// getConnectedSwitch reports whether the Switch client is logically connected.
+func getConnectedSwitch(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	server.WriteBool(c, fan.Get().Connected(), cid, stx)
+}
+
+// putConnectedSwitch tracks the Switch client's logical link.
+func putConnectedSwitch(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	connected, ok := server.ParamBool(c, "Connected")
+	if !ok {
+		server.WriteError(c, server.ErrInvalidValue, "Invalid Connected", cid, stx)
+		return
+	}
+	fan.Get().SetConnected(connected)
+	server.WriteOK(c, cid, stx)
+}
+
+// putConnectSwitch establishes the Switch logical client link.
+func putConnectSwitch(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	fan.Get().SetConnected(true)
+	server.WriteOK(c, cid, stx)
+}
+
+// putDisconnectSwitch drops the Switch logical client link.
+func putDisconnectSwitch(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	fan.Get().SetConnected(false)
+	server.WriteOK(c, cid, stx)
 }
 
 // getInterfaceVersionSwitch returns the ASCOM interface version (3).
@@ -215,13 +248,13 @@ func setSwitch(c *gin.Context) {
 		if state {
 			mode = "manual"
 		}
-		err = eaf.Get().SetFanMode(mode)
+		err = fan.Get().SetFanMode(mode)
 	} else {
 		speed := 1
 		if state {
 			speed = 100
 		}
-		err = eaf.Get().SetFanSpeed(speed)
+		err = fan.Get().SetFanSpeed(speed)
 	}
 	if err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
@@ -250,7 +283,7 @@ func setSwitchValue(c *gin.Context) {
 		if value != 0 {
 			mode = "manual"
 		}
-		err = eaf.Get().SetFanMode(mode)
+		err = fan.Get().SetFanMode(mode)
 	} else {
 		speed := int(value)
 		if speed < 1 {
@@ -258,7 +291,7 @@ func setSwitchValue(c *gin.Context) {
 		} else if speed > 100 {
 			speed = 100
 		}
-		err = eaf.Get().SetFanSpeed(speed)
+		err = fan.Get().SetFanSpeed(speed)
 	}
 	if err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
@@ -326,7 +359,7 @@ func getDeviceStateSwitch(c *gin.Context) {
 func switchValue(id int) (float64, error) {
 	switch id {
 	case switchFanPower:
-		on, err := eaf.Get().FanPower()
+		on, err := fan.Get().FanPower()
 		if err != nil {
 			return 0, err
 		}
@@ -335,15 +368,15 @@ func switchValue(id int) (float64, error) {
 		}
 		return 0, nil
 	case switchFanSpeed:
-		s, err := eaf.Get().FanSpeed()
+		s, err := fan.Get().FanSpeed()
 		return float64(s), err
 	case switchFanRPM:
-		r, err := eaf.Get().FanRPM()
+		r, err := fan.Get().FanRPM()
 		return float64(r), err
 	case switchMirrorTemp:
-		return eaf.Get().MirrorTemperature()
+		return fan.Get().MirrorTemperature()
 	case switchAmbientTemp:
-		return eaf.Get().Temperature()
+		return temp.Get().AmbientTemperature()
 	default:
 		return 0, errInvalidSwitchID
 	}

@@ -7,9 +7,11 @@ import (
 
 // Configuration holds the app settings, loaded from environment variables.
 type Configuration struct {
-	Port                  int    `json:"port"`                  // Alpaca REST port
-	SerialPort            string `json:"serialPort"`            // mount CDC-ACM serial port (empty = auto-detect)
-	AccessoriesSerialPort string `json:"accessoriesSerialPort"` // accessory CDC-ACM serial port (empty = auto-detect)
+	Port           int    `json:"port"`           // Alpaca REST port
+	SerialPort     string `json:"serialPort"`     // mount CDC-ACM serial port (empty = auto-detect)
+	EAFSerialPort  string `json:"eafSerialPort"`  // focuser CDC-ACM serial port (empty = auto-detect)
+	FanSerialPort  string `json:"fanSerialPort"`  // fan CDC-ACM serial port (empty = auto-detect)
+	TempSerialPort string `json:"tempSerialPort"` // temp/vibration CDC-ACM serial port (empty = auto-detect)
 }
 
 var config *Configuration
@@ -29,8 +31,10 @@ func load() *Configuration {
 	}
 
 	return &Configuration{
-		Port:                  port,
-		SerialPort:            os.Getenv("SERIAL_PORT"),
-		AccessoriesSerialPort: os.Getenv("ACCESSORIES_SERIAL_PORT"),
+		Port:           port,
+		SerialPort:     os.Getenv("SERIAL_PORT"),
+		EAFSerialPort:  os.Getenv("EAF_SERIAL_PORT"),
+		FanSerialPort:  os.Getenv("FAN_SERIAL_PORT"),
+		TempSerialPort: os.Getenv("TEMP_SERIAL_PORT"),
 	}
 }

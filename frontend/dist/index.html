@@ -739,6 +739,16 @@ input::placeholder {
             @click="toggleEAF()">
             <i></i>EAF
           </button>
+          <button class="conn-chip" :class="eaf.fan_detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.fan_detected ? 'Desconectar fan' : 'Conectar fan'"
+            @click="toggleFan()">
+            <i></i>Fan
+          </button>
+          <button class="conn-chip" :class="eaf.temp_detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.temp_detected ? 'Desconectar temp' : 'Conectar temp'"
+            @click="toggleTemp()">
+            <i></i>Temp
+          </button>
         </div>
       </div>
       <div class="header-coords">
@@ -757,8 +767,8 @@ input::placeholder {
       <div class="header-info">
         <span>Temperatura <b x-text="fmt(eaf.environment.ambient_c, 1, '°C')"></b></span>
         <span>Focuser <b x-text="focuserHeaderState()"></b></span>
-        <span>Fan <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
-        <span>Vibración <b x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></b></span>
+        <span>Fan <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+        <span>Vibración <b x-text="eaf.temp_detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></b></span>
       </div>
     </header>
 
@@ -771,8 +781,8 @@ input::placeholder {
       <button x-show="mountConnected" :class="{ active: tab === 'settings' }"
         @click="tab = 'settings'">Settings</button>
       <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
-      <button x-show="eaf.detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
-      <button x-show="eaf.detected" :class="{ active: tab === 'sensores' }"
+      <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
+      <button x-show="eaf.fan_detected || eaf.temp_detected" :class="{ active: tab === 'sensores' }"
         @click="tab = 'sensores'">Sensores</button>
     </nav>
 
@@ -1058,25 +1068,25 @@ input::placeholder {
         <div class="panel-header"><strong>Ventilador</strong></div>
         <div class="stack">
           <div class="fan-head">
-            <span class="onoff" :class="eaf.detected && eaf.fan.power ? 'on' : 'off'">
-              <i></i><b x-text="eaf.detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
+            <span class="onoff" :class="eaf.fan_detected && eaf.fan.power ? 'on' : 'off'">
+              <i></i><b x-text="eaf.fan_detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
             </span>
             <div class="fan-metrics">
-              <span>Modo <b x-text="eaf.detected ? (eaf.fan.mode || '—') : '—'"></b></span>
-              <span>Velocidad <b x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></b></span>
-              <span>RPM <b x-text="eaf.detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
+              <span>Modo <b x-text="eaf.fan_detected ? (eaf.fan.mode || '—') : '—'"></b></span>
+              <span>Velocidad <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+              <span>RPM <b x-text="eaf.fan_detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
             </div>
           </div>
           <div class="row">
-            <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.detected">OFF</button>
-            <button :class="{ primary: eaf.fan.mode === 'auto' }" @click="fanSetMode('auto')" :disabled="!eaf.detected">AUTO</button>
-            <button :class="{ primary: eaf.fan.mode === 'manual' }" @click="fanSetMode('manual')" :disabled="!eaf.detected">MANUAL</button>
+            <button :class="{ primary: eaf.fan.mode === 'off' }" @click="fanSetMode('off')" :disabled="!eaf.fan_detected">OFF</button>
+            <button :class="{ primary: eaf.fan.mode === 'auto' }" @click="fanSetMode('auto')" :disabled="!eaf.fan_detected">AUTO</button>
+            <button :class="{ primary: eaf.fan.mode === 'manual' }" @click="fanSetMode('manual')" :disabled="!eaf.fan_detected">MANUAL</button>
           </div>
           <div class="row">
             <label class="settings-label">Velocidad</label>
             <input type="range" min="0" max="100" step="1" class="grow" x-model.number="eaf.fan.speed"
-              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.detected || eaf.fan.mode !== 'manual'">
-            <span class="settings-value" x-text="eaf.detected ? (eaf.fan.speed + '%') : '—'"></span>
+              @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.fan_detected || eaf.fan.mode !== 'manual'">
+            <span class="settings-value" x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></span>
           </div>
         </div>
       </div>
@@ -1141,7 +1151,7 @@ input::placeholder {
           <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
             <span class="metric-label">RMS total</span>
             <span class="metric-value"
-              x-text="eaf.detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+              x-text="eaf.temp_detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
           </div>
         </div>
       </div>
@@ -1253,6 +1263,20 @@ input::placeholder {
                 this.run(app().ConnectEAF());
             }
         },
+        toggleFan() {
+            if (this.eaf.fan_detected) {
+                this.run(app().DisconnectFan());
+            } else {
+                this.run(app().ConnectFan());
+            }
+        },
+        toggleTemp() {
+            if (this.eaf.temp_detected) {
+                this.run(app().DisconnectTemp());
+            } else {
+                this.run(app().ConnectTemp());
+            }
+        },
         park() {
             this.run(app().Park());
         },
@@ -1361,11 +1385,11 @@ input::placeholder {
 
         /* Move to the first visible tab when the active one's device disconnects. */
         normalizeTab() {
-            const mountTabs = ['principal', 'movimiento', 'settings'];
-            const eafTabs = ['enfoque', 'fan', 'sensores'];
             const visible = [];
-            if (this.mountConnected) visible.push(...mountTabs);
-            if (this.eaf.detected) visible.push(...eafTabs);
+            if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
+            if (this.eaf.detected) visible.push('enfoque');
+            if (this.eaf.fan_detected) visible.push('fan');
+            if (this.eaf.fan_detected || this.eaf.temp_detected) visible.push('sensores');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -1450,14 +1474,16 @@ input::placeholder {
         },
 
         sensorOk(key) {
-            if (!this.eaf.detected) return false;
-            if (key === 'ambiente' || key === 'espejo') return this.eaf.environment.error == null;
-            if (key === 'vibracion') return this.eaf.vibration.error == null;
+            if (key === 'ambiente') return this.eaf.temp_detected && this.eaf.environment.ambient_c != null;
+            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.environment.mirror_c != null;
+            if (key === 'vibracion') return this.eaf.temp_detected && this.eaf.vibration.error == null;
             return false;
         },
 
         sensorError() {
-            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
+            if (!this.eaf.fan_detected && !this.eaf.temp_detected) {
+                return 'No detectado — tocá "Fan" o "Temp" arriba para conectar';
+            }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
             if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);

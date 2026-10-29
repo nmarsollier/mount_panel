@@ -1,8 +1,26 @@
-package eaf
+package fan
+
+// SetFanMode sets the fan mode: "off", "auto" or "manual".
+func (f *Fan) SetFanMode(mode string) error {
+	c, err := f.getConn()
+	if err != nil {
+		return err
+	}
+	return c.FanSetMode(mode)
+}
+
+// SetFanSpeed sets the manual fan speed (1..100).
+func (f *Fan) SetFanSpeed(speed int) error {
+	c, err := f.getConn()
+	if err != nil {
+		return err
+	}
+	return c.FanSetSpeed(speed)
+}
 
 // FanMode returns the current fan mode ("off", "auto" or "manual").
-func (e *EAF) FanMode() (string, error) {
-	c, err := e.getConn()
+func (f *Fan) FanMode() (string, error) {
+	c, err := f.getConn()
 	if err != nil {
 		return "", err
 	}
@@ -14,8 +32,8 @@ func (e *EAF) FanMode() (string, error) {
 }
 
 // FanPower reports whether the fan relay is on.
-func (e *EAF) FanPower() (bool, error) {
-	c, err := e.getConn()
+func (f *Fan) FanPower() (bool, error) {
+	c, err := f.getConn()
 	if err != nil {
 		return false, err
 	}
@@ -27,8 +45,8 @@ func (e *EAF) FanPower() (bool, error) {
 }
 
 // FanSpeed returns the effective fan speed (0..100).
-func (e *EAF) FanSpeed() (int, error) {
-	c, err := e.getConn()
+func (f *Fan) FanSpeed() (int, error) {
+	c, err := f.getConn()
 	if err != nil {
 		return 0, err
 	}
@@ -40,8 +58,8 @@ func (e *EAF) FanSpeed() (int, error) {
 }
 
 // FanManualSpeed returns the manual fan speed (1..100).
-func (e *EAF) FanManualSpeed() (int, error) {
-	c, err := e.getConn()
+func (f *Fan) FanManualSpeed() (int, error) {
+	c, err := f.getConn()
 	if err != nil {
 		return 0, err
 	}
@@ -53,8 +71,8 @@ func (e *EAF) FanManualSpeed() (int, error) {
 }
 
 // FanRPM returns the fan RPM, or -1 while the tachometer is not wired.
-func (e *EAF) FanRPM() (int, error) {
-	c, err := e.getConn()
+func (f *Fan) FanRPM() (int, error) {
+	c, err := f.getConn()
 	if err != nil {
 		return 0, err
 	}

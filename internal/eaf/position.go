@@ -83,29 +83,3 @@ func (e *EAF) IsMoving() (bool, error) {
 	}
 	return fs.IsMoving, nil
 }
-
-// Temperature returns the temperature in Celsius to report to Alpaca: the
-// average of the ambient and mirror sensors when both are present, the only
-// working sensor when one is absent, or ErrEnvironmentUnavailable when neither
-// has a valid reading.
-func (e *EAF) Temperature() (float64, error) {
-	c, err := e.getConn()
-	if err != nil {
-		return 0, err
-	}
-	env, err := c.StateEnvironment()
-	if err != nil {
-		return 0, err
-	}
-	ambient, mirror := env.AmbientC, env.MirrorC
-	switch {
-	case ambient != nil && mirror != nil:
-		return (*ambient + *mirror) / 2, nil
-	case ambient != nil:
-		return *ambient, nil
-	case mirror != nil:
-		return *mirror, nil
-	default:
-		return 0, ErrEnvironmentUnavailable
-	}
-}

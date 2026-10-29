@@ -2,6 +2,14 @@ package proto
 
 import "sync"
 
+// DetectMu serialises device-detection scans across the mount and accessory
+// clients. Detection probes every candidate port and claims each one
+// atomically; running the scans concurrently lets one detector's probe of a
+// port it does not match hold the port just long enough for another detector to
+// skip it and miss its own device. Serialising the scans keeps the detectors
+// from racing each other over the shared port-ownership map.
+var DetectMu sync.Mutex
+
 // portOwners tracks which serial ports are held by a client. The mount and
 // accessory clients use separate ports, but both auto-detect by probing every
 // candidate; the ownership map keeps one detector from opening (and corrupting)

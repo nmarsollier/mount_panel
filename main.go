@@ -12,7 +12,9 @@ import (
 
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/fan"
 	"github.com/nmarsollier/mount_panel/internal/mount"
+	"github.com/nmarsollier/mount_panel/internal/temp"
 	"github.com/nmarsollier/mount_panel/internal/tools/env"
 	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 	"github.com/nmarsollier/mount_panel/internal/ui"
@@ -29,8 +31,11 @@ func main() {
 	// re-connects manually from the UI when it is unplugged.
 	mount.Init(env.Get().SerialPort)
 
-	// Start the accessory model (focuser/fan) on its own serial link.
-	eaf.Init(env.Get().AccessoriesSerialPort)
+	// Start the accessory models (focuser, fan, temperature/vibration) each on
+	// their own serial link.
+	eaf.Init(env.Get().EAFSerialPort)
+	fan.Init(env.Get().FanSerialPort)
+	temp.Init(env.Get().TempSerialPort)
 
 	// Serve Alpaca (N.I.N.A./PHD2) in the background alongside the GUI.
 	go alpaca_mount.Start()

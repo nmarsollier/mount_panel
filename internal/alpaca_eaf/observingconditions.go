@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
-	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 const observingConditions = "/api/v1/observingconditions/0"
@@ -16,10 +16,10 @@ func initObservingConditions(engine *gin.Engine) {
 	g := engine.Group(observingConditions)
 
 	// Common device endpoints.
-	g.GET("/connected", getConnected)
-	g.PUT("/connected", putConnected)
-	g.PUT("/connect", putConnect)
-	g.PUT("/disconnect", putDisconnect)
+	g.GET("/connected", getConnectedOC)
+	g.PUT("/connected", putConnectedOC)
+	g.PUT("/connect", putConnectOC)
+	g.PUT("/disconnect", putDisconnectOC)
 	g.GET("/connecting", getConnecting)
 	g.GET("/description", getDescription)
 	g.GET("/driverinfo", getDriverInfo)
@@ -54,6 +54,38 @@ func initObservingConditions(engine *gin.Engine) {
 	g.PUT("/refresh", putRefresh)
 }
 
+// getConnectedOC reports whether the OC client is logically connected.
+func getConnectedOC(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	server.WriteBool(c, temp.Get().Connected(), cid, stx)
+}
+
+// putConnectedOC tracks the OC client's logical link.
+func putConnectedOC(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	connected, ok := server.ParamBool(c, "Connected")
+	if !ok {
+		server.WriteError(c, server.ErrInvalidValue, "Invalid Connected", cid, stx)
+		return
+	}
+	temp.Get().SetConnected(connected)
+	server.WriteOK(c, cid, stx)
+}
+
+// putConnectOC establishes the OC logical client link.
+func putConnectOC(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	temp.Get().SetConnected(true)
+	server.WriteOK(c, cid, stx)
+}
+
+// putDisconnectOC drops the OC logical client link.
+func putDisconnectOC(c *gin.Context) {
+	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
+	temp.Get().SetConnected(false)
+	server.WriteOK(c, cid, stx)
+}
+
 // getInterfaceVersionOC returns the ASCOM interface version (2).
 func getInterfaceVersionOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
@@ -63,7 +95,7 @@ func getInterfaceVersionOC(c *gin.Context) {
 // getHumidity returns the ambient relative humidity in percent.
 func getHumidity(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := eaf.Get().Humidity()
+	v, err := temp.Get().Humidity()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -74,7 +106,7 @@ func getHumidity(c *gin.Context) {
 // getDewPoint returns the dew point in Celsius.
 func getDewPoint(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := eaf.Get().DewPoint()
+	v, err := temp.Get().DewPoint()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -85,7 +117,7 @@ func getDewPoint(c *gin.Context) {
 // getAveragePeriod returns the averaging window in hours.
 func getAveragePeriod(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteFloat(c, eaf.Get().AveragePeriod(), cid, stx)
+	server.WriteFloat(c, temp.Get().AveragePeriod(), cid, stx)
 }
 
 // putAveragePeriod sets the averaging window in hours (0..1).
@@ -96,7 +128,7 @@ func putAveragePeriod(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "AveragePeriod out of range (0-1 hours)", cid, stx)
 		return
 	}
-	eaf.Get().SetAveragePeriod(v)
+	temp.Get().SetAveragePeriod(v)
 	server.WriteOK(c, cid, stx)
 }
 
@@ -143,13 +175,13 @@ func getDeviceStateOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	entries := []stateEntry{}
 
-	if v, err := eaf.Get().Temperature(); err == nil {
+	if v, err := temp.Get().AmbientTemperature(); err == nil {
 		entries = append(entries, stateEntry{"Temperature", server.RawFloat(v)})
 	}
-	if v, err := eaf.Get().Humidity(); err == nil {
+	if v, err := temp.Get().Humidity(); err == nil {
 		entries = append(entries, stateEntry{"Humidity", server.RawFloat(v)})
 	}
-	if v, err := eaf.Get().DewPoint(); err == nil {
+	if v, err := temp.Get().DewPoint(); err == nil {
 		entries = append(entries, stateEntry{"DewPoint", server.RawFloat(v)})
 	}
 

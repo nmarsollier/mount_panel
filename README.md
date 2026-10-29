@@ -149,14 +149,20 @@ Every desktop-UI command has a protocol equivalent. See the protocol at
 ## Internal architecture (packages)
 
 ```
-main.go                     # entry point: init mount + Alpaca (goroutine) + Wails
+main.go                     # entry point: init mount + accessories + Alpaca + Wails
 frontend/                   # embedded desktop UI (HTML/CSS/JS Alpine.js)
 internal/
   proto/                    # serial protocol client (framing + detection)
+  mountproto/               # mount message contract
+  eafproto/                 # accessory message contract (eaf/fan/temp, by device_id)
   mount/                    # mount model (connection + operations, no cache)
-  alpaca/                   # Alpaca REST server (GIN): ITelescopeV4 endpoints
+  eaf/                      # focuser model (connection + operations, no cache)
+  fan/                      # fan + mirror-temperature model (no cache)
+  temp/                     # ambient/humidity/vibration model (no cache)
+  alpaca_mount/             # Alpaca REST server (GIN): ITelescopeV4 endpoints
     server/                 # GIN engine + logging middleware
-  ui/                       # Wails binding (App) → mount
+  alpaca_eaf/               # Focuser V4 + ObservingConditions V2 + Switch V3
+  ui/                       # Wails binding (App) → mount/eaf/fan/temp
   tools/                    # logx (logger) + env (config), cross-cutting
 test/alpaca/                # Alpaca integration tests (build tag `integration`)
 ```
@@ -262,7 +268,10 @@ reconnects automatically once it is plugged in. Works on macOS and Windows.
 Configuration via environment variables (see `internal/tools/env`):
 
 - `PORT` — Alpaca server port (default `11111`).
-- `SERIAL_PORT` — pins the CDC port (empty = auto-detection).
+- `SERIAL_PORT` — pins the mount CDC port (empty = auto-detection).
+- `EAF_SERIAL_PORT` — pins the focuser CDC port (empty = auto-detect `device_id="eaf"`).
+- `FAN_SERIAL_PORT` — pins the fan CDC port (empty = auto-detect `device_id="fan"`).
+- `TEMP_SERIAL_PORT` — pins the temperature/vibration CDC port (empty = auto-detect `device_id="temp"`).
 
 For development with hot-reload you can use `wails dev` (requires installing the
 CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`).

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 // getConnected reports whether the client is logically connected.
@@ -113,7 +114,7 @@ func getDeviceState(c *gin.Context) {
 			Value json.RawMessage `json:"Value"`
 		}{"Position", server.RawInt(int(v))})
 	}
-	if v, err := eaf.Get().Temperature(); err == nil {
+	if v, err := temp.Get().AmbientTemperature(); err == nil {
 		entries = append(entries, struct {
 			Name  string          `json:"Name"`
 			Value json.RawMessage `json:"Value"`

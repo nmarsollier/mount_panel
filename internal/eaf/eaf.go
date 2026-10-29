@@ -32,10 +32,6 @@ type EAF struct {
 	position      int32
 	positionValid bool
 
-	// averagePeriod is the ObservingConditions averaging window, in hours
-	// (0 = instantaneous). Stored in Go; it does not change the sensor period.
-	averagePeriod float64
-
 	connected bool // logical client link (Alpaca Connected)
 }
 
@@ -117,7 +113,7 @@ func (e *EAF) tryConnect() (*eafproto.Client, error) {
 	if e.serialPort != "" {
 		c, err = eafproto.Open(e.serialPort)
 	} else {
-		c, err = eafproto.Detect()
+		c, err = eafproto.Detect("eaf")
 	}
 	if err != nil {
 		return nil, err

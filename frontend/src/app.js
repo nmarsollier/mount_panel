@@ -101,6 +101,20 @@ function mountApp() {
                 this.run(app().ConnectEAF());
             }
         },
+        toggleFan() {
+            if (this.eaf.fan_detected) {
+                this.run(app().DisconnectFan());
+            } else {
+                this.run(app().ConnectFan());
+            }
+        },
+        toggleTemp() {
+            if (this.eaf.temp_detected) {
+                this.run(app().DisconnectTemp());
+            } else {
+                this.run(app().ConnectTemp());
+            }
+        },
         park() {
             this.run(app().Park());
         },
@@ -209,11 +223,11 @@ function mountApp() {
 
         /* Move to the first visible tab when the active one's device disconnects. */
         normalizeTab() {
-            const mountTabs = ['principal', 'movimiento', 'settings'];
-            const eafTabs = ['enfoque', 'fan', 'sensores'];
             const visible = [];
-            if (this.mountConnected) visible.push(...mountTabs);
-            if (this.eaf.detected) visible.push(...eafTabs);
+            if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
+            if (this.eaf.detected) visible.push('enfoque');
+            if (this.eaf.fan_detected) visible.push('fan');
+            if (this.eaf.fan_detected || this.eaf.temp_detected) visible.push('sensores');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -298,14 +312,16 @@ function mountApp() {
         },
 
         sensorOk(key) {
-            if (!this.eaf.detected) return false;
-            if (key === 'ambiente' || key === 'espejo') return this.eaf.environment.error == null;
-            if (key === 'vibracion') return this.eaf.vibration.error == null;
+            if (key === 'ambiente') return this.eaf.temp_detected && this.eaf.environment.ambient_c != null;
+            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.environment.mirror_c != null;
+            if (key === 'vibracion') return this.eaf.temp_detected && this.eaf.vibration.error == null;
             return false;
         },
 
         sensorError() {
-            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
+            if (!this.eaf.fan_detected && !this.eaf.temp_detected) {
+                return 'No detectado — tocá "Fan" o "Temp" arriba para conectar';
+            }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
             if (this.eaf.vibration.error) errs.push(this.eaf.vibration.error);
