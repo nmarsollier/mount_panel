@@ -127,6 +127,12 @@ func (a *App) MoveAxisSpeed(raRate, decRate float64) error {
 	return mount.Get().MoveAxisSpeed(raRate, decRate)
 }
 
+// MoveAxisSpeeds returns the discrete MoveAxis speed ladder (deg/s) from the
+// mount capabilities, for the joystick speed selector.
+func (a *App) MoveAxisSpeeds() ([]float64, error) {
+	return mount.Get().MoveAxisSpeeds()
+}
+
 // MoveAxisBy moves one axis a relative number of degrees (manual slew).
 func (a *App) MoveAxisBy(axis string, degrees float64, speed int) error {
 	return mount.Get().MoveAxisBy(axis, degrees, speed)

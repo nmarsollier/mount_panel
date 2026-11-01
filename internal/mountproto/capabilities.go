@@ -21,10 +21,11 @@ type CapabilitiesResponse struct {
 
 // MountCaps is the mount-specific part of the capabilities response.
 type MountCaps struct {
-	Axes          []string  `json:"axes"`
-	SlewSpeedsDps []float64 `json:"slew_speeds_dps"`
-	TrackingModes []string  `json:"tracking_modes"`
-	Caps          struct {
+	Axes              []string  `json:"axes"`
+	SlewSpeedsDps     []float64 `json:"slew_speeds_dps"`
+	MoveAxisSpeedsDps []float64 `json:"move_axis_speeds_dps"`
+	TrackingModes     []string  `json:"tracking_modes"`
+	Caps              struct {
 		Guide    bool `json:"guide"`
 		Home     bool `json:"home"`
 		Park     bool `json:"park"`

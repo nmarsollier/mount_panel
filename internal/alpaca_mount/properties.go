@@ -251,17 +251,17 @@ func getAxisRates(c *gin.Context) {
 	// Axis is 0 (RA) or 1 (DEC); this mount uses the same range for both.
 	_, _ = server.ParamInt(c, "Axis")
 
-	lo, err := m.MinSlewSpeed()
+	lo, err := m.MinMoveAxisSpeed()
 	if err != nil {
 		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
 		return
 	}
-	hi, err := m.MaxSlewSpeed()
+	hi, err := m.MaxMoveAxisSpeed()
 	if err != nil {
 		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
 		return
 	}
-	server.WriteValue(c, []byte(`[{"Minimum":`+strconv.FormatFloat(lo, 'f', 1, 64)+`,"Maximum":`+strconv.FormatFloat(hi, 'f', 1, 64)+`}]`), cid, stx)
+	server.WriteValue(c, []byte(`[{"Minimum":`+strconv.FormatFloat(lo, 'f', -1, 64)+`,"Maximum":`+strconv.FormatFloat(hi, 'f', -1, 64)+`}]`), cid, stx)
 }
 
 func getDoesRefraction(c *gin.Context) {

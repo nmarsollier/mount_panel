@@ -101,10 +101,9 @@
             <div class="joy-speed">
               <label>Speed</label>
               <select x-model.number="joySpeed">
-                <option value="1">1×</option>
-                <option value="2">2×</option>
-                <option value="3">3×</option>
-                <option value="4">4×</option>
+                <template x-for="(s, i) in moveSpeeds" :key="i">
+                  <option :value="i" x-text="s + '°/s'"></option>
+                </template>
               </select>
             </div>
             <div class="axis-grid">
@@ -183,10 +182,9 @@
           <div class="joy-speed">
             <label>Speed</label>
             <select x-model.number="joySpeed">
-              <option value="1">1×</option>
-              <option value="2">2×</option>
-              <option value="3">3×</option>
-              <option value="4">4×</option>
+              <template x-for="(s, i) in moveSpeeds" :key="i">
+                <option :value="i" x-text="s + '°/s'"></option>
+              </template>
             </select>
           </div>
           <div class="axis-grid">

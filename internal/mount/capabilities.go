@@ -1,25 +1,35 @@
 package mount
 
-// MinSlewSpeed returns the slowest MoveAxis/slew speed in deg/s.
-func (m *Mount) MinSlewSpeed() (float64, error) {
+// MoveAxisSpeeds returns the discrete MoveAxis speed ladder (deg/s) the mount
+// exposes, ordered slowest to fastest.  The joystick uses this list directly.
+func (m *Mount) MoveAxisSpeeds() ([]float64, error) {
 	c, err := m.fetchCaps()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	if len(c.Capabilities.SlewSpeedsDps) == 0 {
-		return 1.0, nil
-	}
-	return c.Capabilities.SlewSpeedsDps[0], nil
+	return c.Capabilities.MoveAxisSpeedsDps, nil
 }
 
-// MaxSlewSpeed returns the fastest MoveAxis/slew speed in deg/s.
-func (m *Mount) MaxSlewSpeed() (float64, error) {
+// MinMoveAxisSpeed returns the slowest MoveAxis speed in deg/s.
+func (m *Mount) MinMoveAxisSpeed() (float64, error) {
 	c, err := m.fetchCaps()
 	if err != nil {
 		return 0, err
 	}
-	if len(c.Capabilities.SlewSpeedsDps) == 0 {
-		return 6.0, nil
+	if len(c.Capabilities.MoveAxisSpeedsDps) == 0 {
+		return 0.005, nil
 	}
-	return c.Capabilities.SlewSpeedsDps[len(c.Capabilities.SlewSpeedsDps)-1], nil
+	return c.Capabilities.MoveAxisSpeedsDps[0], nil
+}
+
+// MaxMoveAxisSpeed returns the fastest MoveAxis speed in deg/s.
+func (m *Mount) MaxMoveAxisSpeed() (float64, error) {
+	c, err := m.fetchCaps()
+	if err != nil {
+		return 0, err
+	}
+	if len(c.Capabilities.MoveAxisSpeedsDps) == 0 {
+		return 1.0, nil
+	}
+	return c.Capabilities.MoveAxisSpeedsDps[len(c.Capabilities.MoveAxisSpeedsDps)-1], nil
 }

@@ -17,7 +17,8 @@ function mountApp() {
         settingsDirty: false,
         mountTime: '--',
         slew: {degrees: 5, speed: 4},
-        joySpeed: 4,
+        joySpeed: -1,        // index into moveSpeeds; set to fastest once fetched
+        moveSpeeds: [],      // deg/s ladder, from capabilities
         slewTarget: {ra: {h: 0, m: 0, s: 0}, dec: {d: 0, m: 0, s: 0}, speed: 4},
         serverTracking: 'none',
         isParked: false,
@@ -138,8 +139,7 @@ function mountApp() {
 
         // --- Joystick (continuous move) ---
         joyStart(axis, dir) {
-            const speeds = {1: 1.0, 2: 3.0, 3: 4.5, 4: 6.0};
-            const dps = speeds[this.joySpeed] || 6.0;
+            const dps = this.moveSpeeds[this.joySpeed] || 0;
             this.joyRates[axis] = dir * dps;
             app().MoveAxisSpeed(this.joyRates.ra, this.joyRates.dec)
                 .catch(() => {});
@@ -217,6 +217,19 @@ function mountApp() {
             app().EAFStatus().then(j => {
                 if (j) this.eaf = j;
                 this.normalizeTab();
+            }).catch(() => {
+            });
+        },
+
+        /* Load the MoveAxis speed ladder from the mount capabilities. */
+        fetchMoveSpeeds() {
+            app().MoveAxisSpeeds().then(speeds => {
+                if (speeds && speeds.length) {
+                    this.moveSpeeds = speeds;
+                    if (this.joySpeed < 0 || this.joySpeed >= speeds.length) {
+                        this.joySpeed = speeds.length - 1;
+                    }
+                }
             }).catch(() => {
             });
         },
@@ -331,7 +344,8 @@ function mountApp() {
         init() {
             this.fetchStatus();
             this.fetchEAFStatus();
-            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); }, 1000);
+            this.fetchMoveSpeeds();
+            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); this.fetchMoveSpeeds(); }, 1000);
         }
     }
 }
