@@ -13,7 +13,7 @@ in its own local repo:
   spec in `main/proto/README.md`.
 - **`~/Dev/fan_firmware`** — primary-mirror fan + mirror temperature firmware
   (`device_id="fan"`).
-- **`~/Dev/temp_firmware`** — ambient temperature/humidity + vibration firmware
+- **`~/Dev/amb_firmware`** — ambient temperature/humidity + vibration firmware
   (`device_id="temp"`).
 
 The three accessory firmwares speak `proto=2`, `device_type="accessories"`, and

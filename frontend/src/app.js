@@ -28,8 +28,10 @@ function mountApp() {
         eaf: {detected: false, power: false, health: 'unknown',
               focuser: {counter_steps: 0, is_moving: false, enabled: true},
               fan: {mode: 'off', power: false, speed: 0, rpm: null},
-              environment: {error: null, ambient_c: null, humidity_pct: null, mirror_c: null, dew_point_c: null, mirror_ambient_delta_c: null},
-              vibration: {error: null, rms_total: 0}},
+              mirror: {error: null, mirror_c: null},
+              environment: {error: null, ambient_c: null, humidity_pct: null, dew_point_c: null},
+              vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
+              orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
 
         /* Run a binding promise and refresh status. */
@@ -240,7 +242,7 @@ function mountApp() {
             if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
             if (this.eaf.detected) visible.push('enfoque');
             if (this.eaf.fan_detected) visible.push('fan');
-            if (this.eaf.fan_detected || this.eaf.temp_detected) visible.push('sensores');
+            if (this.eaf.temp_detected) visible.push('ambiente');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -326,14 +328,14 @@ function mountApp() {
 
         sensorOk(key) {
             if (key === 'ambiente') return this.eaf.temp_detected && this.eaf.environment.ambient_c != null;
-            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.environment.mirror_c != null;
+            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.mirror.mirror_c != null;
             if (key === 'vibracion') return this.eaf.temp_detected && this.eaf.vibration.error == null;
             return false;
         },
 
         sensorError() {
-            if (!this.eaf.fan_detected && !this.eaf.temp_detected) {
-                return 'No detectado — tocá "Fan" o "Temp" arriba para conectar';
+            if (!this.eaf.temp_detected) {
+                return 'No detectado — tocá "AMB" arriba para conectar';
             }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);

@@ -193,26 +193,42 @@ type eafStatus struct {
 	TempDetected bool            `json:"temp_detected"`
 	Focuser      eaf.FocuserView `json:"focuser"`
 	Fan          fan.FanView     `json:"fan"`
+	Mirror       fan.MirrorView  `json:"mirror"`
 	Environment  environmentView `json:"environment"`
 	Vibration    vibrationView   `json:"vibration"`
+	Orientation  orientationView `json:"orientation"`
 }
 
-// environmentView merges the ambient readings (temp) with the mirror reading
-// (fan) under the shape the frontend expects.
+// environmentView is the ambient environment subset shown in the UI. It comes
+// entirely from the temp module; the mirror reading lives in Mirror.
 type environmentView struct {
-	Error               *string  `json:"error"`
-	AmbientC            *float64 `json:"ambient_c"`
-	HumidityPct         *float64 `json:"humidity_pct"`
-	MirrorC             *float64 `json:"mirror_c"`
-	DewPointC           *float64 `json:"dew_point_c"`
-	MirrorAmbientDeltaC *float64 `json:"mirror_ambient_delta_c"`
-	MirrorDewMarginC    *float64 `json:"mirror_dew_margin_c"`
+	Error       *string  `json:"error"`
+	AmbientC    *float64 `json:"ambient_c"`
+	HumidityPct *float64 `json:"humidity_pct"`
+	DewPointC   *float64 `json:"dew_point_c"`
 }
 
-// vibrationView is the vibration subset shown in the UI.
+// vibrationView is the vibration subset shown in the UI: acceleration RMS/peak
+// (milli-g) and velocity RMS/peak (mm/s) plus the ISO 10816 zone. A field is
+// nil when the accelerometer is absent; the frontend renders it as "—".
 type vibrationView struct {
-	Error    *string `json:"error"`
-	RmsTotal float64 `json:"rms_total"`
+	Error          *string  `json:"error"`
+	RmsTotal       *float64 `json:"rms_total"`
+	AccelPeakTotal *float64 `json:"accel_peak_total"`
+	VelRmsTotal    *float64 `json:"vel_rms_total"`
+	VelPeakTotal   *float64 `json:"vel_peak_total"`
+	IsoZone        *string  `json:"iso_zone"`
+}
+
+// orientationView is the tilt subset shown in the UI: pitch/roll angles
+// (degrees) and the gravity vector (g).
+type orientationView struct {
+	Error    *string  `json:"error"`
+	PitchDeg *float64 `json:"pitch_deg"`
+	RollDeg  *float64 `json:"roll_deg"`
+	AxG      *float64 `json:"ax_g"`
+	AyG      *float64 `json:"ay_g"`
+	AzG      *float64 `json:"az_g"`
 }
 
 // EAFStatus returns the aggregate accessory snapshot for the UI, merging the
@@ -230,10 +246,9 @@ func (a *App) EAFStatus() eafStatus {
 	fst := fan.Get().Status()
 	st.FanDetected = fst.Detected
 	st.Fan = fst.Fan
-	mirror := fst.Mirror.MirrorC
-	mirrorErr := fst.Mirror.Error
+	st.Mirror = fst.Mirror
 	if !fst.Detected {
-		mirrorErr = strptr("fan not connected")
+		st.Mirror.Error = strptr("fan not connected")
 	}
 
 	tst := temp.Get().Status()
@@ -243,16 +258,30 @@ func (a *App) EAFStatus() eafStatus {
 	if !tst.Detected {
 		ambientErr = strptr("temp not connected")
 	}
-	st.Vibration = vibrationView{Error: tst.Vibration.Error, RmsTotal: tst.Vibration.RmsTotal}
+	st.Vibration = vibrationView{
+		Error:          tst.Vibration.Error,
+		RmsTotal:       tst.Vibration.RmsTotal,
+		AccelPeakTotal: tst.Vibration.AccelPeakTotal,
+		VelRmsTotal:    tst.Vibration.VelRmsTotal,
+		VelPeakTotal:   tst.Vibration.VelPeakTotal,
+		IsoZone:        tst.Vibration.IsoZone,
+	}
+	st.Orientation = orientationView{
+		Error:    tst.Orientation.Error,
+		PitchDeg: tst.Orientation.PitchDeg,
+		RollDeg:  tst.Orientation.RollDeg,
+		AxG:      tst.Orientation.AxG,
+		AyG:      tst.Orientation.AyG,
+		AzG:      tst.Orientation.AzG,
+	}
 	if !tst.Detected && st.Vibration.Error == nil {
 		st.Vibration.Error = strptr("temp not connected")
 	}
 
 	st.Environment = environmentView{
-		Error:       mergeErr(ambientErr, mirrorErr),
+		Error:       ambientErr,
 		AmbientC:    tst.Environment.AmbientC,
 		HumidityPct: tst.Environment.HumidityPct,
-		MirrorC:     mirror,
 		DewPointC:   tst.Environment.DewPointC,
 	}
 
@@ -260,14 +289,3 @@ func (a *App) EAFStatus() eafStatus {
 }
 
 func strptr(s string) *string { return &s }
-
-func mergeErr(a, b *string) *string {
-	if a == nil {
-		return b
-	}
-	if b == nil {
-		return a
-	}
-	joined := *a + " · " + *b
-	return &joined
-}

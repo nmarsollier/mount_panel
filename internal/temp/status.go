@@ -11,14 +11,32 @@ type EnvironmentView struct {
 	DewPointC   *float64 `json:"dew_point_c"`
 }
 
-// VibrationView is the vibration subset shown in the UI.
+// VibrationView is the vibration subset shown in the UI: acceleration RMS/peak
+// (milli-g) and velocity RMS/peak (mm/s, converted from the firmware's µm/s),
+// plus the ISO 10816 zone. A field is nil when the accelerometer is absent; the
+// frontend renders it as "—".
 type VibrationView struct {
-	Error    *string `json:"error"`
-	RmsTotal float64 `json:"rms_total"`
+	Error          *string  `json:"error"`
+	RmsTotal       *float64 `json:"rms_total"`
+	AccelPeakTotal *float64 `json:"accel_peak_total"`
+	VelRmsTotal    *float64 `json:"vel_rms_total"`
+	VelPeakTotal   *float64 `json:"vel_peak_total"`
+	IsoZone        *string  `json:"iso_zone"`
+}
+
+// OrientationView is the tilt subset shown in the UI: pitch/roll tilt angles
+// (degrees) and the gravity vector (g).
+type OrientationView struct {
+	Error    *string  `json:"error"`
+	PitchDeg *float64 `json:"pitch_deg"`
+	RollDeg  *float64 `json:"roll_deg"`
+	AxG      *float64 `json:"ax_g"`
+	AyG      *float64 `json:"ay_g"`
+	AzG      *float64 `json:"az_g"`
 }
 
 // Status is the temperature/vibration snapshot: connection state plus the
-// ambient and vibration readings.
+// ambient, vibration and orientation readings.
 type Status struct {
 	Detected     bool             `json:"detected"`
 	BootID       string           `json:"boot_id"`
@@ -26,6 +44,7 @@ type Status struct {
 	SensorHealth string           `json:"sensor_health"`
 	Environment  EnvironmentView  `json:"environment"`
 	Vibration    VibrationView    `json:"vibration"`
+	Orientation  OrientationView  `json:"orientation"`
 }
 
 // Status aggregates the device, environment and vibration readings. When the
@@ -60,10 +79,36 @@ func (t *Temp) Status() Status {
 		logx.Warn(tempCtx(), "state/vibration: "+err.Error())
 	} else {
 		st.Vibration = VibrationView{
-			Error:    vib.Error,
-			RmsTotal: vib.RmsTotal,
+			Error:          vib.Error,
+			RmsTotal:       vib.RmsTotal,
+			AccelPeakTotal: vib.AccelPeakTotal,
+			VelRmsTotal:    umPerSToMmPerS(vib.VelRmsTotal),
+			VelPeakTotal:   umPerSToMmPerS(vib.VelPeakTotal),
+			IsoZone:        vib.IsoZone,
+		}
+	}
+	if ori, err := c.StateOrientation(); err != nil {
+		logx.Warn(tempCtx(), "state/orientation: "+err.Error())
+	} else {
+		st.Orientation = OrientationView{
+			Error:    ori.Error,
+			PitchDeg: ori.PitchDeg,
+			RollDeg:  ori.RollDeg,
+			AxG:      ori.AxG,
+			AyG:      ori.AyG,
+			AzG:      ori.AzG,
 		}
 	}
 
 	return st
+}
+
+// umPerSToMmPerS converts the firmware's µm/s velocity to mm/s for display. A
+// nil value (sensor absent) is passed through.
+func umPerSToMmPerS(v *float64) *float64 {
+	if v == nil {
+		return nil
+	}
+	m := *v / 1000.0
+	return &m
 }

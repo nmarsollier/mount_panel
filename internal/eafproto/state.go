@@ -83,18 +83,47 @@ type EnvironmentState struct {
 	MirrorDewMarginC    *float64 `json:"mirror_dew_margin_c"`
 }
 
-// VibrationState is the vibration snapshot (ADXL345 statistics, m/s²). The
-// firmware reports the last completed second's demeaned RMS.
+// VibrationState is the vibration snapshot from the ADXL345 (100 Hz), read-and-
+// reset: each request reports the figures accumulated since the previous one.
+// Acceleration RMS/peak are in milli-g and velocity RMS/peak in µm/s, plus an
+// ISO 10816-1 severity zone. A field is nil when the accelerometer is absent
+// (the firmware reports null, never a fabricated 0).
 type VibrationState struct {
-	Enabled      bool    `json:"enabled"`
-	Valid        bool    `json:"valid"`
-	Error        *string `json:"error"`
-	SampleRateHz int     `json:"sample_rate_hz"`
-	RmsX         float64 `json:"rms_x"`
-	RmsY         float64 `json:"rms_y"`
-	RmsZ         float64 `json:"rms_z"`
-	RmsTotal     float64 `json:"rms_total"`
-	Processing   string  `json:"processing"`
+	Enabled        bool     `json:"enabled"`
+	Valid          bool     `json:"valid"`
+	Error          *string  `json:"error"`
+	SampleRateHz   *int     `json:"sample_rate_hz"`
+	RmsX           *float64 `json:"rms_x"`
+	RmsY           *float64 `json:"rms_y"`
+	RmsZ           *float64 `json:"rms_z"`
+	RmsTotal       *float64 `json:"rms_total"`
+	AccelPeakX     *float64 `json:"accel_peak_x"`
+	AccelPeakY     *float64 `json:"accel_peak_y"`
+	AccelPeakZ     *float64 `json:"accel_peak_z"`
+	AccelPeakTotal *float64 `json:"accel_peak_total"`
+	VelRmsX        *float64 `json:"vel_rms_x"`
+	VelRmsY        *float64 `json:"vel_rms_y"`
+	VelRmsZ        *float64 `json:"vel_rms_z"`
+	VelRmsTotal    *float64 `json:"vel_rms_total"`
+	VelPeakX       *float64 `json:"vel_peak_x"`
+	VelPeakY       *float64 `json:"vel_peak_y"`
+	VelPeakZ       *float64 `json:"vel_peak_z"`
+	VelPeakTotal   *float64 `json:"vel_peak_total"`
+	IsoZone        *string  `json:"iso_zone"`
+	Processing     string   `json:"processing"`
+}
+
+// OrientationState is the current rotation from the gravity vector: pitch/roll
+// tilt angles (degrees) and the raw gravity components (g). A field is nil when
+// the accelerometer is absent.
+type OrientationState struct {
+	Enabled  bool     `json:"enabled"`
+	Error    *string  `json:"error"`
+	PitchDeg *float64 `json:"pitch_deg"`
+	RollDeg  *float64 `json:"roll_deg"`
+	AxG      *float64 `json:"ax_g"`
+	AyG      *float64 `json:"ay_g"`
+	AzG      *float64 `json:"az_g"`
 }
 
 // StateDevice asks the accessory for the general snapshot.
@@ -147,6 +176,18 @@ func (c *Client) StateVibration() (*VibrationState, error) {
 		Data VibrationState `json:"data"`
 	}{}
 	if err := c.request(context.Background(), "state", "vibration", "", nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// StateOrientation asks the accessory for the current tilt angles and gravity
+// vector.
+func (c *Client) StateOrientation() (*OrientationState, error) {
+	out := struct {
+		Data OrientationState `json:"data"`
+	}{}
+	if err := c.request(context.Background(), "state", "orientation", "", nil, &out); err != nil {
 		return nil, err
 	}
 	return &out.Data, nil

@@ -745,9 +745,9 @@ input::placeholder {
             <i></i>Fan
           </button>
           <button class="conn-chip" :class="eaf.temp_detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.temp_detected ? 'Desconectar temp' : 'Conectar temp'"
+            :title="eaf.temp_detected ? 'Desconectar AMB' : 'Conectar AMB'"
             @click="toggleTemp()">
-            <i></i>Temp
+            <i></i>AMB
           </button>
         </div>
       </div>
@@ -768,7 +768,7 @@ input::placeholder {
         <span>Temperatura <b x-text="fmt(eaf.environment.ambient_c, 1, '°C')"></b></span>
         <span>Focuser <b x-text="focuserHeaderState()"></b></span>
         <span>Fan <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
-        <span>Vibración <b x-text="eaf.temp_detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></b></span>
+        <span>Vibración <b x-text="fmt(eaf.vibration.vel_rms_total, 2, ' mm/s')"></b></span>
       </div>
     </header>
 
@@ -782,8 +782,8 @@ input::placeholder {
         @click="tab = 'settings'">Settings</button>
       <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
       <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
-      <button x-show="eaf.fan_detected || eaf.temp_detected" :class="{ active: tab === 'sensores' }"
-        @click="tab = 'sensores'">Sensores</button>
+      <button x-show="eaf.temp_detected" :class="{ active: tab === 'ambiente' }"
+        @click="tab = 'ambiente'">Ambiente</button>
     </nav>
 
     <!-- ═══ Montura ═══ -->
@@ -1089,16 +1089,26 @@ input::placeholder {
         </div>
       </div>
 
+      <div class="panel">
+        <div class="panel-header"><strong>Espejo Primario</strong></div>
+        <div class="stack">
+          <div class="metric">
+            <span class="metric-label">Temperatura</span>
+            <span class="metric-value" x-text="fmt(eaf.mirror.mirror_c, 2, ' °C')"></span>
+          </div>
+          <span class="sensor-error" x-show="eaf.mirror.error" x-text="eaf.mirror.error"></span>
+        </div>
+      </div>
+
     </section>
 
-    <!-- ═══ Sensores ═══ -->
-    <section class="tab-content" x-show="tab === 'sensores'">
+    <!-- ═══ Ambiente ═══ -->
+    <section class="tab-content" x-show="tab === 'ambiente'">
 
       <div class="panel">
         <div class="panel-header"><strong>Estado</strong></div>
         <div class="sensor-status">
           <span class="conn-chip" :class="sensorOk('ambiente') ? 'conn-on' : 'conn-error'"><i></i>Ambiente</span>
-          <span class="conn-chip" :class="sensorOk('espejo') ? 'conn-on' : 'conn-error'"><i></i>Temperatura Espejo</span>
           <span class="conn-chip" :class="sensorOk('vibracion') ? 'conn-on' : 'conn-error'"><i></i>Vibración</span>
           <span class="sensor-error" x-show="sensorError()" x-text="sensorError()"></span>
         </div>
@@ -1128,28 +1138,63 @@ input::placeholder {
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Espejo Primario</strong></div>
+        <div class="panel-header"><strong>Vibración</strong></div>
         <div class="sensor-grid">
-          <div class="metric">
-            <span class="metric-label">Temperatura</span>
+          <div class="metric" title="Velocidad RMS — severidad ISO 10816 (mm/s)">
+            <span class="metric-label">Vel. RMS</span>
             <span class="metric-value"
-              x-text="fmt(eaf.environment.mirror_c, 2, ' °C')"></span>
+              x-text="fmt(eaf.vibration.vel_rms_total, 3, ' mm/s')"></span>
           </div>
-          <div class="metric" title="Diferencia entre temperatura del espejo y ambiente">
-            <span class="metric-label">Δ</span>
+          <div class="metric" title="Zona de severidad ISO 10816-1 (A a D)">
+            <span class="metric-label">ISO 10816</span>
             <span class="metric-value"
-              x-text="fmt(eaf.environment.mirror_ambient_delta_c, 2, ' °C')"></span>
+              x-text="eaf.vibration.iso_zone || '—'"></span>
+          </div>
+          <div class="metric" title="Aceleración RMS (milli-g)">
+            <span class="metric-label">Acel. RMS</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.vibration.rms_total, 2, ' mg')"></span>
+          </div>
+          <div class="metric" title="Aceleración pico máxima (milli-g)">
+            <span class="metric-label">Acel. pico</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.vibration.accel_peak_total, 2, ' mg')"></span>
+          </div>
+          <div class="metric" title="Velocidad pico máxima (mm/s)">
+            <span class="metric-label">Vel. pico</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.vibration.vel_peak_total, 3, ' mm/s')"></span>
           </div>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Vibración</strong></div>
-        <div class="stack">
-          <div class="metric" title="Root Mean Square — vibración promedio de los tres ejes">
-            <span class="metric-label">RMS total</span>
+        <div class="panel-header"><strong>Orientación</strong></div>
+        <div class="sensor-grid">
+          <div class="metric" title="Inclinación del eje X desde la horizontal">
+            <span class="metric-label">Pitch (X)</span>
             <span class="metric-value"
-              x-text="eaf.temp_detected ? (eaf.vibration.rms_total.toFixed(3) + ' m/s²') : '—'"></span>
+              x-text="fmt(eaf.orientation.pitch_deg, 2, '°')"></span>
+          </div>
+          <div class="metric" title="Inclinación del eje Y desde la horizontal">
+            <span class="metric-label">Roll (Y)</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.orientation.roll_deg, 2, '°')"></span>
+          </div>
+          <div class="metric" title="Gravedad, eje X (g)">
+            <span class="metric-label">Gravedad X</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.orientation.ax_g, 3, ' g')"></span>
+          </div>
+          <div class="metric" title="Gravedad, eje Y (g)">
+            <span class="metric-label">Gravedad Y</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.orientation.ay_g, 3, ' g')"></span>
+          </div>
+          <div class="metric" title="Gravedad, eje Z (g)">
+            <span class="metric-label">Gravedad Z</span>
+            <span class="metric-value"
+              x-text="fmt(eaf.orientation.az_g, 3, ' g')"></span>
           </div>
         </div>
       </div>
@@ -1188,8 +1233,10 @@ input::placeholder {
         eaf: {detected: false, power: false, health: 'unknown',
               focuser: {counter_steps: 0, is_moving: false, enabled: true},
               fan: {mode: 'off', power: false, speed: 0, rpm: null},
-              environment: {error: null, ambient_c: null, humidity_pct: null, mirror_c: null, dew_point_c: null, mirror_ambient_delta_c: null},
-              vibration: {error: null, rms_total: 0}},
+              mirror: {error: null, mirror_c: null},
+              environment: {error: null, ambient_c: null, humidity_pct: null, dew_point_c: null},
+              vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
+              orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
 
         /* Run a binding promise and refresh status. */
@@ -1400,7 +1447,7 @@ input::placeholder {
             if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
             if (this.eaf.detected) visible.push('enfoque');
             if (this.eaf.fan_detected) visible.push('fan');
-            if (this.eaf.fan_detected || this.eaf.temp_detected) visible.push('sensores');
+            if (this.eaf.temp_detected) visible.push('ambiente');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -1486,14 +1533,14 @@ input::placeholder {
 
         sensorOk(key) {
             if (key === 'ambiente') return this.eaf.temp_detected && this.eaf.environment.ambient_c != null;
-            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.environment.mirror_c != null;
+            if (key === 'espejo') return this.eaf.fan_detected && this.eaf.mirror.mirror_c != null;
             if (key === 'vibracion') return this.eaf.temp_detected && this.eaf.vibration.error == null;
             return false;
         },
 
         sensorError() {
-            if (!this.eaf.fan_detected && !this.eaf.temp_detected) {
-                return 'No detectado — tocá "Fan" o "Temp" arriba para conectar';
+            if (!this.eaf.temp_detected) {
+                return 'No detectado — tocá "AMB" arriba para conectar';
             }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);
