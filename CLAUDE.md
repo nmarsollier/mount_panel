@@ -14,7 +14,7 @@ in its own local repo:
 - **`~/Dev/fan_firmware`** — primary-mirror fan + mirror temperature firmware
   (`device_id="fan"`).
 - **`~/Dev/amb_firmware`** — ambient temperature/humidity + vibration firmware
-  (`device_id="temp"`).
+  (`device_id="amb"`).
 
 The three accessory firmwares speak `proto=2`, `device_type="accessories"`, and
 are told apart by their `device_id`. When firmware references are needed — the

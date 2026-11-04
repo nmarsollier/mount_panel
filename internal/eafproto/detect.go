@@ -18,7 +18,7 @@ var errNoAccessories = errors.New("no accessory controller found on any serial p
 
 // Detect probes the serial ports and returns a client connected to the
 // accessory controller whose capabilities report the given device_id ("eaf",
-// "fan" or "temp"). Each candidate is claimed atomically before it is probed,
+// "fan" or "amb"). Each candidate is claimed atomically before it is probed,
 // so a random device is never mistaken for the accessory and the mount detector
 // is never blocked by this one.
 func Detect(deviceID string) (*Client, error) {

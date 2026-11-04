@@ -112,7 +112,7 @@ func (t *Temp) tryConnect() (*eafproto.Client, error) {
 	if t.serialPort != "" {
 		c, err = eafproto.Open(t.serialPort)
 	} else {
-		c, err = eafproto.Detect("temp")
+		c, err = eafproto.Detect("amb")
 	}
 	if err != nil {
 		return nil, err
