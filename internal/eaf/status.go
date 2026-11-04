@@ -1,6 +1,9 @@
 package eaf
 
-import "github.com/nmarsollier/mount_panel/internal/tools/logx"
+import (
+	"github.com/nmarsollier/mount_panel/internal/events"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
+)
 
 // FocuserView is the focuser subset shown in the UI.
 type FocuserView struct {
@@ -48,6 +51,15 @@ func (e *EAF) Status() Status {
 			DriverOK:     fs.Driver.UartOK,
 			Enabled:      fs.Enabled,
 		}
+	}
+
+	if st.Detected {
+		events.Record(events.Event{
+			Type:    events.TypeSensorReading,
+			Source:  events.SourceEAF,
+			Subject: "status",
+			Payload: st,
+		})
 	}
 
 	return st

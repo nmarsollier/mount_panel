@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/nmarsollier/mount_panel/internal/events"
 )
 
 // Status is a coherent snapshot of the mount formatted for the UI, mirroring
@@ -95,6 +97,15 @@ func (m *Mount) Status() Status {
 		st.Settings.Lon = cfg.Config.Lon
 		st.Settings.Elevation = cfg.Config.Elevation
 		st.Time = cfg.Utc
+	}
+
+	if s != nil {
+		events.Record(events.Event{
+			Type:    events.TypeSensorReading,
+			Source:  events.SourceMount,
+			Subject: "status",
+			Payload: st,
+		})
 	}
 
 	return st

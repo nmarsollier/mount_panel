@@ -3,7 +3,9 @@ package mountproto
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
+	"github.com/nmarsollier/mount_panel/internal/events"
 	"github.com/nmarsollier/mount_panel/internal/proto"
 )
 
@@ -31,11 +33,29 @@ func (c *Client) request(ctx context.Context, reqType string, payload any, out a
 	if err != nil {
 		return err
 	}
+	correlation := strconv.FormatUint(uint64(id), 10)
+
+	// Audit every serial command sent to the mount, before it is written.
+	events.Record(events.Event{
+		Type:          events.TypeMountCommand,
+		Source:        events.SourceMount,
+		Subject:       reqType,
+		CorrelationID: correlation,
+		Payload:       json.RawMessage(body),
+	})
 
 	raw, err := c.RoundTrip(ctx, id, body)
 	if err != nil {
 		return err
 	}
+
+	events.Record(events.Event{
+		Type:          events.TypeMountResponse,
+		Source:        events.SourceMount,
+		Subject:       reqType,
+		CorrelationID: correlation,
+		Payload:       json.RawMessage(raw),
+	})
 
 	var env envelope
 	if err := json.Unmarshal(raw, &env); err != nil {

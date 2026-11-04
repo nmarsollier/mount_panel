@@ -14,6 +14,7 @@ func Router() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	engine = gin.New()
 	engine.Use(gin.Recovery())
+	engine.Use(Events())
 
 	return engine
 }

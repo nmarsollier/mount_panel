@@ -1,6 +1,9 @@
 package fan
 
-import "github.com/nmarsollier/mount_panel/internal/tools/logx"
+import (
+	"github.com/nmarsollier/mount_panel/internal/events"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
+)
 
 // FanView is the fan subset shown in the UI.
 type FanView struct {
@@ -68,6 +71,15 @@ func (f *Fan) Status() Status {
 			Error:   env.Error,
 			MirrorC: env.MirrorC,
 		}
+	}
+
+	if st.Detected {
+		events.Record(events.Event{
+			Type:    events.TypeSensorReading,
+			Source:  events.SourceFan,
+			Subject: "status",
+			Payload: st,
+		})
 	}
 
 	return st

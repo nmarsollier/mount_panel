@@ -1,6 +1,9 @@
 package amb
 
-import "github.com/nmarsollier/mount_panel/internal/tools/logx"
+import (
+	"github.com/nmarsollier/mount_panel/internal/events"
+	"github.com/nmarsollier/mount_panel/internal/tools/logx"
+)
 
 // EnvironmentView is the ambient environment subset shown in the UI. The mirror
 // fields are nil for this module (the mirror sensor lives in the fan).
@@ -98,6 +101,15 @@ func (t *Amb) Status() Status {
 			AyG:      ori.AyG,
 			AzG:      ori.AzG,
 		}
+	}
+
+	if st.Detected {
+		events.Record(events.Event{
+			Type:    events.TypeSensorReading,
+			Source:  events.SourceAmb,
+			Subject: "status",
+			Payload: st,
+		})
 	}
 
 	return st

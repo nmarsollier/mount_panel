@@ -13,6 +13,7 @@ import (
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount"
 	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
+	"github.com/nmarsollier/mount_panel/internal/events"
 	"github.com/nmarsollier/mount_panel/internal/fan"
 	"github.com/nmarsollier/mount_panel/internal/mount"
 	"github.com/nmarsollier/mount_panel/internal/tools/env"
@@ -26,6 +27,13 @@ var assets embed.FS
 func main() {
 	ctx := logx.CtxWithFields(context.Background(),
 		logx.NewFields().Add(logx.CONTROLLER, "Main"))
+
+	// Start the event log: an embedded SQLite database that records every Alpaca
+	// command/response, mount command and sensor reading asynchronously.
+	if err := events.Init(env.Get().DBPath); err != nil {
+		logx.Warn(ctx, "event log unavailable: "+err.Error())
+	}
+	defer events.Close()
 
 	// Start the mount model: a single connection attempt at startup; the user
 	// re-connects manually from the UI when it is unplugged.

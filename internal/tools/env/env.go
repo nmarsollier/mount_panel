@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -12,6 +13,7 @@ type Configuration struct {
 	EAFSerialPort string `json:"eafSerialPort"` // focuser CDC-ACM serial port (empty = auto-detect)
 	FanSerialPort string `json:"fanSerialPort"` // fan CDC-ACM serial port (empty = auto-detect)
 	AmbSerialPort string `json:"ambSerialPort"` // ambient/vibration CDC-ACM serial port (empty = auto-detect)
+	DBPath        string `json:"dbPath"`        // SQLite event-log file path (default: user config dir)
 }
 
 var config *Configuration
@@ -36,5 +38,24 @@ func load() *Configuration {
 		EAFSerialPort: os.Getenv("EAF_SERIAL_PORT"),
 		FanSerialPort: os.Getenv("FAN_SERIAL_PORT"),
 		AmbSerialPort: os.Getenv("AMB_SERIAL_PORT"),
+		DBPath:        envOr("DB_PATH", defaultDBPath()),
 	}
+}
+
+// envOr returns the environment variable value when set, or the fallback.
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+// defaultDBPath returns the event database location inside the user config
+// directory, falling back to the current directory when it cannot be resolved.
+func defaultDBPath() string {
+	dir, err := os.UserConfigDir()
+	if err != nil || dir == "" {
+		return "mount_panel.db"
+	}
+	return filepath.Join(dir, "mount_panel", "events.db")
 }
