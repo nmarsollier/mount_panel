@@ -154,15 +154,15 @@ frontend/                   # embedded desktop UI (HTML/CSS/JS Alpine.js)
 internal/
   proto/                    # serial protocol client (framing + detection)
   mountproto/               # mount message contract
-  eafproto/                 # accessory message contract (eaf/fan/temp, by device_id)
+  eafproto/                 # accessory message contract (eaf/fan/amb, by device_id)
   mount/                    # mount model (connection + operations, no cache)
   eaf/                      # focuser model (connection + operations, no cache)
   fan/                      # fan + mirror-temperature model (no cache)
-  temp/                     # ambient/humidity/vibration model (no cache)
+  amb/                      # ambient/humidity/vibration model (no cache)
   alpaca_mount/             # Alpaca REST server (GIN): ITelescopeV4 endpoints
     server/                 # GIN engine + logging middleware
   alpaca_eaf/               # Focuser V4 + ObservingConditions V2 + Switch V3
-  ui/                       # Wails binding (App) → mount/eaf/fan/temp
+  ui/                       # Wails binding (App) → mount/eaf/fan/amb
   tools/                    # logx (logger) + env (config), cross-cutting
 test/alpaca/                # Alpaca integration tests (build tag `integration`)
 ```
@@ -271,7 +271,7 @@ Configuration via environment variables (see `internal/tools/env`):
 - `SERIAL_PORT` — pins the mount CDC port (empty = auto-detection).
 - `EAF_SERIAL_PORT` — pins the focuser CDC port (empty = auto-detect `device_id="eaf"`).
 - `FAN_SERIAL_PORT` — pins the fan CDC port (empty = auto-detect `device_id="fan"`).
-- `TEMP_SERIAL_PORT` — pins the temperature/vibration CDC port (empty = auto-detect `device_id="amb"`).
+- `AMB_SERIAL_PORT` — pins the ambient/vibration CDC port (empty = auto-detect `device_id="amb"`).
 
 For development with hot-reload you can use `wails dev` (requires installing the
 CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`).

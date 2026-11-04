@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
 	"github.com/nmarsollier/mount_panel/internal/fan"
-	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 // getAbsolute reports that the adapter publishes an absolute position.
@@ -71,7 +71,7 @@ func getTempCompAvailable(c *gin.Context) {
 // getTemperature returns the ambient temperature in Celsius.
 func getTemperature(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := temp.Get().AmbientTemperature()
+	v, err := amb.Get().AmbientTemperature()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -83,7 +83,7 @@ func getTemperature(c *gin.Context) {
 // sensor is 1024 (not implemented), a broken serial link is 1027 (not
 // connected).
 func writeEnvironmentError(c *gin.Context, err error, cid, stx uint32) {
-	if errors.Is(err, temp.ErrUnavailable) || errors.Is(err, fan.ErrUnavailable) {
+	if errors.Is(err, amb.ErrUnavailable) || errors.Is(err, fan.ErrUnavailable) {
 		server.WriteError(c, server.ErrNotImplemented, err.Error(), cid, stx)
 		return
 	}

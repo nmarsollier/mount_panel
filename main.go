@@ -11,10 +11,10 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount"
+	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
 	"github.com/nmarsollier/mount_panel/internal/fan"
 	"github.com/nmarsollier/mount_panel/internal/mount"
-	"github.com/nmarsollier/mount_panel/internal/temp"
 	"github.com/nmarsollier/mount_panel/internal/tools/env"
 	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 	"github.com/nmarsollier/mount_panel/internal/ui"
@@ -31,11 +31,11 @@ func main() {
 	// re-connects manually from the UI when it is unplugged.
 	mount.Init(env.Get().SerialPort)
 
-	// Start the accessory models (focuser, fan, temperature/vibration) each on
+	// Start the accessory models (focuser, fan, ambient/vibration) each on
 	// their own serial link.
 	eaf.Init(env.Get().EAFSerialPort)
 	fan.Init(env.Get().FanSerialPort)
-	temp.Init(env.Get().TempSerialPort)
+	amb.Init(env.Get().AmbSerialPort)
 
 	// Serve Alpaca (N.I.N.A./PHD2) in the background alongside the GUI.
 	go alpaca_mount.Start()

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
+	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/fan"
-	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 const switchDevice = "/api/v1/switch/0"
@@ -376,7 +376,7 @@ func switchValue(id int) (float64, error) {
 	case switchMirrorTemp:
 		return fan.Get().MirrorTemperature()
 	case switchAmbientTemp:
-		return temp.Get().AmbientTemperature()
+		return amb.Get().AmbientTemperature()
 	default:
 		return 0, errInvalidSwitchID
 	}

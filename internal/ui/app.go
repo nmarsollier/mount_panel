@@ -5,10 +5,10 @@ package ui
 import (
 	"context"
 
+	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
 	"github.com/nmarsollier/mount_panel/internal/fan"
 	"github.com/nmarsollier/mount_panel/internal/mount"
-	"github.com/nmarsollier/mount_panel/internal/temp"
 )
 
 // App is the Wails binding between the Alpine.js frontend and the mount.
@@ -43,9 +43,9 @@ func (a *App) ConnectFan() error {
 	return fan.Get().Connect()
 }
 
-// ConnectTemp makes a single manual connection attempt to the temp module.
-func (a *App) ConnectTemp() error {
-	return temp.Get().Connect()
+// ConnectAmb makes a single manual connection attempt to the amb module.
+func (a *App) ConnectAmb() error {
+	return amb.Get().Connect()
 }
 
 // DisconnectMount closes the serial link to the mount.
@@ -63,9 +63,9 @@ func (a *App) DisconnectFan() {
 	fan.Get().Disconnect()
 }
 
-// DisconnectTemp closes the serial link to the temp module.
-func (a *App) DisconnectTemp() {
-	temp.Get().Disconnect()
+// DisconnectAmb closes the serial link to the amb module.
+func (a *App) DisconnectAmb() {
+	amb.Get().Disconnect()
 }
 
 // Stop halts everything (slew, tracking and manual motion).
@@ -182,7 +182,7 @@ func (a *App) FanSetSpeed(pct int) error {
 
 // eafStatus is the aggregate accessory snapshot returned to the frontend: the
 // focuser comes from the eaf, the fan and mirror from the fan controller, and
-// the ambient/vibration readings from the temp module.
+// the ambient/vibration readings from the amb module.
 type eafStatus struct {
 	Detected     bool            `json:"detected"`
 	BootID       string          `json:"boot_id"`
@@ -190,7 +190,7 @@ type eafStatus struct {
 	Health       string          `json:"health"`
 	SensorHealth string          `json:"sensor_health"`
 	FanDetected  bool            `json:"fan_detected"`
-	TempDetected bool            `json:"temp_detected"`
+	AmbDetected  bool            `json:"amb_detected"`
 	Focuser      eaf.FocuserView `json:"focuser"`
 	Fan          fan.FanView     `json:"fan"`
 	Mirror       fan.MirrorView  `json:"mirror"`
@@ -200,7 +200,7 @@ type eafStatus struct {
 }
 
 // environmentView is the ambient environment subset shown in the UI. It comes
-// entirely from the temp module; the mirror reading lives in Mirror.
+// entirely from the amb module; the mirror reading lives in Mirror.
 type environmentView struct {
 	Error       *string  `json:"error"`
 	AmbientC    *float64 `json:"ambient_c"`
@@ -251,38 +251,38 @@ func (a *App) EAFStatus() eafStatus {
 		st.Mirror.Error = strptr("fan not connected")
 	}
 
-	tst := temp.Get().Status()
-	st.TempDetected = tst.Detected
-	st.SensorHealth = tst.SensorHealth
-	ambientErr := tst.Environment.Error
-	if !tst.Detected {
-		ambientErr = strptr("temp not connected")
+	ast := amb.Get().Status()
+	st.AmbDetected = ast.Detected
+	st.SensorHealth = ast.SensorHealth
+	ambientErr := ast.Environment.Error
+	if !ast.Detected {
+		ambientErr = strptr("amb not connected")
 	}
 	st.Vibration = vibrationView{
-		Error:          tst.Vibration.Error,
-		RmsTotal:       tst.Vibration.RmsTotal,
-		AccelPeakTotal: tst.Vibration.AccelPeakTotal,
-		VelRmsTotal:    tst.Vibration.VelRmsTotal,
-		VelPeakTotal:   tst.Vibration.VelPeakTotal,
-		IsoZone:        tst.Vibration.IsoZone,
+		Error:          ast.Vibration.Error,
+		RmsTotal:       ast.Vibration.RmsTotal,
+		AccelPeakTotal: ast.Vibration.AccelPeakTotal,
+		VelRmsTotal:    ast.Vibration.VelRmsTotal,
+		VelPeakTotal:   ast.Vibration.VelPeakTotal,
+		IsoZone:        ast.Vibration.IsoZone,
 	}
 	st.Orientation = orientationView{
-		Error:    tst.Orientation.Error,
-		PitchDeg: tst.Orientation.PitchDeg,
-		RollDeg:  tst.Orientation.RollDeg,
-		AxG:      tst.Orientation.AxG,
-		AyG:      tst.Orientation.AyG,
-		AzG:      tst.Orientation.AzG,
+		Error:    ast.Orientation.Error,
+		PitchDeg: ast.Orientation.PitchDeg,
+		RollDeg:  ast.Orientation.RollDeg,
+		AxG:      ast.Orientation.AxG,
+		AyG:      ast.Orientation.AyG,
+		AzG:      ast.Orientation.AzG,
 	}
-	if !tst.Detected && st.Vibration.Error == nil {
-		st.Vibration.Error = strptr("temp not connected")
+	if !ast.Detected && st.Vibration.Error == nil {
+		st.Vibration.Error = strptr("amb not connected")
 	}
 
 	st.Environment = environmentView{
 		Error:       ambientErr,
-		AmbientC:    tst.Environment.AmbientC,
-		HumidityPct: tst.Environment.HumidityPct,
-		DewPointC:   tst.Environment.DewPointC,
+		AmbientC:    ast.Environment.AmbientC,
+		HumidityPct: ast.Environment.HumidityPct,
+		DewPointC:   ast.Environment.DewPointC,
 	}
 
 	return st

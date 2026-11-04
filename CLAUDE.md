@@ -40,7 +40,7 @@ N.I.N.A. / PHD2 ──HTTP──▶ Alpaca REST (GIN) ──┐
 Desktop UI (Wails) ──bindings──▶ ui ───────────┘                          ├─▶ Proto (serial CDC)
                             ui ──▶ EAF  ──▶ EAFProto ─────────────────────┘
                             ui ──▶ Fan  ──▶ EAFProto ─────────────────────┘
-                            ui ──▶ Temp ──▶ EAFProto ─────────────────────┘
+                            ui ──▶ Amb ──▶ EAFProto ─────────────────────┘
 ```
 
 - **proto/** — shared serial transport: framing (u32 LE length + JSON), port
@@ -52,7 +52,7 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 - **eafproto/** — the accessory message contract, shared by the three accessory
   devices: `proto=2`, `device_type="accessories"`, a `target`/`action`/`op`/
   `params` envelope with `session`/`boot_id`. Port detection matches the
-  `device_id` (`eaf`/`fan`/`temp`).
+  `device_id` (`eaf`/`fan`/`amb`).
 - **mount/** — mount model: manages the connection (detection, **auto-reconnect**
   and hot-unplug detection) and translates high-level operations (slew, move
   axis, guide, track, park…) into `mountproto` calls. No state cache.
@@ -60,7 +60,7 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
   operations to the UI. No state cache.
 - **fan/** — fan model: manages its serial link and exposes fan and
   mirror-temperature operations to the UI. No state cache.
-- **temp/** — temperature/vibration model: manages its serial link and exposes
+- **amb/** — ambient/vibration model: manages its serial link and exposes
   ambient/humidity/dew/vibration readings to the UI. No state cache.
 - **alpaca_mount/** — Alpaca REST server for the telescope: ITelescopeV4 endpoints
   (properties + methods) plus `management` and UDP discovery. Translates
@@ -69,8 +69,8 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
   - **alpaca_mount/server/** — shared GIN framework (engine singleton, response
     envelope, param parsing, error numbers, server identity).
 - **alpaca_eaf/** — Alpaca REST server for the accessory devices: IFocuserV4
-  (→ `eaf`), ObservingConditions V2 (→ `temp`) and Switch V3 (→ `fan` + `temp`).
-- **ui/** — Wails binding (`App`): exposes `mount`, `eaf`, `fan` and `temp` to the
+  (→ `eaf`), ObservingConditions V2 (→ `amb`) and Switch V3 (→ `fan` + `amb`).
+- **ui/** — Wails binding (`App`): exposes `mount`, `eaf`, `fan` and `amb` to the
   desktop UI.
 - **frontend/** — web assets (HTML/CSS/JS Alpine.js) served by Wails, which call
   `window.go.ui.App.*`.
@@ -119,10 +119,10 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 ## Package relationships (dependencies)
 
 - `alpaca_mount` → `mount` → `mountproto` → `proto`; `alpaca_mount` →
-  `alpaca_eaf`; `alpaca_eaf` → `eaf` + `fan` + `temp` → `eafproto` → `proto`
+  `alpaca_eaf`; `alpaca_eaf` → `eaf` + `fan` + `amb` → `eafproto` → `proto`
   (no reverse dependencies). Both `alpaca_mount` and `alpaca_eaf` use
   `alpaca_mount/server` for the shared HTTP framework.
-- `ui` → `mount`, `ui` → `eaf`, `ui` → `fan`, `ui` → `temp`.
+- `ui` → `mount`, `ui` → `eaf`, `ui` → `fan`, `ui` → `amb`.
 - `proto` is self-contained: serial port, framing, request/response with `id`,
   and the disconnection signal.
 - `tools/*` depends on no other package; the others may use `tools`.

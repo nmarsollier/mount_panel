@@ -33,9 +33,9 @@
             @click="toggleFan()">
             <i></i>Fan
           </button>
-          <button class="conn-chip" :class="eaf.temp_detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.temp_detected ? 'Desconectar AMB' : 'Conectar AMB'"
-            @click="toggleTemp()">
+          <button class="conn-chip" :class="eaf.amb_detected ? 'conn-on' : 'conn-off'"
+            :title="eaf.amb_detected ? 'Desconectar AMB' : 'Conectar AMB'"
+            @click="toggleAmb()">
             <i></i>AMB
           </button>
         </div>
@@ -71,7 +71,7 @@
         @click="tab = 'settings'">Settings</button>
       <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
       <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
-      <button x-show="eaf.temp_detected" :class="{ active: tab === 'ambiente' }"
+      <button x-show="eaf.amb_detected" :class="{ active: tab === 'ambiente' }"
         @click="tab = 'ambiente'">Ambiente</button>
     </nav>
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
-	"github.com/nmarsollier/mount_panel/internal/temp"
+	"github.com/nmarsollier/mount_panel/internal/amb"
 )
 
 const observingConditions = "/api/v1/observingconditions/0"
@@ -57,7 +57,7 @@ func initObservingConditions(engine *gin.Engine) {
 // getConnectedOC reports whether the OC client is logically connected.
 func getConnectedOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteBool(c, temp.Get().Connected(), cid, stx)
+	server.WriteBool(c, amb.Get().Connected(), cid, stx)
 }
 
 // putConnectedOC tracks the OC client's logical link.
@@ -68,21 +68,21 @@ func putConnectedOC(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "Invalid Connected", cid, stx)
 		return
 	}
-	temp.Get().SetConnected(connected)
+	amb.Get().SetConnected(connected)
 	server.WriteOK(c, cid, stx)
 }
 
 // putConnectOC establishes the OC logical client link.
 func putConnectOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	temp.Get().SetConnected(true)
+	amb.Get().SetConnected(true)
 	server.WriteOK(c, cid, stx)
 }
 
 // putDisconnectOC drops the OC logical client link.
 func putDisconnectOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	temp.Get().SetConnected(false)
+	amb.Get().SetConnected(false)
 	server.WriteOK(c, cid, stx)
 }
 
@@ -95,7 +95,7 @@ func getInterfaceVersionOC(c *gin.Context) {
 // getHumidity returns the ambient relative humidity in percent.
 func getHumidity(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := temp.Get().Humidity()
+	v, err := amb.Get().Humidity()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -106,7 +106,7 @@ func getHumidity(c *gin.Context) {
 // getDewPoint returns the dew point in Celsius.
 func getDewPoint(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := temp.Get().DewPoint()
+	v, err := amb.Get().DewPoint()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -117,7 +117,7 @@ func getDewPoint(c *gin.Context) {
 // getAveragePeriod returns the averaging window in hours.
 func getAveragePeriod(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteFloat(c, temp.Get().AveragePeriod(), cid, stx)
+	server.WriteFloat(c, amb.Get().AveragePeriod(), cid, stx)
 }
 
 // putAveragePeriod sets the averaging window in hours (0..1).
@@ -128,7 +128,7 @@ func putAveragePeriod(c *gin.Context) {
 		server.WriteError(c, server.ErrInvalidValue, "AveragePeriod out of range (0-1 hours)", cid, stx)
 		return
 	}
-	temp.Get().SetAveragePeriod(v)
+	amb.Get().SetAveragePeriod(v)
 	server.WriteOK(c, cid, stx)
 }
 
@@ -175,13 +175,13 @@ func getDeviceStateOC(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	entries := []stateEntry{}
 
-	if v, err := temp.Get().AmbientTemperature(); err == nil {
+	if v, err := amb.Get().AmbientTemperature(); err == nil {
 		entries = append(entries, stateEntry{"Temperature", server.RawFloat(v)})
 	}
-	if v, err := temp.Get().Humidity(); err == nil {
+	if v, err := amb.Get().Humidity(); err == nil {
 		entries = append(entries, stateEntry{"Humidity", server.RawFloat(v)})
 	}
-	if v, err := temp.Get().DewPoint(); err == nil {
+	if v, err := amb.Get().DewPoint(); err == nil {
 		entries = append(entries, stateEntry{"DewPoint", server.RawFloat(v)})
 	}
 

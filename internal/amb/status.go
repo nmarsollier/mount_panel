@@ -1,4 +1,4 @@
-package temp
+package amb
 
 import "github.com/nmarsollier/mount_panel/internal/tools/logx"
 
@@ -35,21 +35,21 @@ type OrientationView struct {
 	AzG      *float64 `json:"az_g"`
 }
 
-// Status is the temperature/vibration snapshot: connection state plus the
+// Status is the ambient/vibration snapshot: connection state plus the
 // ambient, vibration and orientation readings.
 type Status struct {
-	Detected     bool             `json:"detected"`
-	BootID       string           `json:"boot_id"`
-	Health       string           `json:"health"`
-	SensorHealth string           `json:"sensor_health"`
-	Environment  EnvironmentView  `json:"environment"`
-	Vibration    VibrationView    `json:"vibration"`
-	Orientation  OrientationView  `json:"orientation"`
+	Detected     bool            `json:"detected"`
+	BootID       string          `json:"boot_id"`
+	Health       string          `json:"health"`
+	SensorHealth string          `json:"sensor_health"`
+	Environment  EnvironmentView `json:"environment"`
+	Vibration    VibrationView   `json:"vibration"`
+	Orientation  OrientationView `json:"orientation"`
 }
 
 // Status aggregates the device, environment and vibration readings. When the
 // module is not connected it returns a zero snapshot with Detected=false.
-func (t *Temp) Status() Status {
+func (t *Amb) Status() Status {
 	st := Status{Detected: false, Health: "unknown"}
 
 	c, err := t.getConn()
@@ -60,13 +60,13 @@ func (t *Temp) Status() Status {
 	st.BootID = c.BootID()
 
 	if dev, err := c.StateDevice(); err != nil {
-		logx.Warn(tempCtx(), "state/device: "+err.Error())
+		logx.Warn(ambCtx(), "state/device: "+err.Error())
 	} else {
 		st.Health = dev.Health
 		st.SensorHealth = dev.SensorHealth
 	}
 	if env, err := c.StateEnvironment(); err != nil {
-		logx.Warn(tempCtx(), "state/environment: "+err.Error())
+		logx.Warn(ambCtx(), "state/environment: "+err.Error())
 	} else {
 		st.Environment = EnvironmentView{
 			Error:       env.Error,
@@ -76,7 +76,7 @@ func (t *Temp) Status() Status {
 		}
 	}
 	if vib, err := c.StateVibration(); err != nil {
-		logx.Warn(tempCtx(), "state/vibration: "+err.Error())
+		logx.Warn(ambCtx(), "state/vibration: "+err.Error())
 	} else {
 		st.Vibration = VibrationView{
 			Error:          vib.Error,
@@ -88,7 +88,7 @@ func (t *Temp) Status() Status {
 		}
 	}
 	if ori, err := c.StateOrientation(); err != nil {
-		logx.Warn(tempCtx(), "state/orientation: "+err.Error())
+		logx.Warn(ambCtx(), "state/orientation: "+err.Error())
 	} else {
 		st.Orientation = OrientationView{
 			Error:    ori.Error,

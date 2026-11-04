@@ -111,11 +111,11 @@ function mountApp() {
                 this.run(app().ConnectFan());
             }
         },
-        toggleTemp() {
-            if (this.eaf.temp_detected) {
-                this.run(app().DisconnectTemp());
+        toggleAmb() {
+            if (this.eaf.amb_detected) {
+                this.run(app().DisconnectAmb());
             } else {
-                this.run(app().ConnectTemp());
+                this.run(app().ConnectAmb());
             }
         },
         park() {
@@ -242,7 +242,7 @@ function mountApp() {
             if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
             if (this.eaf.detected) visible.push('enfoque');
             if (this.eaf.fan_detected) visible.push('fan');
-            if (this.eaf.temp_detected) visible.push('ambiente');
+            if (this.eaf.amb_detected) visible.push('ambiente');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -327,14 +327,14 @@ function mountApp() {
         },
 
         sensorOk(key) {
-            if (key === 'ambiente') return this.eaf.temp_detected && this.eaf.environment.ambient_c != null;
+            if (key === 'ambiente') return this.eaf.amb_detected && this.eaf.environment.ambient_c != null;
             if (key === 'espejo') return this.eaf.fan_detected && this.eaf.mirror.mirror_c != null;
-            if (key === 'vibracion') return this.eaf.temp_detected && this.eaf.vibration.error == null;
+            if (key === 'vibracion') return this.eaf.amb_detected && this.eaf.vibration.error == null;
             return false;
         },
 
         sensorError() {
-            if (!this.eaf.temp_detected) {
+            if (!this.eaf.amb_detected) {
                 return 'No detectado — tocá "AMB" arriba para conectar';
             }
             const errs = [];

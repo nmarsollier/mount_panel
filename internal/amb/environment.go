@@ -1,4 +1,4 @@
-package temp
+package amb
 
 import "errors"
 
@@ -8,7 +8,7 @@ import "errors"
 var ErrUnavailable = errors.New("environment reading unavailable")
 
 // Humidity returns the ambient relative humidity in percent.
-func (t *Temp) Humidity() (float64, error) {
+func (t *Amb) Humidity() (float64, error) {
 	c, err := t.getConn()
 	if err != nil {
 		return 0, err
@@ -24,7 +24,7 @@ func (t *Temp) Humidity() (float64, error) {
 }
 
 // DewPoint returns the dew point in Celsius.
-func (t *Temp) DewPoint() (float64, error) {
+func (t *Amb) DewPoint() (float64, error) {
 	c, err := t.getConn()
 	if err != nil {
 		return 0, err
@@ -40,7 +40,7 @@ func (t *Temp) DewPoint() (float64, error) {
 }
 
 // AmbientTemperature returns the ambient temperature in Celsius.
-func (t *Temp) AmbientTemperature() (float64, error) {
+func (t *Amb) AmbientTemperature() (float64, error) {
 	c, err := t.getConn()
 	if err != nil {
 		return 0, err
