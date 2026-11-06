@@ -68,8 +68,11 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
   both the telescope and the accessory devices.
   - **alpaca_mount/server/** — shared GIN framework (engine singleton, response
     envelope, param parsing, error numbers, server identity).
-- **alpaca_eaf/** — Alpaca REST server for the accessory devices: IFocuserV4
-  (→ `eaf`), ObservingConditions V2 (→ `amb`) and Switch V3 (→ `fan` + `amb`).
+- **alpaca_eaf/** — Alpaca REST server for the focuser: IFocuserV4 (→ `eaf`).
+- **alpaca_amb/** — Alpaca REST server for the ambient controller:
+  ObservingConditions V2 (→ `amb`).
+- **alpaca_fan/** — Alpaca REST server for the fan controller: Switch V3
+  (→ `fan` + `amb`).
 - **ui/** — Wails binding (`App`): exposes `mount`, `eaf`, `fan` and `amb` to the
   desktop UI.
 - **frontend/** — web assets (HTML/CSS/JS Alpine.js) served by Wails, which call
@@ -119,9 +122,11 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 ## Package relationships (dependencies)
 
 - `alpaca_mount` → `mount` → `mountproto` → `proto`; `alpaca_mount` →
-  `alpaca_eaf`; `alpaca_eaf` → `eaf` + `fan` + `amb` → `eafproto` → `proto`
-  (no reverse dependencies). Both `alpaca_mount` and `alpaca_eaf` use
-  `alpaca_mount/server` for the shared HTTP framework.
+  `alpaca_eaf` + `alpaca_amb` + `alpaca_fan`. Each accessory server maps to
+  its model: `alpaca_eaf` → `eaf` (+ `amb`), `alpaca_amb` → `amb`,
+  `alpaca_fan` → `fan` (+ `amb`), and the models → `eafproto` → `proto`
+  (no reverse dependencies). All four Alpaca servers use `alpaca_mount/server`
+  for the shared HTTP framework.
 - `ui` → `mount`, `ui` → `eaf`, `ui` → `fan`, `ui` → `amb`.
 - `proto` is self-contained: serial port, framing, request/response with `id`,
   and the disconnection signal.

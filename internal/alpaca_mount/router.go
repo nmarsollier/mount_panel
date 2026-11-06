@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_amb"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_eaf"
+	"github.com/nmarsollier/mount_panel/internal/alpaca_fan"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"github.com/nmarsollier/mount_panel/internal/tools/env"
 )
@@ -19,6 +21,8 @@ func Start() {
 	initManagement(engine)
 	initTelescope(engine)
 	alpaca_eaf.Init(engine)
+	alpaca_amb.Init(engine)
+	alpaca_fan.Init(engine)
 	startDiscovery()
 
 	engine.Run(fmt.Sprintf(":%d", env.Get().Port))

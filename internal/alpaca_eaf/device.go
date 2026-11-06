@@ -2,12 +2,10 @@ package alpaca_eaf
 
 import "github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 
-// Devices returns the Alpaca devices exposed by the accessory controller:
-// Focuser, ObservingConditions and Switch.
+// Devices returns the Alpaca devices exposed by the focuser controller: a
+// single Focuser V4 device.
 func Devices() []server.DeviceInfo {
 	return []server.DeviceInfo{
-		{DeviceName: deviceName, DeviceType: "Focuser", DeviceNumber: 0, UniqueID: "nrm-eaf-focuser-001"},
-		{DeviceName: deviceName, DeviceType: "ObservingConditions", DeviceNumber: 0, UniqueID: "nrm-eaf-observingconditions-001"},
-		{DeviceName: deviceName, DeviceType: "Switch", DeviceNumber: 0, UniqueID: "nrm-eaf-switch-001"},
+		{DeviceName: deviceName, DeviceType: deviceType, DeviceNumber: deviceNumber, UniqueID: uniqueID},
 	}
 }

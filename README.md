@@ -161,7 +161,9 @@ internal/
   amb/                      # ambient/humidity/vibration model (no cache)
   alpaca_mount/             # Alpaca REST server (GIN): ITelescopeV4 endpoints
     server/                 # GIN engine + logging middleware
-  alpaca_eaf/               # Focuser V4 + ObservingConditions V2 + Switch V3
+  alpaca_eaf/               # Alpaca REST server (GIN): Focuser V4
+  alpaca_amb/               # Alpaca REST server (GIN): ObservingConditions V2
+  alpaca_fan/               # Alpaca REST server (GIN): Switch V3
   ui/                       # Wails binding (App) → mount/eaf/fan/amb
   tools/                    # logx (logger) + env (config), cross-cutting
 test/alpaca/                # Alpaca integration tests (build tag `integration`)

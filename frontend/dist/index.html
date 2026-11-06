@@ -730,22 +730,22 @@ input::placeholder {
         <span class="brand">Mount Panel</span>
         <div class="conn-status">
           <button class="conn-chip" :class="mountConnected ? 'conn-on' : 'conn-off'"
-            :title="mountConnected ? 'Desconectar mount' : 'Conectar mount'"
+            :title="mountConnected ? 'Disconnect mount' : 'Connect mount'"
             @click="toggleMount()">
             <i></i>Mount
           </button>
           <button class="conn-chip" :class="eaf.detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.detected ? 'Desconectar EAF' : 'Conectar EAF'"
+            :title="eaf.detected ? 'Disconnect EAF' : 'Connect EAF'"
             @click="toggleEAF()">
             <i></i>EAF
           </button>
           <button class="conn-chip" :class="eaf.fan_detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.fan_detected ? 'Desconectar fan' : 'Conectar fan'"
+            :title="eaf.fan_detected ? 'Disconnect fan' : 'Connect fan'"
             @click="toggleFan()">
             <i></i>Fan
           </button>
           <button class="conn-chip" :class="eaf.amb_detected ? 'conn-on' : 'conn-off'"
-            :title="eaf.amb_detected ? 'Desconectar AMB' : 'Conectar AMB'"
+            :title="eaf.amb_detected ? 'Disconnect AMB' : 'Connect AMB'"
             @click="toggleAmb()">
             <i></i>AMB
           </button>
@@ -765,32 +765,32 @@ input::placeholder {
         <span>Elev <b x-text="serverSettings.elevation"></b>m</span>
       </div>
       <div class="header-info">
-        <span>Temperatura <b x-text="fmt(eaf.environment.ambient_c, 1, '°C')"></b></span>
+        <span>Temperature <b x-text="fmt(eaf.environment.ambient_c, 1, '°C')"></b></span>
         <span>Focuser <b x-text="focuserHeaderState()"></b></span>
         <span>Fan <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
-        <span>Vibración <b x-text="fmt(eaf.vibration.vel_rms_total, 2, ' mm/s')"></b></span>
+        <span>Vibration <b x-text="fmt(eaf.vibration.vel_rms_total, 2, ' mm/s')"></b></span>
       </div>
     </header>
 
     <!-- ═══ Tabs ═══ -->
     <nav class="tabs">
       <button x-show="mountConnected" :class="{ active: tab === 'principal' }"
-        @click="tab = 'principal'">Montura</button>
+        @click="tab = 'principal'">Mount</button>
       <button x-show="mountConnected" :class="{ active: tab === 'movimiento' }"
-        @click="tab = 'movimiento'">Movimiento</button>
+        @click="tab = 'movimiento'">Movement</button>
       <button x-show="mountConnected" :class="{ active: tab === 'settings' }"
         @click="tab = 'settings'">Settings</button>
-      <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Enfoque</button>
+      <button x-show="eaf.detected" :class="{ active: tab === 'enfoque' }" @click="tab = 'enfoque'">Focuser</button>
       <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
       <button x-show="eaf.amb_detected" :class="{ active: tab === 'ambiente' }"
-        @click="tab = 'ambiente'">Ambiente</button>
+        @click="tab = 'ambiente'">Environment</button>
     </nav>
 
-    <!-- ═══ Montura ═══ -->
+    <!-- ═══ Mount ═══ -->
     <section class="tab-content" x-show="tab === 'principal'">
 
       <div class="panel">
-        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="panel-header"><strong>Status</strong></div>
         <div class="status" :class="mountStatusClass()" x-text="mountStatusText()"></div>
       </div>
 
@@ -851,7 +851,7 @@ input::placeholder {
 
     </section>
 
-    <!-- ═══ Movimiento ═══ -->
+    <!-- ═══ Movement ═══ -->
     <section class="tab-content" x-show="tab === 'movimiento'">
 
       <div class="panel">
@@ -1018,15 +1018,15 @@ input::placeholder {
 
     </section>
 
-    <!-- ═══ Enfoque (EAF: focuser + fan) ═══ -->
+    <!-- ═══ Focuser (EAF: focuser + fan) ═══ -->
     <section class="tab-content" x-show="tab === 'enfoque'">
 
       <div class="panel">
-        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="panel-header"><strong>Status</strong></div>
         <div class="stack">
           <div class="status" :class="eafStatusClass()" x-text="eafStatusText()"></div>
           <div class="metric">
-            <span class="metric-label">Posición</span>
+            <span class="metric-label">Position</span>
             <span class="metric-value" x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></span>
           </div>
         </div>
@@ -1037,14 +1037,14 @@ input::placeholder {
         <div class="stack">
           <div class="joy-layout">
             <div class="joy-speed">
-              <label>Distancia (pasos)</label>
+              <label>Distance (steps)</label>
               <input type="number" min="1" step="1" class="settings-input" x-model.number="focusStep">
             </div>
             <div class="axis-grid">
               <div class="axis-row">
-                <button class="joy-btn" @click="focusMove(-1)" :disabled="focusMoveDisabled()" title="Foco −">◀</button>
-                <span class="axis-label">Foco</span>
-                <button class="joy-btn" @click="focusMove(1)" :disabled="focusMoveDisabled()" title="Foco +">▶</button>
+                <button class="joy-btn" @click="focusMove(-1)" :disabled="focusMoveDisabled()" title="Focus −">◀</button>
+                <span class="axis-label">Focus</span>
+                <button class="joy-btn" @click="focusMove(1)" :disabled="focusMoveDisabled()" title="Focus +">▶</button>
               </div>
             </div>
           </div>
@@ -1052,7 +1052,7 @@ input::placeholder {
             <button class="danger" @click="focusStop()"
               :disabled="!eaf.detected || !eaf.focuser.is_moving">STOP</button>
             <button @click="focusToggleEnabled()" :disabled="!eaf.detected"
-              x-text="eaf.focuser.enabled ? 'DESHABILITAR' : 'HABILITAR'"></button>
+              x-text="eaf.focuser.enabled ? 'DISABLE' : 'ENABLE'"></button>
           </div>
         </div>
       </div>
@@ -1063,15 +1063,15 @@ input::placeholder {
     <section class="tab-content" x-show="tab === 'fan'">
 
       <div class="panel">
-        <div class="panel-header"><strong>Ventilador</strong></div>
+        <div class="panel-header"><strong>Fan</strong></div>
         <div class="stack">
           <div class="fan-head">
             <span class="onoff" :class="eaf.fan_detected && eaf.fan.power ? 'on' : 'off'">
               <i></i><b x-text="eaf.fan_detected ? (eaf.fan.power ? 'ON' : 'OFF') : '—'"></b>
             </span>
             <div class="fan-metrics">
-              <span>Modo <b x-text="eaf.fan_detected ? (eaf.fan.mode || '—') : '—'"></b></span>
-              <span>Velocidad <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
+              <span>Mode <b x-text="eaf.fan_detected ? (eaf.fan.mode || '—') : '—'"></b></span>
+              <span>Speed <b x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></b></span>
               <span>RPM <b x-text="eaf.fan_detected && eaf.fan.rpm != null ? eaf.fan.rpm : '—'"></b></span>
             </div>
           </div>
@@ -1081,7 +1081,7 @@ input::placeholder {
             <button :class="{ primary: eaf.fan.mode === 'manual' }" @click="fanSetMode('manual')" :disabled="!eaf.fan_detected">MANUAL</button>
           </div>
           <div class="row">
-            <label class="settings-label">Velocidad</label>
+            <label class="settings-label">Speed</label>
             <input type="range" min="0" max="100" step="1" class="grow" x-model.number="eaf.fan.speed"
               @change="fanSetSpeed(eaf.fan.speed)" :disabled="!eaf.fan_detected || eaf.fan.mode !== 'manual'">
             <span class="settings-value" x-text="eaf.fan_detected ? (eaf.fan.speed + '%') : '—'"></span>
@@ -1090,10 +1090,10 @@ input::placeholder {
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Espejo Primario</strong></div>
+        <div class="panel-header"><strong>Primary Mirror</strong></div>
         <div class="stack">
           <div class="metric">
-            <span class="metric-label">Temperatura</span>
+            <span class="metric-label">Temperature</span>
             <span class="metric-value" x-text="fmt(eaf.mirror.mirror_c, 2, ' °C')"></span>
           </div>
           <span class="sensor-error" x-show="eaf.mirror.error" x-text="eaf.mirror.error"></span>
@@ -1102,35 +1102,35 @@ input::placeholder {
 
     </section>
 
-    <!-- ═══ Ambiente ═══ -->
+    <!-- ═══ Environment ═══ -->
     <section class="tab-content" x-show="tab === 'ambiente'">
 
       <div class="panel">
-        <div class="panel-header"><strong>Estado</strong></div>
+        <div class="panel-header"><strong>Status</strong></div>
         <div class="sensor-status">
-          <span class="conn-chip" :class="sensorOk('ambiente') ? 'conn-on' : 'conn-error'"><i></i>Ambiente</span>
-          <span class="conn-chip" :class="sensorOk('vibracion') ? 'conn-on' : 'conn-error'"><i></i>Vibración</span>
+          <span class="conn-chip" :class="sensorOk('ambiente') ? 'conn-on' : 'conn-error'"><i></i>Environment</span>
+          <span class="conn-chip" :class="sensorOk('vibracion') ? 'conn-on' : 'conn-error'"><i></i>Vibration</span>
           <span class="sensor-error" x-show="sensorError()" x-text="sensorError()"></span>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Ambiente</strong></div>
+        <div class="panel-header"><strong>Environment</strong></div>
         <div class="sensor-grid">
           <div class="stack">
             <div class="metric">
-              <span class="metric-label">Temperatura</span>
+              <span class="metric-label">Temperature</span>
               <span class="metric-value"
                 x-text="fmt(eaf.environment.ambient_c, 2, ' °C')"></span>
             </div>
             <div class="metric">
-              <span class="metric-label">Humedad</span>
+              <span class="metric-label">Humidity</span>
               <span class="metric-value"
                 x-text="fmt(eaf.environment.humidity_pct, 1, ' %')"></span>
             </div>
           </div>
-          <div class="metric" title="Temperatura de punto de rocío, derivada de ambiente + humedad">
-            <span class="metric-label">Rocío</span>
+          <div class="metric" title="Dew point temperature, derived from ambient + humidity">
+            <span class="metric-label">Dew point</span>
             <span class="metric-value"
               x-text="fmt(eaf.environment.dew_point_c, 2, ' °C')"></span>
           </div>
@@ -1138,30 +1138,30 @@ input::placeholder {
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Vibración</strong></div>
+        <div class="panel-header"><strong>Vibration</strong></div>
         <div class="sensor-grid">
-          <div class="metric" title="Velocidad RMS — severidad ISO 10816 (mm/s)">
+          <div class="metric" title="RMS velocity — ISO 10816 severity (mm/s)">
             <span class="metric-label">Vel. RMS</span>
             <span class="metric-value"
               x-text="fmt(eaf.vibration.vel_rms_total, 3, ' mm/s')"></span>
           </div>
-          <div class="metric" title="Zona de severidad ISO 10816-1 (A a D)">
+          <div class="metric" title="ISO 10816-1 severity zone (A to D)">
             <span class="metric-label">ISO 10816</span>
             <span class="metric-value"
               x-text="eaf.vibration.iso_zone || '—'"></span>
           </div>
-          <div class="metric" title="Aceleración RMS (milli-g)">
-            <span class="metric-label">Acel. RMS</span>
+          <div class="metric" title="RMS acceleration (milli-g)">
+            <span class="metric-label">Accel. RMS</span>
             <span class="metric-value"
               x-text="fmt(eaf.vibration.rms_total, 2, ' mg')"></span>
           </div>
-          <div class="metric" title="Aceleración pico máxima (milli-g)">
-            <span class="metric-label">Acel. pico</span>
+          <div class="metric" title="Peak acceleration (milli-g)">
+            <span class="metric-label">Accel. peak</span>
             <span class="metric-value"
               x-text="fmt(eaf.vibration.accel_peak_total, 2, ' mg')"></span>
           </div>
-          <div class="metric" title="Velocidad pico máxima (mm/s)">
-            <span class="metric-label">Vel. pico</span>
+          <div class="metric" title="Peak velocity (mm/s)">
+            <span class="metric-label">Vel. peak</span>
             <span class="metric-value"
               x-text="fmt(eaf.vibration.vel_peak_total, 3, ' mm/s')"></span>
           </div>
@@ -1169,30 +1169,30 @@ input::placeholder {
       </div>
 
       <div class="panel">
-        <div class="panel-header"><strong>Orientación</strong></div>
+        <div class="panel-header"><strong>Orientation</strong></div>
         <div class="sensor-grid">
-          <div class="metric" title="Inclinación del eje X desde la horizontal">
+          <div class="metric" title="Tilt of the X axis from horizontal">
             <span class="metric-label">Pitch (X)</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.pitch_deg, 2, '°')"></span>
           </div>
-          <div class="metric" title="Inclinación del eje Y desde la horizontal">
+          <div class="metric" title="Tilt of the Y axis from horizontal">
             <span class="metric-label">Roll (Y)</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.roll_deg, 2, '°')"></span>
           </div>
-          <div class="metric" title="Gravedad, eje X (g)">
-            <span class="metric-label">Gravedad X</span>
+          <div class="metric" title="Gravity, X axis (g)">
+            <span class="metric-label">Gravity X</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.ax_g, 3, ' g')"></span>
           </div>
-          <div class="metric" title="Gravedad, eje Y (g)">
-            <span class="metric-label">Gravedad Y</span>
+          <div class="metric" title="Gravity, Y axis (g)">
+            <span class="metric-label">Gravity Y</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.ay_g, 3, ' g')"></span>
           </div>
-          <div class="metric" title="Gravedad, eje Z (g)">
-            <span class="metric-label">Gravedad Z</span>
+          <div class="metric" title="Gravity, Z axis (g)">
+            <span class="metric-label">Gravity Z</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.az_g, 3, ' g')"></span>
           </div>
@@ -1419,7 +1419,7 @@ input::placeholder {
             );
         },
 
-        /* --- Enfoque (EAF: focuser + fan) --- */
+        /* --- Focuser (EAF: focuser + fan) --- */
         fetchEAFStatus() {
             app().EAFStatus().then(j => {
                 if (j) this.eaf = j;
@@ -1475,9 +1475,9 @@ input::placeholder {
 
         focuserHeaderState() {
             if (!this.eaf.detected) return '—';
-            if (this.eaf.health === 'fault') return 'Fallo';
-            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
-            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            if (this.eaf.health === 'fault') return 'Fault';
+            if (!this.eaf.focuser.enabled) return 'Disabled';
+            if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
         },
 
@@ -1518,10 +1518,10 @@ input::placeholder {
         },
 
         eafStatusText() {
-            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
-            if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
-            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
-            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            if (!this.eaf.detected) return 'Not detected — tap "EAF" above to connect';
+            if (this.eaf.health === 'fault') return 'Fault — check the focuser driver';
+            if (!this.eaf.focuser.enabled) return 'Disabled';
+            if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
         },
 
@@ -1540,7 +1540,7 @@ input::placeholder {
 
         sensorError() {
             if (!this.eaf.amb_detected) {
-                return 'No detectado — tocá "AMB" arriba para conectar';
+                return 'Not detected — tap "AMB" above to connect';
             }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);

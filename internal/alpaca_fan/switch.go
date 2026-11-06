@@ -1,7 +1,6 @@
-package alpaca_eaf
+package alpaca_fan
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -11,9 +10,7 @@ import (
 	"github.com/nmarsollier/mount_panel/internal/fan"
 )
 
-const switchDevice = "/api/v1/switch/0"
-
-// Switch channels exposed by the accessory controller:
+// Switch channels exposed by the fan controller:
 //
 //	0 = Fan Power            (boolean, writable)
 //	1 = Fan Speed            (numeric 0..100 %, writable)
@@ -30,86 +27,6 @@ const (
 )
 
 var errInvalidSwitchID = errors.New("invalid switch id")
-
-// initSwitch registers the Switch V3 endpoints for device 0.
-func initSwitch(engine *gin.Engine) {
-	g := engine.Group(switchDevice)
-
-	// Common device endpoints.
-	g.GET("/connected", getConnectedSwitch)
-	g.PUT("/connected", putConnectedSwitch)
-	g.PUT("/connect", putConnectSwitch)
-	g.PUT("/disconnect", putDisconnectSwitch)
-	g.GET("/connecting", getConnecting)
-	g.GET("/description", getDescription)
-	g.GET("/driverinfo", getDriverInfo)
-	g.GET("/driverversion", getDriverVersion)
-	g.GET("/interfaceversion", getInterfaceVersionSwitch)
-	g.GET("/name", getName)
-	g.GET("/supportedactions", getSupportedActions)
-	g.GET("/devicestate", getDeviceStateSwitch)
-	g.PUT("/commandblind", putCommandBlind)
-	g.PUT("/commandbool", putCommandBool)
-	g.PUT("/commandstring", putCommandString)
-	g.PUT("/action", putAction)
-
-	// Switch endpoints.
-	g.GET("/maxswitch", getMaxSwitch)
-	g.GET("/canwrite", getCanWrite)
-	g.GET("/getswitch", getSwitch)
-	g.GET("/getswitchdescription", getSwitchDescription)
-	g.GET("/getswitchname", getSwitchName)
-	g.PUT("/setswitchname", setSwitchName)
-	g.GET("/getswitchvalue", getSwitchValue)
-	g.GET("/minswitchvalue", getMinSwitchValue)
-	g.GET("/maxswitchvalue", getMaxSwitchValue)
-	g.GET("/switchstep", getSwitchStep)
-	g.PUT("/setswitch", setSwitch)
-	g.PUT("/setswitchvalue", setSwitchValue)
-	g.GET("/canasync", getCanAsync)
-	g.PUT("/setasync", setAsync)
-	g.PUT("/setasyncvalue", setAsyncValue)
-	g.GET("/statechangecomplete", getStateChangeComplete)
-	g.PUT("/cancelasync", cancelAsync)
-}
-
-// getConnectedSwitch reports whether the Switch client is logically connected.
-func getConnectedSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteBool(c, fan.Get().Connected(), cid, stx)
-}
-
-// putConnectedSwitch tracks the Switch client's logical link.
-func putConnectedSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	connected, ok := server.ParamBool(c, "Connected")
-	if !ok {
-		server.WriteError(c, server.ErrInvalidValue, "Invalid Connected", cid, stx)
-		return
-	}
-	fan.Get().SetConnected(connected)
-	server.WriteOK(c, cid, stx)
-}
-
-// putConnectSwitch establishes the Switch logical client link.
-func putConnectSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	fan.Get().SetConnected(true)
-	server.WriteOK(c, cid, stx)
-}
-
-// putDisconnectSwitch drops the Switch logical client link.
-func putDisconnectSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	fan.Get().SetConnected(false)
-	server.WriteOK(c, cid, stx)
-}
-
-// getInterfaceVersionSwitch returns the ASCOM interface version (3).
-func getInterfaceVersionSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	server.WriteInt(c, 3, cid, stx)
-}
 
 // getMaxSwitch returns the number of switch channels (5).
 func getMaxSwitch(c *gin.Context) {
@@ -335,26 +252,6 @@ func cancelAsync(c *gin.Context) {
 	server.WriteOK(c, cid, stx)
 }
 
-// getDeviceStateSwitch returns the Switch operational properties.
-func getDeviceStateSwitch(c *gin.Context) {
-	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	entries := []stateEntry{}
-
-	for id := 0; id < maxSwitch; id++ {
-		v, err := switchValue(id)
-		if err != nil {
-			continue
-		}
-		entries = append(entries,
-			stateEntry{switchStateName(id), server.RawBool(v != 0)},
-			stateEntry{switchValueName(id), server.RawFloat(v)},
-		)
-	}
-
-	value, _ := json.Marshal(entries)
-	server.WriteValue(c, value, cid, stx)
-}
-
 // switchValue returns the numeric value of a switch channel.
 func switchValue(id int) (float64, error) {
 	switch id {
@@ -404,15 +301,15 @@ func switchName(id int) string {
 func switchDescription(id int) string {
 	switch id {
 	case switchFanPower:
-		return "Enciende/apaga el relé de 12 V del ventilador"
+		return "Turns the fan's 12 V relay on/off"
 	case switchFanSpeed:
-		return "Velocidad PWM del ventilador, en % (0–100)"
+		return "Fan PWM speed, in % (0–100)"
 	case switchFanRPM:
-		return "RPM real del ventilador (tacómetro)"
+		return "Actual fan RPM (tachometer)"
 	case switchMirrorTemp:
-		return "Temperatura del espejo primario (DS18B20)"
+		return "Primary mirror temperature (DS18B20)"
 	case switchAmbientTemp:
-		return "Temperatura ambiente (SHT31)"
+		return "Ambient temperature (SHT31)"
 	default:
 		return ""
 	}

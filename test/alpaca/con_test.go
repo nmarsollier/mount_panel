@@ -178,21 +178,31 @@ func TestDiscoverFromNewClient(t *testing.T) {
 		t.Fatal(err)
 	}
 	devs, ok := mgmt.Value.([]any)
-	if !ok || len(devs) != 1 {
-		t.Fatalf("expected 1 device, got %v", mgmt.Value)
+	if !ok || len(devs) != 4 {
+		t.Fatalf("expected 4 devices, got %v", mgmt.Value)
 	}
-	dev, ok := devs[0].(map[string]any)
-	if !ok {
-		t.Fatalf("device is not an object: %v", devs[0])
+
+	want := map[string]string{
+		"Telescope":           "BFT - MOUNT",
+		"Focuser":             "BFT - EAF",
+		"ObservingConditions": "BFT - AMB",
+		"Switch":              "BFT - FAN",
 	}
-	if dev["DeviceType"] != "Telescope" {
-		t.Errorf("DeviceType != Telescope: %v", dev["DeviceType"])
+	for _, d := range devs {
+		dev, ok := d.(map[string]any)
+		if !ok {
+			t.Fatalf("device is not an object: %v", d)
+		}
+		typ, _ := dev["DeviceType"].(string)
+		if asInt(dev["DeviceNumber"]) != deviceNumber {
+			t.Errorf("%s DeviceNumber != %d", typ, deviceNumber)
+		}
+		if name, _ := dev["DeviceName"].(string); name != want[typ] {
+			t.Errorf("%s DeviceName = %q, want %q", typ, name, want[typ])
+		}
 	}
-	if asInt(dev["DeviceNumber"]) != deviceNumber {
-		t.Errorf("DeviceNumber != %d", deviceNumber)
-	}
-	if disc["ServerName"] != dev["DeviceName"] {
-		t.Errorf("ServerName (%v) != DeviceName (%v)", disc["ServerName"], dev["DeviceName"])
+	if name, _ := disc["ServerName"].(string); name == "" {
+		t.Errorf("discovery ServerName missing or empty: %v", disc["ServerName"])
 	}
 }
 

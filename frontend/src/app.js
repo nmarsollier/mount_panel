@@ -214,7 +214,7 @@ function mountApp() {
             );
         },
 
-        /* --- Enfoque (EAF: focuser + fan) --- */
+        /* --- Focuser (EAF: focuser + fan) --- */
         fetchEAFStatus() {
             app().EAFStatus().then(j => {
                 if (j) this.eaf = j;
@@ -270,9 +270,9 @@ function mountApp() {
 
         focuserHeaderState() {
             if (!this.eaf.detected) return '—';
-            if (this.eaf.health === 'fault') return 'Fallo';
-            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
-            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            if (this.eaf.health === 'fault') return 'Fault';
+            if (!this.eaf.focuser.enabled) return 'Disabled';
+            if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
         },
 
@@ -313,10 +313,10 @@ function mountApp() {
         },
 
         eafStatusText() {
-            if (!this.eaf.detected) return 'No detectado — tocá "EAF" arriba para conectar';
-            if (this.eaf.health === 'fault') return 'Fallo — revisá el driver del enfocador';
-            if (!this.eaf.focuser.enabled) return 'Deshabilitado';
-            if (this.eaf.focuser.is_moving) return 'Moviendo';
+            if (!this.eaf.detected) return 'Not detected — tap "EAF" above to connect';
+            if (this.eaf.health === 'fault') return 'Fault — check the focuser driver';
+            if (!this.eaf.focuser.enabled) return 'Disabled';
+            if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
         },
 
@@ -335,7 +335,7 @@ function mountApp() {
 
         sensorError() {
             if (!this.eaf.amb_detected) {
-                return 'No detectado — tocá "AMB" arriba para conectar';
+                return 'Not detected — tap "AMB" above to connect';
             }
             const errs = [];
             if (this.eaf.environment.error) errs.push(this.eaf.environment.error);

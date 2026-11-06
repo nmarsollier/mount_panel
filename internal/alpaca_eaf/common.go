@@ -55,7 +55,7 @@ func getConnecting(c *gin.Context) {
 func getDescription(c *gin.Context) {
 	cid := server.ClientTransactionID(c)
 	stx := server.NextServerTx()
-	server.WriteString(c, server.ServerDescription, cid, stx)
+	server.WriteString(c, deviceDescription, cid, stx)
 }
 
 // getDriverInfo returns the driver identification string.
