@@ -221,12 +221,15 @@ The app needs the **WebView2 runtime** at *runtime* (not to compile):
 
 - **Wails CLI** — not required (the Makefile builds with plain `go build`), but
   handy to check the environment:
+
   ```sh
   go install github.com/wailsapp/wails/v2/cmd/wails@latest
   wails doctor
   ```
+
 - **go-winres** — only to regenerate the embedded Windows icon resource
   (`make winres`):
+
   ```sh
   go install github.com/tc-hib/go-winres@latest
   ```
@@ -275,3 +278,60 @@ Configuration via environment variables (see `internal/tools/env`):
 
 For development with hot-reload you can use `wails dev` (requires installing the
 CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`).
+
+## Configurar ASCOM para que la tome
+
+1. Mantener el panel abierto
+2. Abrir **ASCOM Diagnostics** desde el menú Inicio de Windows.
+3. Entrar en **Choose Device → Choose and Connect to Device (32-bit application)**.
+4. Seleccionar el tipo **Telescope** y pulsar **Choose**.
+
+## 2. Descubrir Mount Panel y crear el puente
+
+1. En la ventana **ASCOM Telescope Chooser**, abrir el menú **Alpaca**, ubicado arriba, junto a **Trace**. No es una opción del desplegable de telescopios.
+2. Activar **Enable Discovery**.
+3. Esperar unos segundos y abrir la lista de telescopios.
+4. Seleccionar la entrada nueva correspondiente a **Mount Panel**, que puede aparecer como **NEW ALPACA DEVICE…**.
+5. Pulsar **OK** y aceptar el permiso de administrador para crear el driver.
+6. Si hace falta, abrir **Properties** para revisar la configuración.
+
+Si no aparece durante la búsqueda, usar la opción **Create** del menú **Alpaca** para crear y configurar manualmente un driver de tipo **Telescope**.
+
+## 3. Revisar la configuración del puente
+
+| Campo | Valor |
+| --- | --- |
+| HTTP Service Type | `http` |
+| Remote Device Host Name or IP Address | `127.0.0.1` si Mount Panel corre en el mismo Windows; de lo contrario, la IP del equipo que lo ejecuta |
+| Alpaca Port | El puerto HTTP real de Mount Panel; el predeterminado del código revisado es `11111` |
+| Remote device number | `0` |
+| Discovery Port | `32227` |
+| Usuario y contraseña | Vacíos, salvo que se haya configurado autenticación mediante un servidor intermedio |
+
+**Atención al puerto:** en la captura de configuración aparecía `12345`. Debe coincidir con el puerto donde escucha Mount Panel. Usar `11111` si se mantiene el valor predeterminado; si NINA conecta correctamente a otro puerto, usar ese mismo. El puerto HTTP y el puerto de descubrimiento son distintos.
+
+Pulsar **OK** para guardar y confirmar también el selector ASCOM.
+
+## 4. Seleccionar la montura en PHD2
+
+1. Cerrar y volver a abrir PHD2 para actualizar la lista de drivers.
+2. Abrir la conexión de equipos.
+3. En la lista de monturas, seleccionar **Mount Panel (ASCOM)** o el nombre asignado al puente.
+4. Conectar.
+
+La configuración queda guardada. En las próximas sesiones, abrir Mount Panel, conectarlo a la montura y luego conectar PHD2 con ese driver.
+
+## Si no funciona
+
+- **No aparece en PHD2:** comprobar que se creó el driver en el selector ASCOM y reiniciar PHD2.
+- **No aparece al descubrir dispositivos:** comprobar que Mount Panel está abierto y la montura no está en estado de error. El código revisado omite las respuestas de descubrimiento cuando la montura informa ese estado.
+- **Aparece, pero no conecta:** revisar primero la dirección IP, el puerto HTTP y el número de dispositivo.
+- **Mount Panel corre en otro equipo:** usar la IP de ese equipo; `127.0.0.1` siempre apunta al equipo donde se ejecuta el cliente.
+
+## Referencias
+
+- [Repositorio Mount Panel](https://github.com/nmarsollier/mount_panel)
+- [ASCOM: Alpaca mediante el Chooser](https://ascom-standards.org/help/html/e3870a2f-582a-4ab4-b37f-e9b1c37a2030.htm)
+- [ASCOM: uso del Chooser desde Diagnostics](https://download.ascom-standards.org/dev/WorkbenchReadMe.pdf)
+
+Resumen del procedimiento utilizado en esta conversación. Los valores predeterminados corresponden al código revisado el 28 de octubre de 2026.
