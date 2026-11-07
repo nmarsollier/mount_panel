@@ -171,7 +171,7 @@ func setSwitch(c *gin.Context) {
 		if state {
 			speed = 100
 		}
-		err = fan.Get().SetFanSpeed(speed)
+		err = setFanSpeed(speed)
 	}
 	if err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
@@ -208,7 +208,7 @@ func setSwitchValue(c *gin.Context) {
 		} else if speed > 100 {
 			speed = 100
 		}
-		err = fan.Get().SetFanSpeed(speed)
+		err = setFanSpeed(speed)
 	}
 	if err != nil {
 		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
@@ -250,6 +250,16 @@ func cancelAsync(c *gin.Context) {
 		return
 	}
 	server.WriteOK(c, cid, stx)
+}
+
+// setFanSpeed drives the fan speed from a Switch client. A speed value means the
+// client is driving the fan directly, so the mode is switched to MANUAL first —
+// in AUTO/OFF the firmware only remembers the speed without applying it.
+func setFanSpeed(speed int) error {
+	if err := fan.Get().SetFanMode("manual"); err != nil {
+		return err
+	}
+	return fan.Get().SetFanSpeed(speed)
 }
 
 // switchValue returns the numeric value of a switch channel.
