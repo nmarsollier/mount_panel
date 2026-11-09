@@ -273,6 +273,7 @@ reconnects automatically once it is plugged in. Works on macOS and Windows.
 Configuration via environment variables (see `internal/tools/env`):
 
 - `PORT` — Alpaca server port (default `11111`).
+- `ALPACA_HOST` — bind address for the Alpaca HTTP server and UDP discovery (default `127.0.0.1` = localhost only; set to `0.0.0.0` to expose on the network).
 - `SERIAL_PORT` — pins the mount CDC port (empty = auto-detection).
 - `EAF_SERIAL_PORT` — pins the focuser CDC port (empty = auto-detect `device_id="eaf"`).
 - `FAN_SERIAL_PORT` — pins the fan CDC port (empty = auto-detect `device_id="fan"`).

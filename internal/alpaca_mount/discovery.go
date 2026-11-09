@@ -23,7 +23,7 @@ func startDiscovery() {
 }
 
 func discoveryLoop() {
-	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: discoveryPort})
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(env.Get().Host), Port: discoveryPort})
 	if err != nil {
 		logx.Warn(discoveryCtx(), "UDP discovery unavailable: "+err.Error())
 		return

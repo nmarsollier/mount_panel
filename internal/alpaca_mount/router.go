@@ -25,7 +25,7 @@ func Start() {
 	alpaca_fan.Init(engine)
 	startDiscovery()
 
-	engine.Run(fmt.Sprintf(":%d", env.Get().Port))
+	engine.Run(fmt.Sprintf("%s:%d", env.Get().Host, env.Get().Port))
 }
 
 // initManagement registers the management (discovery) endpoints at both the

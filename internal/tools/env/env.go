@@ -9,6 +9,7 @@ import (
 // Configuration holds the app settings, loaded from environment variables.
 type Configuration struct {
 	Port          int    `json:"port"`          // Alpaca REST port
+	Host          string `json:"host"`          // Alpaca REST bind address (default 127.0.0.1 = localhost only)
 	SerialPort    string `json:"serialPort"`    // mount CDC-ACM serial port (empty = auto-detect)
 	EAFSerialPort string `json:"eafSerialPort"` // focuser CDC-ACM serial port (empty = auto-detect)
 	FanSerialPort string `json:"fanSerialPort"` // fan CDC-ACM serial port (empty = auto-detect)
@@ -34,6 +35,7 @@ func load() *Configuration {
 
 	return &Configuration{
 		Port:          port,
+		Host:          envOr("ALPACA_HOST", "127.0.0.1"),
 		SerialPort:    os.Getenv("SERIAL_PORT"),
 		EAFSerialPort: os.Getenv("EAF_SERIAL_PORT"),
 		FanSerialPort: os.Getenv("FAN_SERIAL_PORT"),
