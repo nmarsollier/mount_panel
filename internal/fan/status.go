@@ -78,7 +78,21 @@ func (f *Fan) Status() Status {
 			Type:    events.TypeSensorReading,
 			Source:  events.SourceFan,
 			Subject: "status",
-			Payload: st,
+			Details: events.SensorFan{
+				Detected:       st.Detected,
+				BootID:         st.BootID,
+				Power:          st.Power,
+				Health:         st.Health,
+				FanError:       st.Fan.Error,
+				FanMode:        st.Fan.Mode,
+				FanPower:       st.Fan.Power,
+				FanSpeed:       st.Fan.Speed,
+				FanManualSpeed: st.Fan.ManualSpeed,
+				FanPowerOK:     st.Fan.PowerOK,
+				FanRPM:         st.Fan.RPM,
+				MirrorError:    st.Mirror.Error,
+				MirrorC:        st.Mirror.MirrorC,
+			},
 		})
 	}
 

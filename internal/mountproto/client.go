@@ -41,7 +41,7 @@ func (c *Client) request(ctx context.Context, reqType string, payload any, out a
 		Source:        events.SourceMount,
 		Subject:       reqType,
 		CorrelationID: correlation,
-		Payload:       json.RawMessage(body),
+		Details:       commandDetails(reqType, id, payload),
 	})
 
 	raw, err := c.RoundTrip(ctx, id, body)
@@ -49,24 +49,26 @@ func (c *Client) request(ctx context.Context, reqType string, payload any, out a
 		return err
 	}
 
+	var env envelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return err
+	}
+	if out != nil {
+		if err := json.Unmarshal(raw, out); err != nil {
+			return err
+		}
+	}
+
 	events.Record(events.Event{
 		Type:          events.TypeMountResponse,
 		Source:        events.SourceMount,
 		Subject:       reqType,
 		CorrelationID: correlation,
-		Payload:       json.RawMessage(raw),
+		Details:       responseDetails(reqType, id, env, out),
 	})
 
-	var env envelope
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return err
-	}
 	if !env.OK {
 		return &Error{Message: env.Error}
-	}
-
-	if out != nil {
-		return json.Unmarshal(raw, out)
 	}
 	return nil
 }

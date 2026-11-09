@@ -58,7 +58,17 @@ func (e *EAF) Status() Status {
 			Type:    events.TypeSensorReading,
 			Source:  events.SourceEAF,
 			Subject: "status",
-			Payload: st,
+			Details: events.SensorEAF{
+				Detected:     st.Detected,
+				BootID:       st.BootID,
+				Power:        st.Power,
+				Health:       st.Health,
+				CounterSteps: st.Focuser.CounterSteps,
+				IsMoving:     st.Focuser.IsMoving,
+				OpStatus:     st.Focuser.OpStatus,
+				DriverOK:     st.Focuser.DriverOK,
+				Enabled:      st.Focuser.Enabled,
+			},
 		})
 	}
 

@@ -23,10 +23,10 @@ func Events() gin.HandlerFunc {
 			Source:        events.SourceAlpaca,
 			Subject:       c.Request.URL.Path,
 			CorrelationID: correlation,
-			Payload: map[string]any{
-				"method": c.Request.Method,
-				"path":   c.Request.URL.Path,
-				"query":  c.Request.URL.RawQuery,
+			Details: events.AlpacaCommand{
+				Method: c.Request.Method,
+				Path:   c.Request.URL.Path,
+				Query:  c.Request.URL.RawQuery,
 			},
 		})
 
@@ -35,14 +35,21 @@ func Events() gin.HandlerFunc {
 
 		c.Next()
 
+		var resp Response
+		_ = json.Unmarshal(bw.body.Bytes(), &resp)
+
 		events.Record(events.Event{
 			Type:          events.TypeAlpacaResponse,
 			Source:        events.SourceAlpaca,
 			Subject:       c.Request.URL.Path,
 			CorrelationID: correlation,
-			Payload: map[string]any{
-				"status": c.Writer.Status(),
-				"body":   json.RawMessage(bw.body.Bytes()),
+			Details: events.AlpacaResponse{
+				Status:              c.Writer.Status(),
+				ErrorNumber:         resp.ErrorNumber,
+				ErrorMessage:        resp.ErrorMessage,
+				ClientTransactionID: resp.ClientTransactionID,
+				ServerTransactionID: resp.ServerTransactionID,
+				Value:               resp.Value,
 			},
 		})
 	}

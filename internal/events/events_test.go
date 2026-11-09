@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-// TestRecordPersistsCorrelatedEvents exercises the full path: Init, two
-// correlated Record calls, Close (flush) and a fresh Open that reads them back.
-func TestRecordPersistsCorrelatedEvents(t *testing.T) {
+// TestRecordPersistsTypedDetails exercises the full path: Init, several Record
+// calls with typed details, Close (flush) and a fresh Open that reads them back
+// from the shared table and the typed detail tables.
+func TestRecordPersistsTypedDetails(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.db")
 
 	if err := Init(path); err != nil {
@@ -20,14 +21,27 @@ func TestRecordPersistsCorrelatedEvents(t *testing.T) {
 		Source:        SourceAlpaca,
 		Subject:       "/api/v1/telescope/0/slewtocoordinatesasync",
 		CorrelationID: "c1",
-		Payload:       map[string]any{"method": "PUT"},
+		Details: AlpacaCommand{
+			Method: "PUT",
+			Path:   "/api/v1/telescope/0/slewtocoordinatesasync",
+		},
 	})
 	Record(Event{
 		Type:          TypeAlpacaResponse,
 		Source:        SourceAlpaca,
 		Subject:       "/api/v1/telescope/0/slewtocoordinatesasync",
 		CorrelationID: "c1",
-		Payload:       map[string]any{"status": 200},
+		Details: AlpacaResponse{
+			Status:      200,
+			ErrorNumber: 0,
+			Value:       json.RawMessage(`true`),
+		},
+	})
+	Record(Event{
+		Type:    TypeSensorReading,
+		Source:  SourceMount,
+		Subject: "status",
+		Details: SensorMount{Status: "tracking", Ra: "12:34:56"},
 	})
 
 	Close()
@@ -40,19 +54,39 @@ func TestRecordPersistsCorrelatedEvents(t *testing.T) {
 
 	var n int
 	if err := db.QueryRow(`SELECT count(*) FROM events`).Scan(&n); err != nil {
-		t.Fatalf("count: %v", err)
+		t.Fatalf("count events: %v", err)
 	}
-	if n != 2 {
-		t.Fatalf("want 2 events, got %d", n)
+	if n != 3 {
+		t.Fatalf("want 3 events, got %d", n)
 	}
 
-	var payload string
+	var method string
 	if err := db.QueryRow(
-		`SELECT payload FROM events WHERE event_type = ?`, TypeAlpacaCommand,
-	).Scan(&payload); err != nil {
-		t.Fatalf("select: %v", err)
+		`SELECT method FROM event_alpaca_command WHERE event_id = 1`,
+	).Scan(&method); err != nil {
+		t.Fatalf("select command: %v", err)
 	}
-	if !json.Valid([]byte(payload)) {
-		t.Fatalf("payload is not compact JSON: %s", payload)
+	if method != "PUT" {
+		t.Fatalf("want method PUT, got %s", method)
+	}
+
+	var status int
+	if err := db.QueryRow(
+		`SELECT status FROM event_alpaca_response WHERE event_id = 2`,
+	).Scan(&status); err != nil {
+		t.Fatalf("select response: %v", err)
+	}
+	if status != 200 {
+		t.Fatalf("want status 200, got %d", status)
+	}
+
+	var ra string
+	if err := db.QueryRow(
+		`SELECT ra FROM event_sensor_mount WHERE event_id = 3`,
+	).Scan(&ra); err != nil {
+		t.Fatalf("select sensor: %v", err)
+	}
+	if ra != "12:34:56" {
+		t.Fatalf("want ra 12:34:56, got %s", ra)
 	}
 }
