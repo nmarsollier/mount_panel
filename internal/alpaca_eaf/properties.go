@@ -38,12 +38,14 @@ func getMaxStep(c *gin.Context) {
 	server.WriteInt(c, int(eaf.Get().MaxStep()), cid, stx)
 }
 
-// getPosition returns the current absolute position.
+// getPosition returns the current absolute position. It keeps returning the
+// last counter even when the reference is invalid (N.I.N.A. still needs the
+// device state); it errors only when the controller is disconnected.
 func getPosition(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
 	v, err := eaf.Get().Position()
 	if err != nil {
-		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
+		server.WriteError(c, server.ErrNotConnected, err.Error(), cid, stx)
 		return
 	}
 	server.WriteInt(c, int(v), cid, stx)

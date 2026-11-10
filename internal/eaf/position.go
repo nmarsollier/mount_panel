@@ -10,7 +10,9 @@ const (
 )
 
 var (
-	errNoReference     = errors.New("focuser position reference not established")
+	// ErrNoReference is returned when an absolute move is requested but the
+	// firmware's position reference is not established (counter_valid=false).
+	ErrNoReference     = errors.New("focuser position reference not established")
 	errPositionRange   = errors.New("focuser position out of range")
 	errStepSizeUnknown = errors.New("focuser step size not calibrated")
 )
@@ -29,15 +31,23 @@ func (e *EAF) SetConnected(connected bool) {
 	e.mu.Unlock()
 }
 
-// Position returns the virtual absolute position, or an error when no
-// reference has been established.
+// Position returns the last known absolute position. It mirrors the firmware's
+// counter, so it is returned even when no reference is established (callers
+// check PositionValid for that); it errors only when disconnected.
 func (e *EAF) Position() (int32, error) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	if !e.positionValid {
-		return 0, errNoReference
+	if e.conn == nil {
+		return 0, errNotConnected
 	}
 	return e.position, nil
+}
+
+// PositionValid reports whether the firmware's position reference is current.
+func (e *EAF) PositionValid() bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.conn != nil && e.positionValid
 }
 
 // MaxStep returns the virtual position ceiling.
@@ -57,6 +67,9 @@ func (e *EAF) MoveTo(position int32) error {
 	if position < 0 || position > maxStep {
 		return errPositionRange
 	}
+	if !e.PositionValid() {
+		return ErrNoReference
+	}
 	cur, err := e.Position()
 	if err != nil {
 		return err
@@ -69,6 +82,27 @@ func (e *EAF) MoveTo(position int32) error {
 		return errPositionRange
 	}
 	return e.MoveBy(delta)
+}
+
+// SetPosition declares the focuser's current absolute position and marks the
+// reference valid. It does not move the motor.
+func (e *EAF) SetPosition(position int32) error {
+	if position < 0 || position > maxStep {
+		return errPositionRange
+	}
+	c, err := e.getConn()
+	if err != nil {
+		return err
+	}
+	resp, err := c.FocuserSetPosition(int64(position))
+	if err != nil {
+		return err
+	}
+	e.mu.Lock()
+	e.position = int32(resp.CounterSteps)
+	e.positionValid = resp.CounterValid
+	e.mu.Unlock()
+	return nil
 }
 
 // IsMoving reports whether the focuser is currently moving.

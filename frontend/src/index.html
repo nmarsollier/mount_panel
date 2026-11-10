@@ -318,6 +318,17 @@
             <span class="metric-label">Position</span>
             <span class="metric-value" x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></span>
           </div>
+          <div class="status status-warn" x-show="focusReferenceMissing()">
+            No position reference — set the focuser's current position to re-enable moves.
+          </div>
+          <div class="settings-row" x-show="focusReferenceMissing()">
+            <span class="settings-label">Position (steps)</span>
+            <span class="settings-fields">
+              <input type="number" min="0" step="1" class="settings-input"
+                x-model.number="focusSetPositionValue" title="Position (steps)">
+            </span>
+            <button class="primary" @click="focusSetPosition()">Set reference</button>
+          </div>
         </div>
       </div>
 

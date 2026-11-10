@@ -19,6 +19,12 @@ type FocuserStopResponse struct {
 	CancelledOpID string `json:"cancelled_op_id"`
 }
 
+// FocuserSetPositionResponse is the result of declaring the current position.
+type FocuserSetPositionResponse struct {
+	CounterSteps int64 `json:"counter_steps"`
+	CounterValid bool  `json:"counter_valid"`
+}
+
 // FocuserMove sends a relative move of deltaSteps pulses, guarded by
 // expectedCounter: the firmware rejects the move with COUNTER_CHANGED if the
 // counter no longer matches (a local button moved the motor meanwhile).
@@ -40,6 +46,20 @@ func (c *Client) FocuserStop() (*FocuserStopResponse, error) {
 		Data FocuserStopResponse `json:"data"`
 	}{}
 	if err := c.request(context.Background(), "action", "focuser", "stop", nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Data, nil
+}
+
+// FocuserSetPosition declares the focuser's current absolute position and marks
+// the counter valid, without moving the motor.
+func (c *Client) FocuserSetPosition(position int64) (*FocuserSetPositionResponse, error) {
+	out := struct {
+		Data FocuserSetPositionResponse `json:"data"`
+	}{}
+	err := c.request(context.Background(), "action", "focuser", "set_position",
+		map[string]any{"counter_steps": position}, &out)
+	if err != nil {
 		return nil, err
 	}
 	return &out.Data, nil

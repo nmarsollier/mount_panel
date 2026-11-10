@@ -26,13 +26,14 @@ function mountApp() {
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
         eaf: {detected: false, power: false, health: 'unknown',
-              focuser: {counter_steps: 0, is_moving: false, enabled: true},
+              focuser: {counter_steps: 0, counter_valid: true, is_moving: false, enabled: true},
               fan: {mode: 'off', power: false, speed: 0, rpm: null},
               mirror: {error: null, mirror_c: null},
               environment: {error: null, ambient_c: null, humidity_pct: null, dew_point_c: null},
               vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
               orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
+        focusSetPositionValue: 0,
 
         /* Run a binding promise and refresh status. */
         run(promise) {
@@ -274,6 +275,18 @@ function mountApp() {
             if (!this.eaf.focuser.enabled) return 'Disabled';
             if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
+        },
+
+        /* The firmware reports counter_valid=false after a disable, power loss
+         * or reboot — N.I.N.A. must not autofocus until a reference is set. */
+        focusReferenceMissing() {
+            return this.eaf.detected && this.eaf.focuser.counter_valid === false;
+        },
+
+        focusSetPosition() {
+            const v = this.focusSetPositionValue;
+            if (typeof v !== 'number' || isNaN(v) || v < 0) return;
+            this.run(app().FocusSetPosition(Math.round(v)));
         },
 
         fanSetMode(mode) {

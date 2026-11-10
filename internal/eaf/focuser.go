@@ -29,10 +29,15 @@ func (e *EAF) MoveBy(deltaSteps int64) error {
 		if err != nil {
 			return err
 		}
-		_, err = c.FocuserMove(deltaSteps, fs.CounterSteps)
+		resp, err := c.FocuserMove(deltaSteps, fs.CounterSteps)
 		if err == nil {
 			e.mu.Lock()
-			e.position += int32(deltaSteps)
+			// The firmware counter is authoritative: adopt it instead of
+			// accumulating a local delta, so the cache never drifts. Validity
+			// is unchanged by a move (the firmware only restores it on
+			// set_position).
+			e.position = int32(resp.CounterSteps)
+			e.positionValid = fs.CounterValid
 			e.mu.Unlock()
 			return nil
 		}

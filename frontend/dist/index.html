@@ -1029,6 +1029,17 @@ input::placeholder {
             <span class="metric-label">Position</span>
             <span class="metric-value" x-text="eaf.detected ? eaf.focuser.counter_steps : '—'"></span>
           </div>
+          <div class="status status-warn" x-show="focusReferenceMissing()">
+            No position reference — set the focuser's current position to re-enable moves.
+          </div>
+          <div class="settings-row" x-show="focusReferenceMissing()">
+            <span class="settings-label">Position (steps)</span>
+            <span class="settings-fields">
+              <input type="number" min="0" step="1" class="settings-input"
+                x-model.number="focusSetPositionValue" title="Position (steps)">
+            </span>
+            <button class="primary" @click="focusSetPosition()">Set reference</button>
+          </div>
         </div>
       </div>
 
@@ -1231,13 +1242,14 @@ input::placeholder {
         trackingOptions: ['none', 'sidereal', 'lunar', 'solar'],
         joyRates: {ra: 0, dec: 0},
         eaf: {detected: false, power: false, health: 'unknown',
-              focuser: {counter_steps: 0, is_moving: false, enabled: true},
+              focuser: {counter_steps: 0, counter_valid: true, is_moving: false, enabled: true},
               fan: {mode: 'off', power: false, speed: 0, rpm: null},
               mirror: {error: null, mirror_c: null},
               environment: {error: null, ambient_c: null, humidity_pct: null, dew_point_c: null},
               vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
               orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
+        focusSetPositionValue: 0,
 
         /* Run a binding promise and refresh status. */
         run(promise) {
@@ -1479,6 +1491,18 @@ input::placeholder {
             if (!this.eaf.focuser.enabled) return 'Disabled';
             if (this.eaf.focuser.is_moving) return 'Moving';
             return 'Ok';
+        },
+
+        /* The firmware reports counter_valid=false after a disable, power loss
+         * or reboot — N.I.N.A. must not autofocus until a reference is set. */
+        focusReferenceMissing() {
+            return this.eaf.detected && this.eaf.focuser.counter_valid === false;
+        },
+
+        focusSetPosition() {
+            const v = this.focusSetPositionValue;
+            if (typeof v !== 'number' || isNaN(v) || v < 0) return;
+            this.run(app().FocusSetPosition(Math.round(v)));
         },
 
         fanSetMode(mode) {

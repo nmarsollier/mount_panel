@@ -1,6 +1,8 @@
 package alpaca_eaf
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
@@ -16,7 +18,11 @@ func putMove(c *gin.Context) {
 		return
 	}
 	if err := eaf.Get().MoveTo(int32(position)); err != nil {
-		server.WriteError(c, server.ErrInvalidValue, err.Error(), cid, stx)
+		code := server.ErrInvalidValue
+		if errors.Is(err, eaf.ErrNoReference) {
+			code = server.ErrInvalidOperation
+		}
+		server.WriteError(c, code, err.Error(), cid, stx)
 		return
 	}
 	server.WriteOK(c, cid, stx)

@@ -119,10 +119,20 @@ func (e *EAF) tryConnect() (*eafproto.Client, error) {
 		return nil, err
 	}
 
+	// Seed the position reference from the firmware. After a reboot (or a
+	// disable / power loss) the counter is invalid until a set_position, so it
+	// must not be assumed valid here.
+	position := int32(0)
+	valid := false
+	if fs, err := c.StateFocuser(); err == nil {
+		position = int32(fs.CounterSteps)
+		valid = fs.CounterValid
+	}
+
 	e.mu.Lock()
 	e.conn = c
-	e.position = 0
-	e.positionValid = true
+	e.position = position
+	e.positionValid = valid
 	e.mu.Unlock()
 
 	logx.Info(eafCtx(), "connected on "+c.PortName()+" boot="+c.BootID())

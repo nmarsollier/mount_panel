@@ -2,9 +2,10 @@ package server
 
 // Alpaca error numbers (ASCOM standard).
 const (
-	ErrNotImplemented = 1024
-	ErrInvalidValue   = 1025
-	ErrNotConnected   = 1027 // ASCOM "Not Connected" (0x403)
+	ErrNotImplemented    = 1024
+	ErrInvalidValue      = 1025
+	ErrNotConnected      = 1027 // ASCOM "Not Connected" (0x403)
+	ErrInvalidOperation  = 1035 // ASCOM "InvalidOperationException" (0x40B)
 )
 
 // Alpaca server identity — shared across the device types served by this

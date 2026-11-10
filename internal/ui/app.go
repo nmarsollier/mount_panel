@@ -170,6 +170,12 @@ func (a *App) FocusSetEnabled(enabled bool) error {
 	return eaf.Get().SetEnabled(enabled)
 }
 
+// FocusSetPosition declares the focuser's current absolute position and marks
+// the reference valid. It does not move the focuser.
+func (a *App) FocusSetPosition(position int64) error {
+	return eaf.Get().SetPosition(int32(position))
+}
+
 // FanSetMode sets the fan mode: "off", "auto" or "manual".
 func (a *App) FanSetMode(mode string) error {
 	return fan.Get().SetFanMode(mode)

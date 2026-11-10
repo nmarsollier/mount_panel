@@ -8,6 +8,7 @@ import (
 // FocuserView is the focuser subset shown in the UI.
 type FocuserView struct {
 	CounterSteps int64  `json:"counter_steps"`
+	CounterValid bool   `json:"counter_valid"`
 	IsMoving     bool   `json:"is_moving"`
 	OpStatus     string `json:"op_status"`
 	DriverOK     bool   `json:"driver_ok"`
@@ -46,11 +47,18 @@ func (e *EAF) Status() Status {
 	} else {
 		st.Focuser = FocuserView{
 			CounterSteps: fs.CounterSteps,
+			CounterValid: fs.CounterValid,
 			IsMoving:     fs.IsMoving,
 			OpStatus:     fs.OpStatus,
 			DriverOK:     fs.Driver.UartOK,
 			Enabled:      fs.Enabled,
 		}
+		/* Refresh the cached position/validity: the firmware is authoritative
+		 * and the UI polls this every second, keeping the cache in sync. */
+		e.mu.Lock()
+		e.position = int32(fs.CounterSteps)
+		e.positionValid = fs.CounterValid
+		e.mu.Unlock()
 	}
 
 	if st.Detected {
