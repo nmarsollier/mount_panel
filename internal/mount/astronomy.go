@@ -5,13 +5,6 @@ import (
 	"time"
 )
 
-const homeRAOffsetDeg = 90.0
-
-// limits mirrors the operational axis limits enforced by the motors layer.
-type limits struct {
-	raMin, raMax, decMin, decMax float64
-}
-
 // unixToJD converts a UTC time to a Julian Date.
 func unixToJD(t time.Time) float64 {
 	return float64(t.Unix())/86400.0 + 2440587.5
@@ -62,78 +55,6 @@ func horizontal(raHours, decDeg, latDeg, lst float64) (alt, az float64) {
 	return alt, az
 }
 
-func normalizeHours(h float64) float64 {
-	for h < 0 {
-		h += 24
-	}
-	for h >= 24 {
-		h -= 24
-	}
-	return h
-}
-
-func normalizeDeg(d float64) float64 {
-	d = math.Mod(d, 360)
-	if d >= 180 {
-		d -= 360
-	}
-	if d < -180 {
-		d += 360
-	}
-	return d
-}
-
-// equatorialToAxis computes the physical axis solution (and pier side) that a
-// slew to the given equatorial position would pick: the lowest-movement-cost
-// candidate that is within the axis limits.
-func equatorialToAxis(raHours, decDeg, lst, curRaAxis, curDecAxis float64,
-	lim limits) (raAxis, decAxis float64, pier int, ok bool) {
-
-	if decDeg < -90 || decDeg > 90 {
-		return 0, 0, 0, false
-	}
-	raHours = normalizeHours(raHours)
-
-	haH := lst - raHours
-	for haH > 12 {
-		haH -= 24
-	}
-	for haH < -12 {
-		haH += 24
-	}
-
-	haDeg := haH * 15
-	decBase := decDeg + 90
-
-	type cand struct {
-		ra, dec float64
-		pier    int
-	}
-	c := [2]cand{
-		{normalizeDeg(haDeg - homeRAOffsetDeg), decBase, 0},
-		{normalizeDeg(haDeg + homeRAOffsetDeg), -decBase, 1},
-	}
-
-	best := -1
-	bestCost := 0.0
-	for i := range c {
-		if c[i].ra < lim.raMin || c[i].ra > lim.raMax ||
-			c[i].dec < lim.decMin || c[i].dec > lim.decMax {
-			continue
-		}
-		cost := math.Abs(c[i].ra-curRaAxis) + math.Abs(c[i].dec-curDecAxis)
-		if best < 0 || cost < bestCost {
-			best = i
-			bestCost = cost
-		}
-	}
-
-	if best < 0 {
-		return 0, 0, 0, false
-	}
-	return c[best].ra, c[best].dec, c[best].pier, true
-}
-
 // Altitude returns the current telescope altitude in degrees.
 func (m *Mount) Altitude() (float64, error) {
 	s, err := m.fetchState()
@@ -171,25 +92,4 @@ func (m *Mount) SiderealTime() (float64, error) {
 		return 0, err
 	}
 	return s.Lst, nil
-}
-
-// DestinationSideOfPier returns the pier side the mount would end on after a
-// slew to the given coordinates, or the current side when unreachable. A fork
-// has no side of pier, so it always returns pierUnknown.
-func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) (int, error) {
-	s, err := m.fetchState()
-	if err != nil {
-		return 0, err
-	}
-	if !m.MeridianFlip() {
-		return pierUnknown, nil
-	}
-
-	lim := limits{s.Limits.RaMin, s.Limits.RaMax, s.Limits.DecMin, s.Limits.DecMax}
-	_, _, pier, ok := equatorialToAxis(raHours, decDeg, s.Lst,
-		s.RaAxisDeg, s.DecAxisDeg, lim)
-	if !ok {
-		return m.SideOfPier()
-	}
-	return pier, nil
 }

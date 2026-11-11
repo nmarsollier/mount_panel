@@ -1,6 +1,10 @@
 package mount
 
-import "github.com/nmarsollier/mount_panel/internal/mountproto"
+import (
+	"fmt"
+
+	"github.com/nmarsollier/mount_panel/internal/mountproto"
+)
 
 // slewingState reports whether the state snapshot shows a slew in progress.
 func slewingState(s *mountproto.StateResponse) bool {
@@ -47,17 +51,59 @@ func (m *Mount) Declination() (float64, error) {
 }
 
 // SideOfPier returns pierUnknown (-1) for a fork, or 0 (pierEast) / 1
-// (pierWest) for a German equatorial. The state is still fetched so a
-// disconnected mount reports Not Connected.
+// (pierWest) for a German equatorial. It returns pierUnknown when the mechanical
+// reference is uncertain (position_uncertain) — after an aborted move the
+// reported side is not trustworthy. The state is still fetched so a disconnected
+// mount reports Not Connected.
 func (m *Mount) SideOfPier() (int, error) {
 	s, err := m.fetchState()
 	if err != nil {
 		return 0, err
 	}
+	return sideOfPier(s, m.MeridianFlip()), nil
+}
+
+// sideOfPier reports the pier side from a fresh state snapshot: pierUnknown for
+// a fork or when the position is uncertain, otherwise east (0) / west (1).
+func sideOfPier(s *mountproto.StateResponse, meridianFlip bool) int {
+	if !meridianFlip || s.PositionUncertain {
+		return pierUnknown
+	}
+	return pierSideState(s)
+}
+
+// destinationSideFromResponse maps the firmware's side string to the ASCOM
+// PierSide, rejecting anything that is not a known side so an unexpected
+// firmware response surfaces as an error instead of a fabricated EAST.
+func destinationSideFromResponse(side string) (int, error) {
+	switch side {
+	case "east":
+		return 0, nil
+	case "west":
+		return 1, nil
+	default:
+		return pierUnknown, fmt.Errorf("invalid destination pier side: %q", side)
+	}
+}
+
+// DestinationSideOfPier asks the firmware which pier side a slew to the given
+// coordinates would select at this instant — the same selection a real goto
+// would make. A fork (no meridian flip) always returns pierUnknown. No
+// astronomy is computed here: the firmware is the single source of truth, and
+// an unreachable destination is propagated as an error.
+func (m *Mount) DestinationSideOfPier(raHours, decDeg float64) (int, error) {
 	if !m.MeridianFlip() {
 		return pierUnknown, nil
 	}
-	return pierSideState(s), nil
+	c, err := m.getConn()
+	if err != nil {
+		return 0, err
+	}
+	resp, err := c.DestinationSideOfPier(raHours, decDeg)
+	if err != nil {
+		return 0, err
+	}
+	return destinationSideFromResponse(resp.Side)
 }
 
 // Slewing reports whether a slew is in progress.
