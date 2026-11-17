@@ -500,29 +500,38 @@
 
       <!-- Charts: one panel per chart, stacked as rows below each other. -->
       <div class="panel">
-        <div class="panel-header"><strong>Vibration</strong><span class="hint">last 2 minutes</span></div>
-        <div class="vib-chart" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
-          <div class="vib-bands">
-            <div class="vib-move-band" x-for="b in moveBands()" :key="b.start"
-              :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+        <div class="panel-header"><strong>Vibration</strong><span class="hint">last 5 minutes</span></div>
+        <div class="vib-wrap" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
+          <div class="vib-chart">
+            <svg viewBox="0 0 600 220" preserveAspectRatio="none">
+              <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
+                   mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
+              <line class="vib-iso" x1="0" y1="173.7" x2="600" y2="173.7"></line>
+              <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
+              <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
+              <polyline class="vib-line" :points="vibPoints()"></polyline>
+              <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
+            </svg>
+            <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
           </div>
-          <svg viewBox="0 0 600 220" preserveAspectRatio="none">
-            <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
-                 mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
-            <line class="vib-iso" x1="0" y1="173.7" x2="600" y2="173.7"></line>
-            <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
-            <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
-            <polyline class="vib-line" :points="vibPoints()"></polyline>
-            <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
-          </svg>
-          <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
-        </div>
-        <div class="vib-readout">
-          <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
-            <i></i><span x-text="mountMoving ? 'Mount moving' : 'Mount idle'"></span>
-          </span>
-          <span class="vib-value" x-text="vibHoverText()"></span>
-          <span class="vib-legend">ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
+          <div class="vib-readout">
+            <span class="vib-value" x-text="vibHoverText()"></span>
+            <span class="vib-legend">ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
+          </div>
+
+          <!-- Mount movement, on the same 5-minute time axis as the chart
+               above, so vibration spikes line up with the movement moments. -->
+          <div class="move-strip">
+            <div class="move-band" x-for="b in moveBands()" :key="b.start"
+              :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+            <div class="move-crosshair" x-show="vibHover" :style="{ left: vibHoverPct() + '%' }"></div>
+          </div>
+          <div class="move-caption">
+            <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
+              <i></i><span x-text="mountMoving ? 'Mount moving' : 'Mount idle'"></span>
+            </span>
+            <span class="vib-legend">Mount movement — last 5 minutes</span>
+          </div>
         </div>
       </div>
 

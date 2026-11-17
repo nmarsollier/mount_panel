@@ -377,22 +377,21 @@ function mountApp() {
             return this.vibHistory.samples || [];
         },
         // Fixed geometry: viewBox 0 0 600 220; y maps 0..8 mm/s (ISO 10816
-        // Class II boundaries at 1.12 / 2.8 / 7.1), x maps the last 120 s.
+        // Class II boundaries at 1.12 / 2.8 / 7.1), x maps the last 5 min on
+        // the shared time axis (same as the movement strip below).
         vibY(v) {
             const top = 12, bottom = 20, H = 220, yMax = 8;
             return top + (1 - Math.min(v, yMax) / yMax) * (H - top - bottom);
         },
-        vibX(ts) {
-            const samples = this.vibSamples();
-            const last = samples[samples.length - 1].ts_ms;
-            const first = last - 120000;
-            const W = 600, pad = 4;
-            return pad + (ts - first) / (last - first) * (W - 2 * pad);
+        chartX(ts) {
+            const W = 600, pad = 4, windowMs = 300000;
+            const now = Date.now();
+            return pad + (ts - (now - windowMs)) / windowMs * (W - 2 * pad);
         },
         vibPoints() {
             const samples = this.vibSamples();
             if (samples.length < 2) return '';
-            return samples.map(s => `${this.vibX(s.ts_ms).toFixed(1)},${this.vibY(s.vel_rms).toFixed(1)}`).join(' ');
+            return samples.map(s => `${this.chartX(s.ts_ms).toFixed(1)},${this.vibY(s.vel_rms).toFixed(1)}`).join(' ');
         },
         vibHoverAt(e) {
             const samples = this.vibSamples();
@@ -407,7 +406,11 @@ function mountApp() {
         },
         vibHoverX() {
             if (!this.vibHover) return null;
-            return this.vibX(this.vibHover.ts_ms);
+            return this.chartX(this.vibHover.ts_ms);
+        },
+        vibHoverPct() {
+            const x = this.vibHoverX();
+            return x == null ? null : (x / 600) * 100;
         },
         vibHoverText() {
             if (!this.vibHover) return '';
@@ -416,13 +419,12 @@ function mountApp() {
             return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} · ${this.vibHover.vel_rms.toFixed(3)} mm/s`;
         },
         moveBands() {
-            const samples = this.vibSamples();
             const intervals = this.moveHistory.intervals || [];
-            if (samples.length < 2 || !intervals.length) return [];
+            if (!intervals.length) return [];
             const W = 600, pad = 4;
             return intervals.map(iv => {
-                let x1 = this.vibX(iv.start_ms);
-                let x2 = this.vibX(iv.end_ms);
+                let x1 = this.chartX(iv.start_ms);
+                let x2 = this.chartX(iv.end_ms);
                 x1 = Math.max(pad, Math.min(W - pad, x1));
                 x2 = Math.max(pad, Math.min(W - pad, x2));
                 return { left: (x1 / W) * 100, width: ((x2 - x1) / W) * 100, start: iv.start_ms };

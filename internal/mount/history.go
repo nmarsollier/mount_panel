@@ -8,7 +8,7 @@ import "time"
 // movementWindow, mirroring the ambient vibration history in internal/amb.
 
 // movementWindow is how long a sample stays in the rolling buffer.
-const movementWindow = 2 * time.Minute
+const movementWindow = 5 * time.Minute
 
 // MovementSample is one poll of the mount movement state.
 type MovementSample struct {

@@ -738,20 +738,41 @@ input::placeholder {
     stroke-linecap: round;
 }
 
-.vib-bands {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
+.move-strip {
+    position: relative;
+    height: 18px;
+    background: #0e0b1a;
+    border: 1px solid #1c1730;
+    border-radius: 4px;
+    margin-top: 6px;
+    overflow: hidden;
 }
 
-.vib-move-band {
+.move-band {
     position: absolute;
     top: 0;
     bottom: 0;
-    background: rgba(79, 195, 247, 0.20);
-    border-left: 1px solid rgba(79, 195, 247, 0.55);
-    border-right: 1px solid rgba(79, 195, 247, 0.55);
+    background: rgba(79, 195, 247, 0.35);
+    border-left: 1px solid rgba(79, 195, 247, 0.7);
+    border-right: 1px solid rgba(79, 195, 247, 0.7);
+}
+
+.move-crosshair {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px dashed var(--text-dim);
+    pointer-events: none;
+}
+
+.move-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 11px;
+    min-height: 15px;
 }
 
 .vib-iso {

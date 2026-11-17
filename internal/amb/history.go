@@ -12,7 +12,7 @@ import (
 // the buffer always holds exactly the last two minutes of activity.
 
 // historyWindow is how long a sample stays in the rolling buffer.
-const historyWindow = 2 * time.Minute
+const historyWindow = 5 * time.Minute
 
 // VibrationSample is one vibration reading in the rolling window.
 type VibrationSample struct {
