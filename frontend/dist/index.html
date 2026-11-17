@@ -734,6 +734,8 @@ input::placeholder {
     display: block;
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 .vib-line {
@@ -745,8 +747,20 @@ input::placeholder {
     stroke-linecap: round;
 }
 
+.vib-bands {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
 .vib-move-band {
-    fill: rgba(167, 139, 250, 0.16);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(79, 195, 247, 0.20);
+    border-left: 1px solid rgba(79, 195, 247, 0.55);
+    border-right: 1px solid rgba(79, 195, 247, 0.55);
 }
 
 .vib-iso {
@@ -772,6 +786,7 @@ input::placeholder {
     font-size: 11px;
     color: var(--text-dim);
     pointer-events: none;
+    z-index: 2;
 }
 
 .vib-readout {
@@ -788,23 +803,32 @@ input::placeholder {
     font-family: var(--mono);
 }
 
-.vib-legend {
-    display: flex;
-    gap: 12px;
+.vib-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
     color: var(--text-dim);
 }
 
-.vib-band-key {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+.vib-live i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
 }
 
-.vib-band-key i {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    background: rgba(167, 139, 250, 0.35);
+.vib-live-on {
+    color: #4fc3f7;
+}
+
+.vib-live-on i {
+    background: #4fc3f7;
+    box-shadow: 0 0 6px #4fc3f7;
+}
+
+.vib-legend {
+    color: var(--text-dim);
 }
 </style>
 </head>
@@ -1301,9 +1325,11 @@ input::placeholder {
       <div class="panel">
         <div class="panel-header"><strong>Vibration</strong><span class="hint">last 2 minutes</span></div>
         <div class="vib-chart" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
+          <div class="vib-bands">
+            <div class="vib-move-band" x-for="b in moveBands()" :key="b.start"
+              :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+          </div>
           <svg viewBox="0 0 600 220" preserveAspectRatio="none">
-            <rect class="vib-move-band" x-for="b in moveBands()" :key="b.start"
-              :x="b.x1" y="0" :width="b.width" height="220"></rect>
             <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
                  mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
             <line class="vib-iso" x1="0" y1="173.7" x2="600" y2="173.7"></line>
@@ -1315,11 +1341,11 @@ input::placeholder {
           <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
         </div>
         <div class="vib-readout">
+          <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
+            <i></i><span x-text="mountMoving ? 'Mount moving' : 'Mount idle'"></span>
+          </span>
           <span class="vib-value" x-text="vibHoverText()"></span>
-          <div class="vib-legend">
-            <span class="vib-band-key"><i></i> Mount moving</span>
-            <span>ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
-          </div>
+          <span class="vib-legend">ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
         </div>
       </div>
 
@@ -1364,6 +1390,7 @@ input::placeholder {
         focusStep: 100,
         vibHistory: { samples: [], stats: {} },
         moveHistory: { intervals: [] },
+        mountMoving: false,
         vibHover: null,
 
         /* Run a binding promise and refresh status. */
@@ -1386,6 +1413,8 @@ input::placeholder {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
+                this.mountMoving = (j.status === 'slewing')
+                    || (j.debug && (j.debug.ra_speed !== 0 || j.debug.dec_speed !== 0));
                 this.debug = j.debug || {};
 
                 const s = j.settings;
@@ -1751,7 +1780,7 @@ input::placeholder {
                 let x2 = this.vibX(iv.end_ms);
                 x1 = Math.max(pad, Math.min(W - pad, x1));
                 x2 = Math.max(pad, Math.min(W - pad, x2));
-                return { x1, x2, width: x2 - x1, start: iv.start_ms };
+                return { left: (x1 / W) * 100, width: ((x2 - x1) / W) * 100, start: iv.start_ms };
             }).filter(b => b.width > 0);
         },
 

@@ -35,6 +35,7 @@ function mountApp() {
         focusStep: 100,
         vibHistory: { samples: [], stats: {} },
         moveHistory: { intervals: [] },
+        mountMoving: false,
         vibHover: null,
 
         /* Run a binding promise and refresh status. */
@@ -57,6 +58,8 @@ function mountApp() {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
+                this.mountMoving = (j.status === 'slewing')
+                    || (j.debug && (j.debug.ra_speed !== 0 || j.debug.dec_speed !== 0));
                 this.debug = j.debug || {};
 
                 const s = j.settings;
@@ -422,7 +425,7 @@ function mountApp() {
                 let x2 = this.vibX(iv.end_ms);
                 x1 = Math.max(pad, Math.min(W - pad, x1));
                 x2 = Math.max(pad, Math.min(W - pad, x2));
-                return { x1, x2, width: x2 - x1, start: iv.start_ms };
+                return { left: (x1 / W) * 100, width: ((x2 - x1) / W) * 100, start: iv.start_ms };
             }).filter(b => b.width > 0);
         },
 

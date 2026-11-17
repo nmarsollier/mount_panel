@@ -725,6 +725,8 @@ input::placeholder {
     display: block;
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 .vib-line {
@@ -736,8 +738,20 @@ input::placeholder {
     stroke-linecap: round;
 }
 
+.vib-bands {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
 .vib-move-band {
-    fill: rgba(167, 139, 250, 0.16);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(79, 195, 247, 0.20);
+    border-left: 1px solid rgba(79, 195, 247, 0.55);
+    border-right: 1px solid rgba(79, 195, 247, 0.55);
 }
 
 .vib-iso {
@@ -763,6 +777,7 @@ input::placeholder {
     font-size: 11px;
     color: var(--text-dim);
     pointer-events: none;
+    z-index: 2;
 }
 
 .vib-readout {
@@ -779,21 +794,30 @@ input::placeholder {
     font-family: var(--mono);
 }
 
-.vib-legend {
-    display: flex;
-    gap: 12px;
+.vib-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
     color: var(--text-dim);
 }
 
-.vib-band-key {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+.vib-live i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
 }
 
-.vib-band-key i {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    background: rgba(167, 139, 250, 0.35);
+.vib-live-on {
+    color: #4fc3f7;
+}
+
+.vib-live-on i {
+    background: #4fc3f7;
+    box-shadow: 0 0 6px #4fc3f7;
+}
+
+.vib-legend {
+    color: var(--text-dim);
 }
