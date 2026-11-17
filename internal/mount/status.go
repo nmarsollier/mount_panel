@@ -100,6 +100,11 @@ func (m *Mount) Status() Status {
 	}
 
 	if s != nil {
+		m.movementAppend(MovementSample{
+			TsMs:   time.Now().UnixMilli(),
+			Moving: slewingState(s) || s.RaSpeedDps != 0 || s.DecSpeedDps != 0,
+		})
+
 		events.Record(events.Event{
 			Type:    events.TypeSensorReading,
 			Source:  events.SourceMount,

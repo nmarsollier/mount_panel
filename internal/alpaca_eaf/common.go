@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
-	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
 )
 
@@ -114,7 +113,7 @@ func getDeviceState(c *gin.Context) {
 			Value json.RawMessage `json:"Value"`
 		}{"Position", server.RawInt(int(v))})
 	}
-	if v, err := amb.Get().AmbientTemperature(); err == nil {
+	if v, err := reportedTemperature(); err == nil {
 		entries = append(entries, struct {
 			Name  string          `json:"Name"`
 			Value json.RawMessage `json:"Value"`

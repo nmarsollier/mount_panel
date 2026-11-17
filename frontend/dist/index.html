@@ -718,6 +718,94 @@ input::placeholder {
     background: #2a2240;
     border-radius: 3px;
 }
+
+/* ═══ Vibration chart ═══ */
+
+.vib-chart {
+    position: relative;
+    height: 100px;
+    background: #0e0b1a;
+    border: 1px solid #1c1730;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.vib-chart svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.vib-line {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.vib-move-band {
+    fill: rgba(167, 139, 250, 0.16);
+}
+
+.vib-iso {
+    stroke: #2a2240;
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.vib-crosshair {
+    stroke: var(--text-dim);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.vib-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    pointer-events: none;
+}
+
+.vib-readout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    min-height: 15px;
+}
+
+.vib-value {
+    color: var(--accent-bright);
+    font-family: var(--mono);
+}
+
+.vib-legend {
+    display: flex;
+    gap: 12px;
+    color: var(--text-dim);
+}
+
+.vib-band-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vib-band-key i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: rgba(167, 139, 250, 0.35);
+}
 </style>
 </head>
 
@@ -784,6 +872,8 @@ input::placeholder {
       <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
       <button x-show="eaf.amb_detected" :class="{ active: tab === 'ambiente' }"
         @click="tab = 'ambiente'">Environment</button>
+      <button x-show="eaf.amb_detected" :class="{ active: tab === 'vibraciones' }"
+        @click="tab = 'vibraciones'">Statistics</button>
     </nav>
 
     <!-- ═══ Mount ═══ -->
@@ -1204,6 +1294,37 @@ input::placeholder {
 
     </section>
 
+    <!-- ═══ Vibrations ═══ -->
+    <section class="tab-content" x-show="tab === 'vibraciones'">
+
+      <!-- Charts: one panel per chart, stacked as rows below each other. -->
+      <div class="panel">
+        <div class="panel-header"><strong>Vibration</strong><span class="hint">last 2 minutes</span></div>
+        <div class="vib-chart" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
+          <svg viewBox="0 0 600 220" preserveAspectRatio="none">
+            <rect class="vib-move-band" x-for="b in moveBands()" :key="b.start"
+              :x="b.x1" y="0" :width="b.width" height="220"></rect>
+            <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
+                 mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
+            <line class="vib-iso" x1="0" y1="173.7" x2="600" y2="173.7"></line>
+            <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
+            <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
+            <polyline class="vib-line" :points="vibPoints()"></polyline>
+            <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
+          </svg>
+          <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
+        </div>
+        <div class="vib-readout">
+          <span class="vib-value" x-text="vibHoverText()"></span>
+          <div class="vib-legend">
+            <span class="vib-band-key"><i></i> Mount moving</span>
+            <span>ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
   </div>
 
   <script>function mountApp() {
@@ -1241,6 +1362,9 @@ input::placeholder {
               vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
               orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
+        vibHistory: { samples: [], stats: {} },
+        moveHistory: { intervals: [] },
+        vibHover: null,
 
         /* Run a binding promise and refresh status. */
         run(promise) {
@@ -1431,6 +1555,22 @@ input::placeholder {
             });
         },
 
+        /* --- Vibration history --- */
+        fetchVibrationHistory() {
+            app().VibrationHistory().then(j => {
+                if (j) this.vibHistory = j;
+            }).catch(() => {
+            });
+        },
+
+        /* --- Mount movement history (chart overlay) --- */
+        fetchMovementHistory() {
+            app().MovementHistory().then(j => {
+                if (j) this.moveHistory = j;
+            }).catch(() => {
+            });
+        },
+
         /* Load the MoveAxis speed ladder from the mount capabilities. */
         fetchMoveSpeeds() {
             app().MoveAxisSpeeds().then(speeds => {
@@ -1450,7 +1590,7 @@ input::placeholder {
             if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
             if (this.eaf.detected) visible.push('enfoque');
             if (this.eaf.fan_detected) visible.push('fan');
-            if (this.eaf.amb_detected) visible.push('ambiente');
+            if (this.eaf.amb_detected) visible.push('ambiente', 'vibraciones');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -1558,11 +1698,70 @@ input::placeholder {
             return errs.join(' · ');
         },
 
+        /* --- Vibration chart (inline SVG, no library) --- */
+        vibSamples() {
+            return this.vibHistory.samples || [];
+        },
+        // Fixed geometry: viewBox 0 0 600 220; y maps 0..8 mm/s (ISO 10816
+        // Class II boundaries at 1.12 / 2.8 / 7.1), x maps the last 120 s.
+        vibY(v) {
+            const top = 12, bottom = 20, H = 220, yMax = 8;
+            return top + (1 - Math.min(v, yMax) / yMax) * (H - top - bottom);
+        },
+        vibX(ts) {
+            const samples = this.vibSamples();
+            const last = samples[samples.length - 1].ts_ms;
+            const first = last - 120000;
+            const W = 600, pad = 4;
+            return pad + (ts - first) / (last - first) * (W - 2 * pad);
+        },
+        vibPoints() {
+            const samples = this.vibSamples();
+            if (samples.length < 2) return '';
+            return samples.map(s => `${this.vibX(s.ts_ms).toFixed(1)},${this.vibY(s.vel_rms).toFixed(1)}`).join(' ');
+        },
+        vibHoverAt(e) {
+            const samples = this.vibSamples();
+            if (samples.length < 2) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const frac = (e.clientX - rect.left) / rect.width;
+            const idx = Math.max(0, Math.min(samples.length - 1, Math.round(frac * (samples.length - 1))));
+            this.vibHover = samples[idx];
+        },
+        vibHoverClear() {
+            this.vibHover = null;
+        },
+        vibHoverX() {
+            if (!this.vibHover) return null;
+            return this.vibX(this.vibHover.ts_ms);
+        },
+        vibHoverText() {
+            if (!this.vibHover) return '';
+            const d = new Date(this.vibHover.ts_ms);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} · ${this.vibHover.vel_rms.toFixed(3)} mm/s`;
+        },
+        moveBands() {
+            const samples = this.vibSamples();
+            const intervals = this.moveHistory.intervals || [];
+            if (samples.length < 2 || !intervals.length) return [];
+            const W = 600, pad = 4;
+            return intervals.map(iv => {
+                let x1 = this.vibX(iv.start_ms);
+                let x2 = this.vibX(iv.end_ms);
+                x1 = Math.max(pad, Math.min(W - pad, x1));
+                x2 = Math.max(pad, Math.min(W - pad, x2));
+                return { x1, x2, width: x2 - x1, start: iv.start_ms };
+            }).filter(b => b.width > 0);
+        },
+
         init() {
             this.fetchStatus();
             this.fetchEAFStatus();
             this.fetchMoveSpeeds();
-            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); this.fetchMoveSpeeds(); }, 1000);
+            this.fetchVibrationHistory();
+            this.fetchMovementHistory();
+            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); this.fetchMoveSpeeds(); this.fetchVibrationHistory(); this.fetchMovementHistory(); }, 1000);
         }
     }
 }

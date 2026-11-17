@@ -33,6 +33,9 @@ function mountApp() {
               vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
               orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
+        vibHistory: { samples: [], stats: {} },
+        moveHistory: { intervals: [] },
+        vibHover: null,
 
         /* Run a binding promise and refresh status. */
         run(promise) {
@@ -223,6 +226,22 @@ function mountApp() {
             });
         },
 
+        /* --- Vibration history --- */
+        fetchVibrationHistory() {
+            app().VibrationHistory().then(j => {
+                if (j) this.vibHistory = j;
+            }).catch(() => {
+            });
+        },
+
+        /* --- Mount movement history (chart overlay) --- */
+        fetchMovementHistory() {
+            app().MovementHistory().then(j => {
+                if (j) this.moveHistory = j;
+            }).catch(() => {
+            });
+        },
+
         /* Load the MoveAxis speed ladder from the mount capabilities. */
         fetchMoveSpeeds() {
             app().MoveAxisSpeeds().then(speeds => {
@@ -242,7 +261,7 @@ function mountApp() {
             if (this.mountConnected) visible.push('principal', 'movimiento', 'settings');
             if (this.eaf.detected) visible.push('enfoque');
             if (this.eaf.fan_detected) visible.push('fan');
-            if (this.eaf.amb_detected) visible.push('ambiente');
+            if (this.eaf.amb_detected) visible.push('ambiente', 'vibraciones');
             if (visible.length && !visible.includes(this.tab)) this.tab = visible[0];
         },
 
@@ -350,11 +369,70 @@ function mountApp() {
             return errs.join(' · ');
         },
 
+        /* --- Vibration chart (inline SVG, no library) --- */
+        vibSamples() {
+            return this.vibHistory.samples || [];
+        },
+        // Fixed geometry: viewBox 0 0 600 220; y maps 0..8 mm/s (ISO 10816
+        // Class II boundaries at 1.12 / 2.8 / 7.1), x maps the last 120 s.
+        vibY(v) {
+            const top = 12, bottom = 20, H = 220, yMax = 8;
+            return top + (1 - Math.min(v, yMax) / yMax) * (H - top - bottom);
+        },
+        vibX(ts) {
+            const samples = this.vibSamples();
+            const last = samples[samples.length - 1].ts_ms;
+            const first = last - 120000;
+            const W = 600, pad = 4;
+            return pad + (ts - first) / (last - first) * (W - 2 * pad);
+        },
+        vibPoints() {
+            const samples = this.vibSamples();
+            if (samples.length < 2) return '';
+            return samples.map(s => `${this.vibX(s.ts_ms).toFixed(1)},${this.vibY(s.vel_rms).toFixed(1)}`).join(' ');
+        },
+        vibHoverAt(e) {
+            const samples = this.vibSamples();
+            if (samples.length < 2) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const frac = (e.clientX - rect.left) / rect.width;
+            const idx = Math.max(0, Math.min(samples.length - 1, Math.round(frac * (samples.length - 1))));
+            this.vibHover = samples[idx];
+        },
+        vibHoverClear() {
+            this.vibHover = null;
+        },
+        vibHoverX() {
+            if (!this.vibHover) return null;
+            return this.vibX(this.vibHover.ts_ms);
+        },
+        vibHoverText() {
+            if (!this.vibHover) return '';
+            const d = new Date(this.vibHover.ts_ms);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} · ${this.vibHover.vel_rms.toFixed(3)} mm/s`;
+        },
+        moveBands() {
+            const samples = this.vibSamples();
+            const intervals = this.moveHistory.intervals || [];
+            if (samples.length < 2 || !intervals.length) return [];
+            const W = 600, pad = 4;
+            return intervals.map(iv => {
+                let x1 = this.vibX(iv.start_ms);
+                let x2 = this.vibX(iv.end_ms);
+                x1 = Math.max(pad, Math.min(W - pad, x1));
+                x2 = Math.max(pad, Math.min(W - pad, x2));
+                return { x1, x2, width: x2 - x1, start: iv.start_ms };
+            }).filter(b => b.width > 0);
+        },
+
         init() {
             this.fetchStatus();
             this.fetchEAFStatus();
             this.fetchMoveSpeeds();
-            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); this.fetchMoveSpeeds(); }, 1000);
+            this.fetchVibrationHistory();
+            this.fetchMovementHistory();
+            setInterval(() => { this.fetchStatus(); this.fetchEAFStatus(); this.fetchMoveSpeeds(); this.fetchVibrationHistory(); this.fetchMovementHistory(); }, 1000);
         }
     }
 }

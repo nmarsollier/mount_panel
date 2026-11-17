@@ -27,6 +27,9 @@ type Amb struct {
 	serialPort string
 	connecting bool
 
+	// history holds the rolling vibration window for the UI chart (history.go).
+	history []VibrationSample
+
 	// averagePeriod is the ObservingConditions averaging window, in hours
 	// (0 = instantaneous). Stored in Go; it does not change the sensor period.
 	averagePeriod float64
@@ -133,6 +136,7 @@ func (t *Amb) disconnect(c *eafproto.Client) {
 	if t.conn == c {
 		t.conn = nil
 	}
+	t.history = nil
 	t.mu.Unlock()
 }
 

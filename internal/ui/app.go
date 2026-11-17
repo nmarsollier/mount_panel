@@ -288,4 +288,16 @@ func (a *App) EAFStatus() eafStatus {
 	return st
 }
 
+// VibrationHistory returns the rolling 2-minute vibration window plus its
+// summary statistics, for the chart and stats panel in the UI.
+func (a *App) VibrationHistory() amb.VibrationHistory {
+	return amb.Get().VibrationHistory()
+}
+
+// MovementHistory returns the rolling 2-minute mount-movement intervals, for
+// the chart overlay in the UI.
+func (a *App) MovementHistory() mount.MovementHistory {
+	return mount.Get().MovementHistory()
+}
+
 func strptr(s string) *string { return &s }

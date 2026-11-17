@@ -709,3 +709,91 @@ input::placeholder {
     background: #2a2240;
     border-radius: 3px;
 }
+
+/* ═══ Vibration chart ═══ */
+
+.vib-chart {
+    position: relative;
+    height: 100px;
+    background: #0e0b1a;
+    border: 1px solid #1c1730;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.vib-chart svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.vib-line {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.vib-move-band {
+    fill: rgba(167, 139, 250, 0.16);
+}
+
+.vib-iso {
+    stroke: #2a2240;
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.vib-crosshair {
+    stroke: var(--text-dim);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.vib-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    pointer-events: none;
+}
+
+.vib-readout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    min-height: 15px;
+}
+
+.vib-value {
+    color: var(--accent-bright);
+    font-family: var(--mono);
+}
+
+.vib-legend {
+    display: flex;
+    gap: 12px;
+    color: var(--text-dim);
+}
+
+.vib-band-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vib-band-key i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: rgba(167, 139, 250, 0.35);
+}

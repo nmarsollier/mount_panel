@@ -36,6 +36,10 @@ type Mount struct {
 
 	serialPort string
 	connecting bool
+
+	// movement holds the rolling mount-movement window for the UI chart overlay
+	// (history.go).
+	movement []MovementSample
 }
 
 var (
@@ -152,6 +156,7 @@ func (m *Mount) disconnect(c *mountproto.Client) {
 	if m.conn == c {
 		m.conn = nil
 	}
+	m.movement = nil
 	m.mu.Unlock()
 }
 

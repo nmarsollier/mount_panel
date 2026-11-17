@@ -73,6 +73,8 @@
       <button x-show="eaf.fan_detected" :class="{ active: tab === 'fan' }" @click="tab = 'fan'">Fan</button>
       <button x-show="eaf.amb_detected" :class="{ active: tab === 'ambiente' }"
         @click="tab = 'ambiente'">Environment</button>
+      <button x-show="eaf.amb_detected" :class="{ active: tab === 'vibraciones' }"
+        @click="tab = 'vibraciones'">Statistics</button>
     </nav>
 
     <!-- ═══ Mount ═══ -->
@@ -487,6 +489,37 @@
             <span class="metric-label">Gravity Z</span>
             <span class="metric-value"
               x-text="fmt(eaf.orientation.az_g, 3, ' g')"></span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══ Vibrations ═══ -->
+    <section class="tab-content" x-show="tab === 'vibraciones'">
+
+      <!-- Charts: one panel per chart, stacked as rows below each other. -->
+      <div class="panel">
+        <div class="panel-header"><strong>Vibration</strong><span class="hint">last 2 minutes</span></div>
+        <div class="vib-chart" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
+          <svg viewBox="0 0 600 220" preserveAspectRatio="none">
+            <rect class="vib-move-band" x-for="b in moveBands()" :key="b.start"
+              :x="b.x1" y="0" :width="b.width" height="220"></rect>
+            <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
+                 mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
+            <line class="vib-iso" x1="0" y1="173.7" x2="600" y2="173.7"></line>
+            <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
+            <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
+            <polyline class="vib-line" :points="vibPoints()"></polyline>
+            <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
+          </svg>
+          <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
+        </div>
+        <div class="vib-readout">
+          <span class="vib-value" x-text="vibHoverText()"></span>
+          <div class="vib-legend">
+            <span class="vib-band-key"><i></i> Mount moving</span>
+            <span>ISO 10816: A &lt; 1.12 · B &lt; 2.8 · C &lt; 7.1 · D (mm/s)</span>
           </div>
         </div>
       </div>

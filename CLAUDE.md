@@ -61,14 +61,17 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 - **fan/** — fan model: manages its serial link and exposes fan and
   mirror-temperature operations to the UI. No state cache.
 - **amb/** — ambient/vibration model: manages its serial link and exposes
-  ambient/humidity/dew/vibration readings to the UI. No state cache.
+  ambient/humidity/dew/vibration readings to the UI. No state cache, except a
+  rolling 2-minute vibration history (for the UI chart).
 - **alpaca_mount/** — Alpaca REST server for the telescope: ITelescopeV4 endpoints
   (properties + methods) plus `management` and UDP discovery. Translates
   Alpaca → `mount` → `mountproto`. `Start()` builds the router and registers
   both the telescope and the accessory devices.
   - **alpaca_mount/server/** — shared GIN framework (engine singleton, response
     envelope, param parsing, error numbers, server identity).
-- **alpaca_eaf/** — Alpaca REST server for the focuser: IFocuserV4 (→ `eaf`).
+- **alpaca_eaf/** — Alpaca REST server for the focuser: IFocuserV4 (→ `eaf` +
+  `amb` + `fan`; the focuser Temperature is derived from the ambient and mirror
+  sensors).
 - **alpaca_amb/** — Alpaca REST server for the ambient controller:
   ObservingConditions V2 (→ `amb`).
 - **alpaca_fan/** — Alpaca REST server for the fan controller: Switch V3
@@ -123,7 +126,7 @@ Desktop UI (Wails) ──bindings──▶ ui ───────────�
 
 - `alpaca_mount` → `mount` → `mountproto` → `proto`; `alpaca_mount` →
   `alpaca_eaf` + `alpaca_amb` + `alpaca_fan`. Each accessory server maps to
-  its model: `alpaca_eaf` → `eaf` (+ `amb`), `alpaca_amb` → `amb`,
+  its model: `alpaca_eaf` → `eaf` (+ `amb` + `fan`), `alpaca_amb` → `amb`,
   `alpaca_fan` → `fan` (+ `amb`), and the models → `eafproto` → `proto`
   (no reverse dependencies). All four Alpaca servers use `alpaca_mount/server`
   for the shared HTTP framework.

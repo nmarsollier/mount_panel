@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nmarsollier/mount_panel/internal/alpaca_mount/server"
-	"github.com/nmarsollier/mount_panel/internal/amb"
 	"github.com/nmarsollier/mount_panel/internal/eaf"
 )
 
@@ -69,10 +68,12 @@ func getTempCompAvailable(c *gin.Context) {
 	server.WriteBool(c, false, cid, stx)
 }
 
-// getTemperature returns the ambient temperature in Celsius.
+// getTemperature returns the focuser temperature in Celsius: the average of the
+// ambient and mirror sensors when both are available, the single available
+// reading when only one is, or an error when neither is.
 func getTemperature(c *gin.Context) {
 	cid, stx := server.ClientTransactionID(c), server.NextServerTx()
-	v, err := amb.Get().AmbientTemperature()
+	v, err := reportedTemperature()
 	if err != nil {
 		writeEnvironmentError(c, err, cid, stx)
 		return
@@ -80,11 +81,11 @@ func getTemperature(c *gin.Context) {
 	server.WriteFloat(c, v, cid, stx)
 }
 
-// writeEnvironmentError maps an environment read failure to Alpaca: an absent
-// sensor is 1024 (not implemented), a broken serial link is 1027 (not
+// writeEnvironmentError maps a temperature read failure to Alpaca: no sensor
+// available is 1024 (not implemented), a broken serial link is 1027 (not
 // connected).
 func writeEnvironmentError(c *gin.Context, err error, cid, stx uint32) {
-	if errors.Is(err, amb.ErrUnavailable) {
+	if errors.Is(err, errNoTemperature) {
 		server.WriteError(c, server.ErrNotImplemented, err.Error(), cid, stx)
 		return
 	}

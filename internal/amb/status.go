@@ -1,6 +1,8 @@
 package amb
 
 import (
+	"time"
+
 	"github.com/nmarsollier/mount_panel/internal/events"
 	"github.com/nmarsollier/mount_panel/internal/tools/logx"
 )
@@ -88,6 +90,12 @@ func (t *Amb) Status() Status {
 			VelRmsTotal:    umPerSToMmPerS(vib.VelRmsTotal),
 			VelPeakTotal:   umPerSToMmPerS(vib.VelPeakTotal),
 			IsoZone:        vib.IsoZone,
+		}
+		if st.Vibration.VelRmsTotal != nil {
+			t.historyAppend(VibrationSample{
+				TsMs:   time.Now().UnixMilli(),
+				VelRms: *st.Vibration.VelRmsTotal,
+			})
 		}
 	}
 	if ori, err := c.StateOrientation(); err != nil {
