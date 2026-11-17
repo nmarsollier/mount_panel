@@ -766,15 +766,6 @@ input::placeholder {
     border-right: 1px solid rgba(79, 195, 247, 0.7);
 }
 
-.move-crosshair {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    border-left: 1px dashed var(--text-dim);
-    pointer-events: none;
-}
-
 .move-caption {
     display: flex;
     align-items: center;
@@ -788,13 +779,6 @@ input::placeholder {
     stroke: #2a2240;
     stroke-width: 1;
     stroke-dasharray: 4 4;
-    vector-effect: non-scaling-stroke;
-}
-
-.vib-crosshair {
-    stroke: var(--text-dim);
-    stroke-width: 1;
-    stroke-dasharray: 2 3;
     vector-effect: non-scaling-stroke;
 }
 
@@ -1354,7 +1338,6 @@ input::placeholder {
               <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
               <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
               <polyline class="vib-line" :points="vibPoints()"></polyline>
-              <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
             </svg>
             <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
           </div>
@@ -1368,7 +1351,6 @@ input::placeholder {
           <div class="move-strip">
             <div class="move-band" x-for="b in moveBands()" :key="b.start"
               :style="{ left: b.left + '%', width: b.width + '%' }"></div>
-            <div class="move-crosshair" x-show="vibHover" :style="{ left: vibHoverPct() + '%' }"></div>
           </div>
           <div class="move-caption">
             <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
@@ -1443,8 +1425,9 @@ input::placeholder {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
-                this.mountMoving = (j.status === 'slewing')
-                    || (j.debug && (j.debug.ra_speed !== 0 || j.debug.dec_speed !== 0));
+                // "slewing" only: the mount reports a nonzero speed while
+                // sidereal tracking, which is not a movement event.
+                this.mountMoving = (j.status === 'slewing');
                 this.debug = j.debug || {};
 
                 const s = j.settings;
@@ -1788,14 +1771,6 @@ input::placeholder {
         },
         vibHoverClear() {
             this.vibHover = null;
-        },
-        vibHoverX() {
-            if (!this.vibHover) return null;
-            return this.chartX(this.vibHover.ts_ms);
-        },
-        vibHoverPct() {
-            const x = this.vibHoverX();
-            return x == null ? null : (x / 600) * 100;
         },
         vibHoverText() {
             if (!this.vibHover) return '';

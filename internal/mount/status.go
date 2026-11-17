@@ -100,9 +100,12 @@ func (m *Mount) Status() Status {
 	}
 
 	if s != nil {
+		// "slewing" is the only reliable movement signal: the firmware reports a
+		// nonzero ra/dec speed even while sidereal tracking, which would
+		// otherwise mark tracking as movement.
 		m.movementAppend(MovementSample{
 			TsMs:   time.Now().UnixMilli(),
-			Moving: slewingState(s) || s.RaSpeedDps != 0 || s.DecSpeedDps != 0,
+			Moving: slewingState(s),
 		})
 
 		events.Record(events.Event{

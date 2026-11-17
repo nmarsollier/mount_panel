@@ -510,7 +510,6 @@
               <line class="vib-iso" x1="0" y1="134.2" x2="600" y2="134.2"></line>
               <line class="vib-iso" x1="0" y1="33.2" x2="600" y2="33.2"></line>
               <polyline class="vib-line" :points="vibPoints()"></polyline>
-              <line class="vib-crosshair" x-show="vibHover" :x1="vibHoverX()" y1="0" :x2="vibHoverX()" y2="220"></line>
             </svg>
             <div class="vib-empty" x-show="vibSamples().length < 2">Collecting samples…</div>
           </div>
@@ -524,7 +523,6 @@
           <div class="move-strip">
             <div class="move-band" x-for="b in moveBands()" :key="b.start"
               :style="{ left: b.left + '%', width: b.width + '%' }"></div>
-            <div class="move-crosshair" x-show="vibHover" :style="{ left: vibHoverPct() + '%' }"></div>
           </div>
           <div class="move-caption">
             <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">

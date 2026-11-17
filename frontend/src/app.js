@@ -58,8 +58,9 @@ function mountApp() {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
-                this.mountMoving = (j.status === 'slewing')
-                    || (j.debug && (j.debug.ra_speed !== 0 || j.debug.dec_speed !== 0));
+                // "slewing" only: the mount reports a nonzero speed while
+                // sidereal tracking, which is not a movement event.
+                this.mountMoving = (j.status === 'slewing');
                 this.debug = j.debug || {};
 
                 const s = j.settings;
@@ -403,14 +404,6 @@ function mountApp() {
         },
         vibHoverClear() {
             this.vibHover = null;
-        },
-        vibHoverX() {
-            if (!this.vibHover) return null;
-            return this.chartX(this.vibHover.ts_ms);
-        },
-        vibHoverPct() {
-            const x = this.vibHoverX();
-            return x == null ? null : (x / 600) * 100;
         },
         vibHoverText() {
             if (!this.vibHover) return '';
