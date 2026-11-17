@@ -747,9 +747,25 @@ input::placeholder {
     stroke-linecap: round;
 }
 
+.vib-bands {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.vib-move-shade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(79, 195, 247, 0.22);
+    border-left: 1px solid rgba(79, 195, 247, 0.6);
+    border-right: 1px solid rgba(79, 195, 247, 0.6);
+}
+
 .move-strip {
     position: relative;
-    height: 18px;
+    height: 28px;
     background: #0e0b1a;
     border: 1px solid #1c1730;
     border-radius: 4px;
@@ -761,9 +777,9 @@ input::placeholder {
     position: absolute;
     top: 0;
     bottom: 0;
-    background: rgba(79, 195, 247, 0.35);
-    border-left: 1px solid rgba(79, 195, 247, 0.7);
-    border-right: 1px solid rgba(79, 195, 247, 0.7);
+    background: rgba(79, 195, 247, 0.5);
+    border-left: 1px solid rgba(79, 195, 247, 0.8);
+    border-right: 1px solid rgba(79, 195, 247, 0.8);
 }
 
 .move-caption {
@@ -1331,6 +1347,11 @@ input::placeholder {
         <div class="panel-header"><strong>Vibration</strong><span class="hint">last 5 minutes</span></div>
         <div class="vib-wrap" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
           <div class="vib-chart">
+            <div class="vib-bands">
+              <template x-for="b in moveBands()" :key="b.start">
+                <div class="vib-move-shade" :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+              </template>
+            </div>
             <svg viewBox="0 0 600 220" preserveAspectRatio="none">
               <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
                    mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
@@ -1349,14 +1370,15 @@ input::placeholder {
           <!-- Mount movement, on the same 5-minute time axis as the chart
                above, so vibration spikes line up with the movement moments. -->
           <div class="move-strip">
-            <div class="move-band" x-for="b in moveBands()" :key="b.start"
-              :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+            <template x-for="b in moveBands()" :key="b.start">
+              <div class="move-band" :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+            </template>
           </div>
           <div class="move-caption">
             <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
               <i></i><span x-text="mountMoving ? 'Mount moving' : 'Mount idle'"></span>
             </span>
-            <span class="vib-legend">Mount movement — last 5 minutes</span>
+            <span class="vib-legend" x-text="'Mount movement · ' + (moveHistory.intervals ? moveHistory.intervals.length : 0) + ' moves'"></span>
           </div>
         </div>
       </div>
@@ -1787,6 +1809,9 @@ input::placeholder {
                 let x2 = this.chartX(iv.end_ms);
                 x1 = Math.max(pad, Math.min(W - pad, x1));
                 x2 = Math.max(pad, Math.min(W - pad, x2));
+                // A very brief move (one sample) collapses to zero width; give
+                // it a ~2px sliver so it is still visible.
+                if (x2 - x1 < 2) x2 = Math.min(W - pad, x1 + 2);
                 return { left: (x1 / W) * 100, width: ((x2 - x1) / W) * 100, start: iv.start_ms };
             }).filter(b => b.width > 0);
         },

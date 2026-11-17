@@ -420,6 +420,9 @@ function mountApp() {
                 let x2 = this.chartX(iv.end_ms);
                 x1 = Math.max(pad, Math.min(W - pad, x1));
                 x2 = Math.max(pad, Math.min(W - pad, x2));
+                // A very brief move (one sample) collapses to zero width; give
+                // it a ~2px sliver so it is still visible.
+                if (x2 - x1 < 2) x2 = Math.min(W - pad, x1 + 2);
                 return { left: (x1 / W) * 100, width: ((x2 - x1) / W) * 100, start: iv.start_ms };
             }).filter(b => b.width > 0);
         },

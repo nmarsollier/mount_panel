@@ -503,6 +503,11 @@
         <div class="panel-header"><strong>Vibration</strong><span class="hint">last 5 minutes</span></div>
         <div class="vib-wrap" @mousemove="vibHoverAt($event)" @mouseleave="vibHoverClear()">
           <div class="vib-chart">
+            <div class="vib-bands">
+              <template x-for="b in moveBands()" :key="b.start">
+                <div class="vib-move-shade" :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+              </template>
+            </div>
             <svg viewBox="0 0 600 220" preserveAspectRatio="none">
               <!-- ISO 10816 Class II zone boundaries (A/B 1.12, B/C 2.8, C/D 7.1
                    mm/s), mapped to the fixed 0..8 mm/s y-scale. -->
@@ -521,14 +526,15 @@
           <!-- Mount movement, on the same 5-minute time axis as the chart
                above, so vibration spikes line up with the movement moments. -->
           <div class="move-strip">
-            <div class="move-band" x-for="b in moveBands()" :key="b.start"
-              :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+            <template x-for="b in moveBands()" :key="b.start">
+              <div class="move-band" :style="{ left: b.left + '%', width: b.width + '%' }"></div>
+            </template>
           </div>
           <div class="move-caption">
             <span class="vib-live" :class="{ 'vib-live-on': mountMoving }">
               <i></i><span x-text="mountMoving ? 'Mount moving' : 'Mount idle'"></span>
             </span>
-            <span class="vib-legend">Mount movement — last 5 minutes</span>
+            <span class="vib-legend" x-text="'Mount movement · ' + (moveHistory.intervals ? moveHistory.intervals.length : 0) + ' moves'"></span>
           </div>
         </div>
       </div>
