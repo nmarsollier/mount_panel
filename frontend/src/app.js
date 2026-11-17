@@ -33,7 +33,6 @@ function mountApp() {
               vibration: {error: null, rms_total: null, accel_peak_total: null, vel_rms_total: null, vel_peak_total: null, iso_zone: null},
               orientation: {error: null, pitch_deg: null, roll_deg: null, ax_g: null, ay_g: null, az_g: null}},
         focusStep: 100,
-        focusSetPositionValue: 0,
 
         /* Run a binding promise and refresh status. */
         run(promise) {
@@ -278,15 +277,10 @@ function mountApp() {
         },
 
         /* The firmware reports counter_valid=false after a disable, power loss
-         * or reboot — N.I.N.A. must not autofocus until a reference is set. */
+         * or reboot — N.I.N.A. must not autofocus until the focuser is
+         * re-enabled. */
         focusReferenceMissing() {
             return this.eaf.detected && this.eaf.focuser.counter_valid === false;
-        },
-
-        focusSetPosition() {
-            const v = this.focusSetPositionValue;
-            if (typeof v !== 'number' || isNaN(v) || v < 0) return;
-            this.run(app().FocusSetPosition(Math.round(v)));
         },
 
         fanSetMode(mode) {

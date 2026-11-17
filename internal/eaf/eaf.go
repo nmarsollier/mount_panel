@@ -119,9 +119,9 @@ func (e *EAF) tryConnect() (*eafproto.Client, error) {
 		return nil, err
 	}
 
-	// Seed the position reference from the firmware. After a reboot (or a
-	// disable / power loss) the counter is invalid until a set_position, so it
-	// must not be assumed valid here.
+	// Seed the position reference from the firmware. The counter is authoritative:
+	// it is already valid at boot (the focuser starts enabled at the reference)
+	// and only goes invalid on disable or power loss.
 	position := int32(0)
 	valid := false
 	if fs, err := c.StateFocuser(); err == nil {

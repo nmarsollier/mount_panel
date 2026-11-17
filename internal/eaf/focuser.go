@@ -32,11 +32,12 @@ func (e *EAF) MoveBy(deltaSteps int64) error {
 		resp, err := c.FocuserMove(deltaSteps, fs.CounterSteps)
 		if err == nil {
 			e.mu.Lock()
-			// The firmware counter is authoritative: adopt it instead of
-			// accumulating a local delta, so the cache never drifts. Validity
-			// is unchanged by a move (the firmware only restores it on
-			// set_position).
-			e.position = int32(resp.CounterSteps)
+			// The firmware counter is authoritative: adopt the move's destination
+			// (target_counter) rather than the pre-move counter, so the cache
+			// reflects where the axis is going without waiting for the next
+			// state poll. Validity is unchanged by a move (the firmware only
+			// restores it on enable).
+			e.position = int32(resp.TargetCounter)
 			e.positionValid = fs.CounterValid
 			e.mu.Unlock()
 			return nil

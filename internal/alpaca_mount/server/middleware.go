@@ -18,6 +18,12 @@ func Events() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		correlation := uuid.NewString()
 
+		// Alpaca sends method parameters in the request body (form-urlencoded)
+		// for PUT and in the query string for GET. Parse both up front so the
+		// audit records the values wherever they arrive — RawQuery alone would
+		// miss every PUT parameter N.I.N.A. sends (e.g. Position on /move).
+		_ = c.Request.ParseForm()
+
 		events.Record(events.Event{
 			Type:          events.TypeAlpacaCommand,
 			Source:        events.SourceAlpaca,
@@ -26,7 +32,7 @@ func Events() gin.HandlerFunc {
 			Details: events.AlpacaCommand{
 				Method: c.Request.Method,
 				Path:   c.Request.URL.Path,
-				Query:  c.Request.URL.RawQuery,
+				Query:  c.Request.Form.Encode(),
 			},
 		})
 

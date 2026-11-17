@@ -25,7 +25,7 @@ type Fault struct {
 	Latched   bool   `json:"latched"`
 }
 
-// FocuserState is the focuser snapshot: the signed STEP counter, motion state
+// FocuserState is the focuser snapshot: the absolute STEP counter, motion state
 // and driver health.
 type FocuserState struct {
 	CounterSteps   int64   `json:"counter_steps"`

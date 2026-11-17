@@ -2,11 +2,13 @@ package eaf
 
 import "errors"
 
-// Focuser limits for the Alpaca absolute position (configured in Go; the
-// firmware enforces its own max_move_steps separately).
+// Focuser limits for the Alpaca absolute position. The firmware counter is
+// absolute and non-negative: it is re-declared at 100000 (the reference) on
+// every disable→enable and can travel ±100000 steps from there, so the valid
+// range is 0..200000 — which maps 1:1 onto Alpaca Position.
 const (
-	maxStep      = 1000000 // virtual position ceiling (steps)
-	maxIncrement = 100000  // max per-move delta (steps)
+	maxStep      = 200000 // absolute position ceiling (steps)
+	maxIncrement = 100000 // max per-move delta (steps)
 )
 
 var (
@@ -31,9 +33,10 @@ func (e *EAF) SetConnected(connected bool) {
 	e.mu.Unlock()
 }
 
-// Position returns the last known absolute position. It mirrors the firmware's
-// counter, so it is returned even when no reference is established (callers
-// check PositionValid for that); it errors only when disconnected.
+// Position returns the last known absolute position. It mirrors the firmware
+// counter, which is already non-negative (0..200000). It is returned even when
+// no reference is established (callers check PositionValid for that); it errors
+// only when disconnected.
 func (e *EAF) Position() (int32, error) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
@@ -82,27 +85,6 @@ func (e *EAF) MoveTo(position int32) error {
 		return errPositionRange
 	}
 	return e.MoveBy(delta)
-}
-
-// SetPosition declares the focuser's current absolute position and marks the
-// reference valid. It does not move the motor.
-func (e *EAF) SetPosition(position int32) error {
-	if position < 0 || position > maxStep {
-		return errPositionRange
-	}
-	c, err := e.getConn()
-	if err != nil {
-		return err
-	}
-	resp, err := c.FocuserSetPosition(int64(position))
-	if err != nil {
-		return err
-	}
-	e.mu.Lock()
-	e.position = int32(resp.CounterSteps)
-	e.positionValid = resp.CounterValid
-	e.mu.Unlock()
-	return nil
 }
 
 // IsMoving reports whether the focuser is currently moving.
