@@ -26,6 +26,7 @@ type StateResponse struct {
 	AtPark            bool    `json:"at_park"`
 	PositionUncertain bool    `json:"position_uncertain"`
 	Power             bool    `json:"power"`
+	MotorsEnabled     bool    `json:"motors_enabled"`
 	TimeValid         bool    `json:"time_valid"`
 	Limits            struct {
 		RaMin  float64 `json:"ra_min"`

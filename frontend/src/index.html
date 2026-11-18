@@ -92,6 +92,8 @@
           <button @click="home()" :disabled="isError">HOME</button>
           <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
           <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
+          <button @click="toggleMotors()" :disabled="isError"
+            x-text="motorsEnabled ? 'DISABLE MOTORS' : 'ENABLE MOTORS'"></button>
           <button class="danger" @click="reset()">RESET</button>
         </div>
       </div>

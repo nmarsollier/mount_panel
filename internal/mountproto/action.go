@@ -15,6 +15,7 @@ type ActionRequest struct {
 	Axis       string   `json:"axis,omitempty"`    // move
 	Degrees    *float64 `json:"degrees,omitempty"` // move
 	Param      string   `json:"param,omitempty"`   // limits
+	Enabled    *bool    `json:"enabled,omitempty"` // motors
 }
 
 // Action sends an operation and returns an error if the mount rejects it.

@@ -122,6 +122,11 @@ func (a *App) SetLimit(action string) error {
 	return mount.Get().SetLimits(action)
 }
 
+// SetMotorsEnabled enables or disables the mount's motor drivers.
+func (a *App) SetMotorsEnabled(enabled bool) error {
+	return mount.Get().SetMotorsEnabled(enabled)
+}
+
 // MoveAxisSpeed sets both axes' manual rates at once (deg/s), for the joystick.
 func (a *App) MoveAxisSpeed(raRate, decRate float64) error {
 	return mount.Get().MoveAxisSpeed(raRate, decRate)

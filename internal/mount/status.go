@@ -12,9 +12,10 @@ import (
 // Status is a coherent snapshot of the mount formatted for the UI, mirroring
 // the firmware's GET /api/status shape.
 type Status struct {
-	Status   string `json:"status"`
-	Tracking string `json:"tracking"`
-	Power    bool   `json:"power"`
+	Status        string `json:"status"`
+	Tracking      string `json:"tracking"`
+	Power         bool   `json:"power"`
+	MotorsEnabled bool   `json:"motors_enabled"`
 	Ra       string `json:"ra"`
 	Dec      string `json:"dec"`
 	Lst      string `json:"lst"`
@@ -67,6 +68,7 @@ func (m *Mount) Status() Status {
 		st.Status = s.State
 		st.Tracking = s.Tracking
 		st.Power = s.Power
+		st.MotorsEnabled = s.MotorsEnabled
 		st.Ra = formatHours(s.Ra)
 		st.Dec = formatDec(s.Dec)
 		st.IsHome = s.AtHome

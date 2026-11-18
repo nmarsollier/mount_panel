@@ -11,6 +11,7 @@ function mountApp() {
         isDisconnected: false,
         mountConnected: false,
         hasPower: true,
+        motorsEnabled: true,
         debug: {},
         serverSettings: {lat: 0, lon: 0, elevation: 0},
         settingsDraft: {lat: 0, lon: 0, elevation: 0},
@@ -58,6 +59,7 @@ function mountApp() {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
+                this.motorsEnabled = (j.motors_enabled !== false);
                 // "slewing" only: the mount reports a nonzero speed while
                 // sidereal tracking, which is not a movement event.
                 this.mountMoving = (j.status === 'slewing');
@@ -144,6 +146,10 @@ function mountApp() {
 
         setLimit(action) {
             this.run(app().SetLimit(action));
+        },
+
+        toggleMotors() {
+            this.run(app().SetMotorsEnabled(!this.motorsEnabled));
         },
 
         // --- Joystick (continuous move) ---

@@ -936,6 +936,8 @@ input::placeholder {
           <button @click="home()" :disabled="isError">HOME</button>
           <button @click="park()" x-show="!isParked" :disabled="isError">PARK</button>
           <button @click="unpark()" x-show="isParked" :disabled="isError">UNPARK</button>
+          <button @click="toggleMotors()" :disabled="isError"
+            x-text="motorsEnabled ? 'DISABLE MOTORS' : 'ENABLE MOTORS'"></button>
           <button class="danger" @click="reset()">RESET</button>
         </div>
       </div>
@@ -1400,6 +1402,7 @@ input::placeholder {
         isDisconnected: false,
         mountConnected: false,
         hasPower: true,
+        motorsEnabled: true,
         debug: {},
         serverSettings: {lat: 0, lon: 0, elevation: 0},
         settingsDraft: {lat: 0, lon: 0, elevation: 0},
@@ -1447,6 +1450,7 @@ input::placeholder {
                 this.isDisconnected = (j.status === 'disconnected');
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
+                this.motorsEnabled = (j.motors_enabled !== false);
                 // "slewing" only: the mount reports a nonzero speed while
                 // sidereal tracking, which is not a movement event.
                 this.mountMoving = (j.status === 'slewing');
@@ -1533,6 +1537,10 @@ input::placeholder {
 
         setLimit(action) {
             this.run(app().SetLimit(action));
+        },
+
+        toggleMotors() {
+            this.run(app().SetMotorsEnabled(!this.motorsEnabled));
         },
 
         // --- Joystick (continuous move) ---

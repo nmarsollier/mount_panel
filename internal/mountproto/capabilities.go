@@ -38,6 +38,7 @@ type MountCaps struct {
 		// distinguishable from an explicit false (fork).
 		MeridianFlip *bool `json:"meridian_flip"`
 		PierSide     bool  `json:"pier_side"`
+		MotorsSwitch bool  `json:"motors_switch"`
 	} `json:"caps"`
 }
 
