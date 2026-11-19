@@ -29,6 +29,7 @@ type Mount struct {
 	selectedTrackingRate int // ASCOM DriveRates: 0 sidereal, 1 lunar, 2 solar
 	connected            bool
 	meridianFlip         bool // true = German equatorial (flips); false = fork
+	motorsSwitch         bool // true = firmware exposes the motors enable/disable switch
 
 	// manualUTC is non-nil when the client set an explicit clock value. While
 	// set, the periodic time sync is disabled so it is not silently overwritten.
@@ -138,6 +139,9 @@ func (m *Mount) tryConnect() (*mountproto.Client, error) {
 	m.conn = c
 	// Absent meridian_flip (old firmware) means German equatorial, which flips.
 	m.meridianFlip = caps.Capabilities.Caps.MeridianFlip == nil || *caps.Capabilities.Caps.MeridianFlip
+	// Absent motors_switch (or an explicit false) means the firmware cannot
+	// idle the drivers, so the UI hides the motors enable/disable button.
+	m.motorsSwitch = caps.Capabilities.Caps.MotorsSwitch
 	m.mu.Unlock()
 
 	logx.Info(mountCtx(), "connected on "+c.PortName())
@@ -203,6 +207,16 @@ func (m *Mount) MeridianFlip() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.meridianFlip
+}
+
+// MotorsSwitch reports whether the firmware exposes the motors enable/disable
+// switch (the `motors` action). It is read from the capabilities at connect
+// time; when the firmware does not report motors_switch the mount cannot idle
+// the drivers and the UI hides the button.
+func (m *Mount) MotorsSwitch() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.motorsSwitch
 }
 
 // timeSyncLoop re-sends the UTC clock hourly to correct the ESP RTC drift. It

@@ -16,6 +16,7 @@ type Status struct {
 	Tracking      string `json:"tracking"`
 	Power         bool   `json:"power"`
 	MotorsEnabled bool   `json:"motors_enabled"`
+	MotorsSwitch  bool   `json:"motors_switch"`
 	Ra       string `json:"ra"`
 	Dec      string `json:"dec"`
 	Lst      string `json:"lst"`
@@ -63,6 +64,7 @@ func (m *Mount) Status() Status {
 		Time:     "",
 	}
 	st.Debug.Microsteps = 64 // MOTORS_MICROSTEPS (firmware build constant)
+	st.MotorsSwitch = m.MotorsSwitch()
 
 	if s != nil {
 		st.Status = s.State

@@ -12,6 +12,7 @@ function mountApp() {
         mountConnected: false,
         hasPower: true,
         motorsEnabled: true,
+        motorsSwitch: false,
         debug: {},
         serverSettings: {lat: 0, lon: 0, elevation: 0},
         settingsDraft: {lat: 0, lon: 0, elevation: 0},
@@ -60,6 +61,7 @@ function mountApp() {
                 this.mountConnected = (j.status !== 'disconnected');
                 this.hasPower = (j.power !== false);
                 this.motorsEnabled = (j.motors_enabled !== false);
+                this.motorsSwitch = (j.motors_switch === true);
                 // "slewing" only: the mount reports a nonzero speed while
                 // sidereal tracking, which is not a movement event.
                 this.mountMoving = (j.status === 'slewing');
